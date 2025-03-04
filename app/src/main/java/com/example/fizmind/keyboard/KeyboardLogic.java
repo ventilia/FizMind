@@ -1,0 +1,385 @@
+package com.example.fizmind.keyboard;
+
+import android.content.Context;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.util.Log;
+import android.view.View;
+import android.widget.ImageButton;
+import android.widget.TextView;
+
+import com.example.fizmind.R;
+import com.example.fizmind.animation.KeyboardAnimation;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+
+public class KeyboardLogic implements KeyboardModeSwitcher {
+    private final Context context;
+    private final List<TextView> keyboardCells;
+    private final TextView pageNumberView;
+    private final TextView designationButton;
+    private final TextView unitsButton;
+    private final TextView numbersButton;
+    private final ImageButton prevPageButton;
+    private final ImageButton nextPageButton;
+    private InputController inputController;
+    private boolean useStixFont;
+
+    private String currentMode = "Designation"; //умолачание
+    private int currentPage = 0;
+
+    //  режим -> список страниц -> список кнопок (SymbolKey)
+    private final Map<String, List<List<SymbolKey>>> keyboardData;
+
+    private Typeface stixTypeface;
+
+    public KeyboardLogic(
+            Context context,
+            List<TextView> keyboardCells,
+            TextView pageNumberView,
+            TextView designationButton,
+            TextView unitsButton,
+            TextView numbersButton,
+            ImageButton prevPageButton,
+            ImageButton nextPageButton
+    ) {
+        this.context = context;
+        this.keyboardCells = keyboardCells;
+        this.pageNumberView = pageNumberView;
+        this.designationButton = designationButton;
+        this.unitsButton = unitsButton;
+        this.numbersButton = numbersButton;
+        this.prevPageButton = prevPageButton;
+        this.nextPageButton = nextPageButton;
+
+        // шрифт
+        try {
+            stixTypeface = Typeface.createFromAsset(context.getAssets(), "fonts/stix_two_text_italic.ttf");
+        } catch (Exception e) {
+            Log.e("KeyboardLogic", "Ошибка загрузки шрифта", e);
+            stixTypeface = Typeface.DEFAULT;
+        }
+        designationButton.setTag("MODE_BUTTON");
+        unitsButton.setTag("MODE_BUTTON");
+        numbersButton.setTag("MODE_BUTTON");
+
+
+        keyboardData = new HashMap<>();
+
+        // Режим "Designation"
+        keyboardData.put("Designation", Arrays.asList(
+                Arrays.asList(
+                        new SymbolKey("a_latin", "a", true, true),
+                        new SymbolKey("v_latin", "v", true, true),
+                        new SymbolKey("s_latin", "s", true, true),
+                        new SymbolKey("t_latin", "t", true, true),
+                        new SymbolKey("m_latin", "m", true, true),
+                        new SymbolKey("F_latin", "F", true, true),
+                        new SymbolKey("designation_g", "g", false, true),
+                        // переход
+                        new SymbolKey("P_latin", "P", true, true),
+                        new SymbolKey("E_latin", "E", true, true),
+                        new SymbolKey("designation_W", "W", false, true),
+                        new SymbolKey("designation_ρ", "ρ", false, true),
+                        new SymbolKey("N_latin", "N", true, true),
+                        new SymbolKey("S_latin", "S", true, true),
+                        new SymbolKey("h_latin", "h", true, true),
+                        // переход
+                        new SymbolKey("designation_I", "I", false, true),
+                        new SymbolKey("U_latin", "U", true, true),
+                        new SymbolKey("R_latin", "R", true, true),
+                        new SymbolKey("C_latin", "C", true, true),
+                        new SymbolKey("L_latin", "L", true, true),
+                        new SymbolKey("designation_Φ", "Φ", true, true),
+                        new SymbolKey("B_latin", "B", true, true)
+                ),
+                // Страница 2
+                Arrays.asList(
+                        new SymbolKey("designation_rho", "ρ", false),
+                        new SymbolKey("designation_V", "V", false),
+                        new SymbolKey("designation_N", "N", false),
+                        new SymbolKey("designation_W", "W", false),
+                        new SymbolKey("designation_E", "E", false),
+                        new SymbolKey("designation_k", "k", false),
+                        new SymbolKey("designation_T", "T", false)
+                )
+        ));
+
+        // Режим "Units_of_measurement"
+        keyboardData.put("Units_of_measurement", Arrays.asList(
+                // Страница 1 – единицы, связанные с механическими величинами и температурой
+                Arrays.asList(
+                        new SymbolKey("unit_m/s", "m/s", false),
+                        new SymbolKey("unit_km/h", "km/h", false),
+                        new SymbolKey("unit_mi/h", "mi/h", false),
+                        new SymbolKey("unit_m/s²", "m/s²", false),
+                        new SymbolKey("unit_m", "m", false),
+                        new SymbolKey("unit_kg", "kg", false),
+                        new SymbolKey("unit_g", "g", false),
+                        new SymbolKey("unit_mg", "mg", false),
+                        new SymbolKey("unit_s", "s", false),
+                        new SymbolKey("unit_min", "min", false),
+                        new SymbolKey("unit_h", "h", false)
+                ),
+                // Страница 2 – единицы для силы, давления, энергии, электрических величин и др.
+                Arrays.asList(
+                        new SymbolKey("unit_N", "N", false),
+                        new SymbolKey("unit_Pa", "Pa", false),
+                        new SymbolKey("unit_kPa", "kPa", false),
+                        new SymbolKey("unit_atm", "atm", false),
+                        new SymbolKey("unit_J", "J", false),
+                        new SymbolKey("unit_kJ", "kJ", false),
+                        new SymbolKey("unit_W", "W", false),
+                        new SymbolKey("unit_kg/m³", "kg/m³", false),
+                        new SymbolKey("unit_A", "A", false),
+                        new SymbolKey("unit_V", "V", false),
+                        new SymbolKey("unit_Ω", "Ω", false),
+                        new SymbolKey("unit_F", "F", false),
+                        new SymbolKey("unit_H", "H", false),
+                        new SymbolKey("unit_Wb", "Wb", false),
+                        new SymbolKey("unit_T", "T", false),
+                        new SymbolKey("unit_m³", "m³", false),
+                        new SymbolKey("unit_K", "K", false),
+                        new SymbolKey("unit_°C", "°C", false)
+                )
+        ));
+
+        // Режим "Numbers_and_operations"
+        keyboardData.put("Numbers_and_operations", Arrays.asList(
+                Arrays.asList(
+                        new SymbolKey("num_1", "1", false),
+                        new SymbolKey("num_2", "2", false),
+                        new SymbolKey("num_3", "3", false),
+                        new SymbolKey("num_dot1", ".", false),
+                        new SymbolKey("num_dot2", "ю", false),
+                        new SymbolKey("num_dot3", "ю", false),
+                        new SymbolKey("num_dot4", "ю", false),
+                        // переход
+                        new SymbolKey("num_4", "4", false),
+                        new SymbolKey("num_5", "5", false),
+                        new SymbolKey("num_6", "6", false),
+                        new SymbolKey("num_dot5", "ю", false),
+                        new SymbolKey("num_dot6", "ю", false),
+                        new SymbolKey("num_dot7", "ю", false),
+                        new SymbolKey("num_dot8", "ю", false),
+                        // переход
+                        new SymbolKey("num_7", "ю", false),
+                        new SymbolKey("num_8", "ю", false),
+                        new SymbolKey("num_9", "9", false),
+                        new SymbolKey("num_dot9", "ю", false),
+                        new SymbolKey("num_0", "0", false),
+                        new SymbolKey("num_dot10", "ю", false),
+                        new SymbolKey("num_minus", "-", false)
+                ),
+                // Страница 2
+                Arrays.asList(
+                        new SymbolKey("op_plus", "+", false),
+                        new SymbolKey("op_openParen", "(", false),
+                        new SymbolKey("op_closeParen", ")", false),
+                        new SymbolKey("op_power", "^", false),
+                        new SymbolKey("op_sqrt", "√", false),
+                        new SymbolKey("op_ln", "ln", false),
+                        new SymbolKey("op_log", "log", false),
+                        // переход
+                        new SymbolKey("op_plus2", "+", false),
+                        new SymbolKey("op_openParen2", "(", false),
+                        new SymbolKey("op_closeParen2", ")", false),
+                        new SymbolKey("op_power2", "^", false),
+                        new SymbolKey("op_sqrt2", "√", false),
+                        new SymbolKey("op_ln2", "ln", false),
+                        new SymbolKey("op_log2", "log", false),
+                        // переход
+                        new SymbolKey("op_sin", "sin", false),
+                        new SymbolKey("op_cos", "cos", false),
+                        new SymbolKey("op_tan", "tan", false),
+                        new SymbolKey("op_e", "e", false),
+                        new SymbolKey("op_pi", "π", false),
+                        new SymbolKey("op_EXP", "EXP", false),
+                        new SymbolKey("op_equals", "=", false)
+                )
+        ));
+
+      //смена страниц
+        setModeListeners();
+        setPageListeners();
+
+        applyModeButtonAnimations();
+        updateModeButtonStyles();
+        updateKeyboard();
+    }
+
+
+    public void setInputController(InputController inputController) {
+        this.inputController = inputController;
+
+        inputController.setKeyboardModeSwitcher(this);
+    }
+
+
+    public Typeface getStixTypeface() {
+        return stixTypeface;
+    }
+
+
+    public void setUseStixFont(boolean useStixFont) {
+        this.useStixFont = useStixFont;
+    }
+
+    private void applyModeButtonAnimations() {
+        KeyboardAnimation.applyButtonAnimation(designationButton);
+        KeyboardAnimation.applyButtonAnimation(unitsButton);
+        KeyboardAnimation.applyButtonAnimation(numbersButton);
+    }
+
+    private void updateKeyboard() {
+        List<List<SymbolKey>> pages = keyboardData.get(currentMode);
+        if (pages == null || pages.isEmpty()) return;
+
+
+        if (currentPage >= pages.size()) {
+            currentPage = pages.size() - 1;
+        }
+
+        List<SymbolKey> currentKeys = pages.get(currentPage);
+
+        for (int i = 0; i < keyboardCells.size(); i++) {
+            TextView keyView = keyboardCells.get(i);
+            if (i < currentKeys.size()) {
+                SymbolKey symbolKey = currentKeys.get(i);
+                keyView.setText(symbolKey.getDisplayText());
+
+
+                if (symbolKey.shouldUseStixFont()) {
+                    keyView.setTypeface(stixTypeface);
+                } else {
+                    keyView.setTypeface(Typeface.DEFAULT);
+                }
+
+                keyView.setOnClickListener(view -> {
+                    String displayText = symbolKey.getDisplayText();
+                    String logicalId = symbolKey.getLogicalId();
+                    Log.d("KeyboardLogic", "Кнопка нажата: " + logicalId);
+                    if (inputController != null) {
+                        boolean keyUsesStix = symbolKey.shouldUseStixFont();
+                        inputController.onKeyInput(displayText, currentMode, keyUsesStix, logicalId);
+                    }
+                });
+            } else {
+                keyView.setText("");
+                keyView.setOnClickListener(null);
+            }
+        }
+
+
+        pageNumberView.setText(String.format("%d | %d", currentPage + 1, pages.size()));
+    }
+
+
+    private void updateModeButtonStyles() {
+        if ("Designation".equals(currentMode)) {
+            designationButton.setBackgroundResource(R.drawable.ic_back_black);
+            designationButton.setTextColor(Color.WHITE);
+            designationButton.setSelected(true);
+        } else {
+            designationButton.setBackgroundResource(R.drawable.ic_back);
+            designationButton.setTextColor(Color.BLACK);
+            designationButton.setSelected(false);
+        }
+
+        if ("Units_of_measurement".equals(currentMode)) {
+            unitsButton.setBackgroundResource(R.drawable.ic_back_black);
+            unitsButton.setTextColor(Color.WHITE);
+            unitsButton.setSelected(true);
+        } else {
+            unitsButton.setBackgroundResource(R.drawable.ic_back);
+            unitsButton.setTextColor(Color.BLACK);
+            unitsButton.setSelected(false);
+        }
+
+        if ("Numbers_and_operations".equals(currentMode)) {
+            numbersButton.setBackgroundResource(R.drawable.ic_back_black);
+            numbersButton.setTextColor(Color.WHITE);
+            numbersButton.setSelected(true);
+        } else {
+            numbersButton.setBackgroundResource(R.drawable.ic_back);
+            numbersButton.setTextColor(Color.BLACK);
+            numbersButton.setSelected(false);
+        }
+    }
+
+//режимы снизу
+    private void setModeListeners() {
+        View.OnClickListener modeClickListener = view -> {
+            String selectedMode = "";
+            int viewId = view.getId();
+            if (viewId == R.id.Designation) {
+                selectedMode = "Designation";
+            } else if (viewId == R.id.Units_of_measurement) {
+                selectedMode = "Units_of_measurement";
+            } else if (viewId == R.id.Numbers_and_operations) {
+                selectedMode = "Numbers_and_operations";
+            }
+
+            if (currentMode.equals(selectedMode)) {
+                return;
+            }
+            currentMode = selectedMode;
+            currentPage = 0;
+            updateModeButtonStyles();
+            updateKeyboard();
+        };
+
+        designationButton.setOnClickListener(modeClickListener);
+        unitsButton.setOnClickListener(modeClickListener);
+        numbersButton.setOnClickListener(modeClickListener);
+    }
+
+
+    private void setPageListeners() {
+        prevPageButton.setOnClickListener(view -> {
+            if (currentPage > 0) {
+                currentPage--;
+            } else {
+                List<List<SymbolKey>> pages = keyboardData.get(currentMode);
+                if (pages != null && !pages.isEmpty()) {
+                    currentPage = pages.size() - 1;
+                }
+            }
+            updateKeyboard();
+        });
+
+        nextPageButton.setOnClickListener(view -> {
+            List<List<SymbolKey>> pages = keyboardData.get(currentMode);
+            if (pages != null && !pages.isEmpty()) {
+                currentPage = (currentPage < pages.size() - 1) ? currentPage + 1 : 0;
+            }
+            updateKeyboard();
+        });
+    }
+
+
+    @Override
+    public void switchToNumbersAndOperations() {
+        if (!"Numbers_and_operations".equals(currentMode)) {
+            currentMode = "Numbers_and_operations";
+            currentPage = 0;
+            updateModeButtonStyles();
+            updateKeyboard();
+        }
+    }
+
+
+    @Override
+    public void switchToDesignation() {
+        if (!"Designation".equals(currentMode)) {
+            currentMode = "Designation";
+            currentPage = 0;
+            updateModeButtonStyles();
+            updateKeyboard();
+        }
+    }
+}
