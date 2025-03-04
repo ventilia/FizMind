@@ -5,9 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F6EDFC"
-    >
-
+    android:background="#F6EDFC">
 
     <ImageView
         android:id="@+id/header_background"
@@ -42,7 +40,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-
     <TextView
         android:id="@+id/editText_designations"
         android:layout_width="0dp"
@@ -58,7 +55,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginHorizontal="16dp" />
-
 
     <TextView
         android:id="@+id/editText_unknown"
@@ -77,12 +73,11 @@
         android:layout_marginEnd="5dp"
         android:layout_marginVertical="8dp" />
 
-
-
-    <RelativeLayout
+    <LinearLayout
         android:id="@+id/calculator_panel"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:orientation="vertical"
         android:background="@drawable/fragment_background"
         android:elevation="4dp"
         android:layout_marginTop="8dp"
@@ -91,7 +86,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHeight_percent="0.54">
-
 
         <LinearLayout
             android:id="@+id/top_panel"
@@ -154,7 +148,6 @@
             android:orientation="horizontal"
             android:gravity="center"
             android:paddingHorizontal="8dp"
-            android:layout_below="@id/top_panel"
             android:layout_marginBottom="10dp">
 
             <TextView
@@ -191,11 +184,11 @@
         <GridLayout
             android:id="@+id/grid_layout"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/modes_panel"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:columnCount="7"
             android:paddingHorizontal="8dp"
-            android:paddingBottom="16dp"
+            android:paddingBottom="4dp"
             android:rowCount="3">
 
             <TextView
@@ -410,15 +403,15 @@
                 android:padding="4dp" />
         </GridLayout>
 
-
         <LinearLayout
             android:id="@+id/bottom_panel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center"
-            android:padding="8dp"
-            android:layout_alignParentBottom="true">
+            android:paddingTop="4dp"
+            android:paddingBottom="8dp"
+            android:paddingHorizontal="8dp">
 
             <ImageButton
                 android:id="@+id/button_prev_page"
@@ -445,6 +438,5 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/right_page" />
         </LinearLayout>
-    </RelativeLayout>
-
+    </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
