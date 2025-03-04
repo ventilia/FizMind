@@ -1,23 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:background="#CDC1D4"
-    android:paddingTop="24dp"
-    android:paddingBottom="16dp">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical">
 
+    <!-- Контейнер с фоном и линией -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#CDC1D4"
+        android:paddingTop="24dp"
+        android:paddingBottom="16dp">
+
+        <!-- Другой контент можно добавить здесь при необходимости -->
+
+        <!-- Линия, которая будет располагаться внизу этого блока -->
+
+    </LinearLayout>
+
+  =
+
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:background="#000000"
+
+        />
+    <!-- ImageView, который находится ниже закрашенной области -->
     <ImageView
+        android:layout_marginStart="20dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:src="@drawable/logo_full"
         android:contentDescription="@string/app_name"
-        />
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#000000"
         android:layout_marginTop="16dp" />
+    />
+
 </LinearLayout>

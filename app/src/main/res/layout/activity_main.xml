@@ -184,11 +184,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Физика -  не сложно, \nкогда есть правильный \nинструмент"
-            android:textSize="25sp"
+            android:textSize="30sp"
             android:textColor="#000000"
             android:gravity="center"
             android:padding="20dp"
-            android:fontFamily="@fonts/montserrat_alternates" />
+            android:fontFamily="@font/montserrat_alternates" />
     </LinearLayout>
 
         <View
