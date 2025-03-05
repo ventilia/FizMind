@@ -2,7 +2,6 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F6EDFC">
@@ -42,19 +41,21 @@
 
     <TextView
         android:id="@+id/editText_designations"
-        android:layout_width="0dp"
+        android:layout_width="dp"
         android:layout_height="0dp"
+        android:layout_marginHorizontal="16dp"
         android:background="@android:color/transparent"
         android:hint="Введите обозначения..."
+        android:padding="16dp"
         android:scrollbars="vertical"
         android:textColor="@android:color/black"
         android:textSize="20sp"
-        android:padding="16dp"
-        app:layout_constraintTop_toBottomOf="@id/header_background"
         app:layout_constraintBottom_toTopOf="@id/calculator_panel"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginHorizontal="16dp" />
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/header_background"
+        app:layout_constraintVertical_bias="0.0" />
 
     <TextView
         android:id="@+id/editText_unknown"
@@ -76,7 +77,7 @@
     <LinearLayout
         android:id="@+id/calculator_panel"
         android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
         android:background="@drawable/fragment_background"
         android:elevation="4dp"
@@ -84,8 +85,7 @@
         app:layout_constraintTop_toBottomOf="@id/editText_unknown"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.54">
+        app:layout_constraintEnd_toEndOf="parent">
 
         <LinearLayout
             android:id="@+id/top_panel"
@@ -184,8 +184,7 @@
         <GridLayout
             android:id="@+id/grid_layout"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
+            android:layout_height="wrap_content"
             android:columnCount="7"
             android:paddingHorizontal="8dp"
             android:paddingBottom="4dp"
@@ -205,7 +204,6 @@
                 android:id="@+id/key_2"
                 android:layout_width="0dp"
                 android:layout_height="72dp"
-                android:layout_column="1"
                 android:layout_columnWeight="1"
                 android:gravity="center"
                 android:textSize="16sp"

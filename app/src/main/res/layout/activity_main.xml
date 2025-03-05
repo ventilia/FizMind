@@ -187,7 +187,7 @@
             android:textSize="30sp"
             android:textColor="#000000"
             android:gravity="center"
-            android:padding="20dp"
+            android:padding="30dp"
             android:fontFamily="@font/montserrat_alternates" />
     </LinearLayout>
 
