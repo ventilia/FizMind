@@ -2,11 +2,10 @@ package com.example.fizmind.Activity;
 
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.graphics.Color;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -24,6 +23,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         drawerLayout = findViewById(R.id.drawer_layout);
 
+        // Устанавливаем цвет затемнения (scrim) для DrawerLayout
+        drawerLayout.setScrimColor(Color.parseColor("#80000000"));
+
         // Настройка иконки меню
         ImageView menuIcon = findViewById(R.id.menu_icon);
         menuIcon.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.START));
@@ -39,33 +41,6 @@ public class MainActivity extends AppCompatActivity {
 
         settingsLayout.setOnClickListener(v -> openActivity(SettingsActivity.class));
         aboutUsLayout.setOnClickListener(v -> openActivity(AboutUsActivity.class));
-
-        // Настройка оверлея для блокировки касаний
-        View overlayView = findViewById(R.id.overlay_view);
-        overlayView.setOnClickListener(v -> drawerLayout.closeDrawer(GravityCompat.START));
-
-        // Listener для управления видимостью оверлея
-        drawerLayout.addDrawerListener(new DrawerLayout.DrawerListener() {
-            @Override
-            public void onDrawerSlide(@NonNull View drawerView, float slideOffset) {
-                // Не требуется для этой задачи
-            }
-
-            @Override
-            public void onDrawerOpened(@NonNull View drawerView) {
-                overlayView.setVisibility(View.VISIBLE);
-            }
-
-            @Override
-            public void onDrawerClosed(@NonNull View drawerView) {
-                overlayView.setVisibility(View.GONE);
-            }
-
-            @Override
-            public void onDrawerStateChanged(int newState) {
-                // Не требуется для этой задачи
-            }
-        });
     }
 
     private void configureButton(int buttonId, Class<?> targetActivity) {

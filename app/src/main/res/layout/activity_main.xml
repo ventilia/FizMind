@@ -41,6 +41,7 @@
             app:cardElevation="8dp"
             app:cardCornerRadius="16dp"
             app:cardBackgroundColor="@color/button_background">
+
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
@@ -61,6 +62,7 @@
             app:cardElevation="10dp"
             app:cardCornerRadius="16dp"
             app:cardBackgroundColor="@color/button_background">
+
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
@@ -81,6 +83,7 @@
             app:cardElevation="8dp"
             app:cardCornerRadius="16dp"
             app:cardBackgroundColor="@color/button_background">
+
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
@@ -90,16 +93,8 @@
                 android:textSize="16sp"
                 android:fontFamily="sans-serif-medium" />
         </androidx.cardview.widget.CardView>
-    </RelativeLayout>
 
-    <!-- Прозрачный слой для блокировки касаний -->
-    <View
-        android:id="@+id/overlay_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@android:color/transparent"
-        android:clickable="true"
-        android:visibility="gone" />
+    </RelativeLayout>
 
     <!-- Боковое меню -->
     <LinearLayout
@@ -107,87 +102,103 @@
         android:layout_height="match_parent"
         android:layout_gravity="start"
         android:orientation="vertical"
-        android:background="#FFFFFF">
+        android:background="#FBF5FF">
 
+        <!-- Шапка меню (include) -->
         <include layout="@layout/nav_header" />
 
+        <!-- Основной контейнер пунктов меню -->
         <LinearLayout
-            android:id="@+id/language_layout"
-            android:layout_width="match_parent"
+            android:id="@+id/options_container"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="16dp"
-            android:gravity="center_vertical">
-            <ImageView
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:src="@drawable/ic_language"
-                android:contentDescription="Язык"
-                android:alpha="0.7" />
-            <TextView
-                android:layout_width="wrap_content"
+            android:layout_margin="20dp"
+            android:orientation="vertical"
+            android:background="@drawable/nav_back"
+            android:padding="16dp">
+
+            <!-- Первый пункт -->
+            <LinearLayout
+                android:id="@+id/language_layout"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Язык"
-                android:textSize="20sp"
-                android:textColor="#000000"
-                android:textStyle="normal"
-                android:layout_marginStart="16dp" />
+                android:orientation="horizontal"
+                android:padding="16dp"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/ic_language"
+                    android:contentDescription="Язык"
+                    android:alpha="0.7" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Язык"
+                    android:textSize="15sp"
+                    android:textColor="#000000"
+                    android:textStyle="normal"
+                    android:layout_marginStart="16dp" />
+            </LinearLayout>
+
+            <!-- Второй пункт -->
+            <LinearLayout
+                android:id="@+id/settings_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:orientation="horizontal"
+                android:padding="16dp"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/ic_settings"
+                    android:contentDescription="Настройки"
+                    android:alpha="0.7" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Настройки"
+                    android:textSize="15sp"
+                    android:textColor="#000000"
+                    android:textStyle="normal"
+                    android:layout_marginStart="16dp" />
+            </LinearLayout>
+
+            <!-- Третий пункт -->
+            <LinearLayout
+                android:id="@+id/about_us_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:orientation="horizontal"
+                android:padding="16dp"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/ic_info"
+                    android:contentDescription="О нас"
+                    android:alpha="0.7" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="О нас"
+                    android:textSize="15sp"
+                    android:textColor="#000000"
+                    android:textStyle="normal"
+                    android:layout_marginStart="16dp" />
+            </LinearLayout>
         </LinearLayout>
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="15dp" />
-
-        <LinearLayout
-            android:id="@+id/settings_layout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="16dp"
-            android:gravity="center_vertical">
-            <ImageView
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:src="@drawable/ic_settings"
-                android:contentDescription="Настройки"
-                android:alpha="0.7" />
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Настройки"
-                android:textSize="20sp"
-                android:textColor="#000000"
-                android:textStyle="normal"
-                android:layout_marginStart="16dp" />
-        </LinearLayout>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="15dp" />
-
-        <LinearLayout
-            android:id="@+id/about_us_layout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="16dp"
-            android:gravity="center_vertical">
-            <ImageView
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:src="@drawable/ic_info"
-                android:contentDescription="О нас"
-                android:alpha="0.7" />
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="О нас"
-                android:textSize="20sp"
-                android:textColor="#000000"
-                android:textStyle="normal"
-                android:layout_marginStart="16dp" />
-        </LinearLayout>
-
+        <!-- Текст внизу бокового меню -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -197,6 +208,6 @@
             android:gravity="center"
             android:padding="30dp"
             android:fontFamily="@font/montserrat_alternates" />
-    </LinearLayout>
 
+    </LinearLayout>
 </androidx.drawerlayout.widget.DrawerLayout>
