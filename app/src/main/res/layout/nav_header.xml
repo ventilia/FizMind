@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="#CDC1D4"
+        android:background="#DDCFE7"
         android:paddingTop="24dp"
         android:paddingBottom="16dp">
 

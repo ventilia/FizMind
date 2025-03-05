@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-
+    <!-- Основной контент -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -92,6 +92,15 @@
         </androidx.cardview.widget.CardView>
     </RelativeLayout>
 
+    <!-- Прозрачный слой для блокировки касаний -->
+    <View
+        android:id="@+id/overlay_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/transparent"
+        android:clickable="true"
+        android:visibility="gone" />
+
     <!-- Боковое меню -->
     <LinearLayout
         android:layout_width="300dp"
@@ -163,7 +172,6 @@
             android:orientation="horizontal"
             android:padding="16dp"
             android:gravity="center_vertical">
-
             <ImageView
                 android:layout_width="50dp"
                 android:layout_height="50dp"
@@ -183,17 +191,12 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Физика -  не сложно, \nкогда есть правильный \nинструмент"
+            android:text="Физика - не сложно, \nкогда есть правильный \nинструмент"
             android:textSize="30sp"
             android:textColor="#000000"
             android:gravity="center"
             android:padding="30dp"
             android:fontFamily="@font/montserrat_alternates" />
     </LinearLayout>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="15dp" />
-
 
 </androidx.drawerlayout.widget.DrawerLayout>

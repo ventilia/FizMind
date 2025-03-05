@@ -41,7 +41,7 @@
 
     <TextView
         android:id="@+id/editText_designations"
-        android:layout_width="dp"
+        android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginHorizontal="16dp"
         android:background="@android:color/transparent"
