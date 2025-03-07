@@ -14,17 +14,12 @@
         android:paddingTop="24dp"
         android:paddingBottom="16dp">
 
-        <!-- Другой контент можно добавить здесь при необходимости -->
 
-        <!-- Линия, которая будет располагаться внизу этого блока -->
 
     </LinearLayout>
 
   =
 
-
-
-    <!-- ImageView, который находится ниже закрашенной области -->
     <ImageView
         android:layout_marginStart="20dp"
         android:layout_width="wrap_content"

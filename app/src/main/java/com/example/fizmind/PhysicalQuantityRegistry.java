@@ -15,6 +15,8 @@ public class PhysicalQuantityRegistry {
 
         // Скорость: v (латинская и нелатинская)
         registry.put("v_latin", new PhysicalQuantity("v_latin", "m/s", Arrays.asList("m/s", "km/h", "mi/h")));
+
+
         registry.put("v", new PhysicalQuantity("v", "м/с", Arrays.asList("м/с", "км/ч")));
 
         // Длина/расстояние: s (например, для перемещения)

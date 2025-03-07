@@ -164,41 +164,57 @@ public class InputController {
     }
 
    // save
-    public void onDownArrowPressed() {
-        if (designationBuffer.length() > 0 && valueBuffer.length() > 0) {
-            try {
-                double value = Double.parseDouble(valueBuffer.toString());
-                ConcreteMeasurement measurement = new ConcreteMeasurement(logicalDesignation, value, unitBuffer.toString());
-                if (!measurement.validate()) {
-                    Log.e("InputController", "Ошибка: измерение не прошло проверку: " + measurement.toString());
-                } else {
-                    measurements.add(measurement);
-                    Log.d("InputController", "Измерение сохранено: " + measurement.toString());
+   public void onDownArrowPressed() {
+       if (designationBuffer.length() > 0 && valueBuffer.length() > 0) {
+           String unit = unitBuffer.toString();
+           // Если единица измерения не введена, подставляем SI-единицу
+           if (unit.isEmpty()) {
+               PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(logicalDesignation);
+               if (pq == null) {
+                   Log.e("InputController", "Не найдена информация для физической величины: " + logicalDesignation);
+                   return;
+               }
+               unit = pq.getSiUnit();
+               Log.d("InputController", "Единица измерения не указана, подставлена SI-единица: " + unit);
+           }
 
-                    // запись для истории и формат.
-                    SpannableStringBuilder historyEntry = new SpannableStringBuilder();
-                    int start = historyEntry.length();
-                    historyEntry.append(designationBuffer.toString());
-                    if (designationUsesStix != null && designationUsesStix && stixTypeface != null) {
-                        historyEntry.setSpan(new CustomTypefaceSpan(stixTypeface), start, historyEntry.length(), 0);
-                    }
-                    historyEntry.append(" = ").append(valueBuffer.toString());
-                    if (unitBuffer.length() > 0) {
-                        historyEntry.append(" ").append(unitBuffer.toString());
-                    }
-                    history.add(historyEntry); // доб. ист.
-                }
-            } catch (NumberFormatException e) {
-                Log.e("InputController", "Ошибка формата числа: " + valueBuffer.toString(), e);
-            }
-            resetInput(); // чистка
-            if (keyboardModeSwitcher != null) {
-                keyboardModeSwitcher.switchToDesignation();
-            }
-        } else {
-            Log.d("InputController", "Недостаточно данных для сохранения измерения.");
-        }
-    }
+           try {
+               double value = Double.parseDouble(valueBuffer.toString());
+               ConcreteMeasurement measurement = new ConcreteMeasurement(logicalDesignation, value, unit);
+               if (!measurement.validate()) {
+                   Log.e("InputController", "Ошибка: измерение не прошло проверку: " + measurement.toString());
+               } else {
+                   measurements.add(measurement);
+                   Log.d("InputController", "Измерение сохранено: " + measurement.toString());
+
+                   // Создание записи для истории
+                   SpannableStringBuilder historyEntry = new SpannableStringBuilder();
+                   int start = historyEntry.length();
+                   historyEntry.append(designationBuffer.toString());
+                   // Применяем шрифт STIX для обозначения, если требуется
+                   if (designationUsesStix != null && designationUsesStix && stixTypeface != null) {
+                       historyEntry.setSpan(new CustomTypefaceSpan(stixTypeface), start, historyEntry.length(), 0);
+                   }
+                   historyEntry.append(" = ").append(valueBuffer.toString());
+                   // Добавляем единицу измерения, если она есть (SI или введенная)
+                   if (!unit.isEmpty()) {
+                       historyEntry.append(" ").append(unit);
+                   }
+                   history.add(historyEntry);
+
+                   resetInput();
+                   if (keyboardModeSwitcher != null) {
+                       keyboardModeSwitcher.switchToDesignation();
+                   }
+                   updateDisplay(); // Обновляем отображение после сохранения
+               }
+           } catch (NumberFormatException e) {
+               Log.e("InputController", "Ошибка формата числа: " + valueBuffer.toString(), e);
+           }
+       } else {
+           Log.d("InputController", "Недостаточно данных для сохранения измерения.");
+       }
+   }
 
     public void onLeftArrowPressed() {
         Log.d("InputController", "Действие не определено.");

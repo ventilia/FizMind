@@ -1,7 +1,6 @@
 package com.example.fizmind.measurement;
 
 import android.util.Log;
-
 import com.example.fizmind.PhysicalQuantity;
 import com.example.fizmind.PhysicalQuantityRegistry;
 
@@ -13,24 +12,33 @@ public class ConcreteMeasurement extends Measurement {
 
     @Override
     public boolean validate() {
-        //  обозначение не должно быть пустым
+        // Проверка на пустое обозначение
         if (designation == null || designation.isEmpty()) {
             Log.e("ConcreteMeasurement", "Пустое обозначение");
             return false;
         }
 
-        // получаем информацию о физической величине по обозначению
+        // Получаем информацию о физической величине
         PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(designation);
         if (pq == null) {
             Log.e("ConcreteMeasurement", "Не найдена информация для физической величины: " + designation);
             return false;
         }
 
-        // проверка базы
-        if (!pq.getAllowedUnits().contains(unit)) {
-            Log.e("ConcreteMeasurement", "Неверная единица измерения для " + designation +
-                    ". Ожидалось: " + pq.getAllowedUnits() + ", введено: " + unit);
-            return false;
+        // Если единица измерения пуста
+        if (unit.isEmpty()) {
+            // Разрешаем пустую единицу только если SI-единица тоже пуста (безразмерная величина)
+            if (!pq.getSiUnit().isEmpty()) {
+                Log.e("ConcreteMeasurement", "Для " + designation + " требуется единица измерения");
+                return false;
+            }
+        } else {
+            // Проверяем, входит ли введенная единица в список разрешенных
+            if (!pq.getAllowedUnits().contains(unit)) {
+                Log.e("ConcreteMeasurement", "Неверная единица измерения для " + designation +
+                        ". Ожидалось: " + pq.getAllowedUnits() + ", введено: " + unit);
+                return false;
+            }
         }
         return true;
     }
