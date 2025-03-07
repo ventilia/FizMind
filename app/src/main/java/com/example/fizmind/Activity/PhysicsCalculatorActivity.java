@@ -25,7 +25,6 @@ public class PhysicsCalculatorActivity extends AppCompatActivity {
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setContentView(R.layout.activity_physics_calculator);
 
-
         ImageView backButton = findViewById(R.id.backButton);
         backButton.setOnClickListener(v -> {
             Intent intent = new Intent(PhysicsCalculatorActivity.this, MainActivity.class);
@@ -33,7 +32,7 @@ public class PhysicsCalculatorActivity extends AppCompatActivity {
             finish();
         });
 
-        // Инициализация
+        // Инициализация клавиатурных ячеек
         List<TextView> keyboardCells = Arrays.asList(
                 findViewById(R.id.key_1),
                 findViewById(R.id.key_2),
@@ -64,8 +63,10 @@ public class PhysicsCalculatorActivity extends AppCompatActivity {
         TextView numbersButton = findViewById(R.id.Numbers_and_operations);
         ImageButton prevPageButton = findViewById(R.id.button_prev_page);
         ImageButton nextPageButton = findViewById(R.id.button_next_page);
+        ImageButton buttonScrollDown = findViewById(R.id.button_scroll_down); // Кнопка прокрутки
+        TextView displayView = findViewById(R.id.editText_designations); // Поле ввода
 
-        // ЭКЗЕМПЛЯР
+        // Экземпляр KeyboardLogic с новыми параметрами
         KeyboardLogic keyboardLogic = new KeyboardLogic(
                 this,
                 keyboardCells,
@@ -74,23 +75,21 @@ public class PhysicsCalculatorActivity extends AppCompatActivity {
                 unitsButton,
                 numbersButton,
                 prevPageButton,
-                nextPageButton
+                nextPageButton,
+                buttonScrollDown, // Передаем кнопку прокрутки
+                displayView // Передаем TextView
         );
 
-        // шрифт
+        // Настройка шрифта
         keyboardLogic.setUseStixFont(true);
 
-        TextView displayView = findViewById(R.id.editText_designations);
+        // Настройка InputController
         InputController inputController = new InputController(displayView);
         displayView.setMovementMethod(new ScrollingMovementMethod());
-
-
         keyboardLogic.setInputController(inputController);
-
-
         inputController.setStixTypeface(keyboardLogic.getStixTypeface());
 
-
+        // Обработчики других кнопок
         ImageButton buttonSave = findViewById(R.id.button_save);
         ImageButton buttonLeft = findViewById(R.id.button_left);
         ImageButton buttonRight = findViewById(R.id.button_right);
@@ -111,13 +110,11 @@ public class PhysicsCalculatorActivity extends AppCompatActivity {
             inputController.onRightArrowPressed();
         });
 
-
         buttonClear.setOnClickListener(v -> {
             Log.d("PhysicsCalculatorActivity", "Нажата кнопка делет");
             inputController.onDeletePressed();
         });
 
-        // длительнное нажатие на делет
         buttonClear.setOnLongClickListener(v -> {
             Log.d("PhysicsCalculatorActivity", "Длительное нажатие на кнопку делет");
             inputController.clearAll();

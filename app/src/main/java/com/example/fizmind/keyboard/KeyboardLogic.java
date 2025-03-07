@@ -3,6 +3,8 @@ package com.example.fizmind.keyboard;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
@@ -16,7 +18,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 public class KeyboardLogic implements KeyboardModeSwitcher {
     private final Context context;
     private final List<TextView> keyboardCells;
@@ -29,13 +30,17 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
     private InputController inputController;
     private boolean useStixFont;
 
-    private String currentMode = "Designation"; //умолачание
+    private String currentMode = "Designation"; // по умолчанию
     private int currentPage = 0;
 
-    //  режим -> список страниц -> список кнопок (SymbolKey)
+    // режим -> список страниц -> список кнопок (SymbolKey)
     private final Map<String, List<List<SymbolKey>>> keyboardData;
 
     private Typeface stixTypeface;
+
+    // Новые поля для кнопки прокрутки и TextView
+    private final ImageButton buttonScrollDown;
+    private final TextView displayView;
 
     public KeyboardLogic(
             Context context,
@@ -45,7 +50,9 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
             TextView unitsButton,
             TextView numbersButton,
             ImageButton prevPageButton,
-            ImageButton nextPageButton
+            ImageButton nextPageButton,
+            ImageButton buttonScrollDown, // Добавляем кнопку прокрутки
+            TextView displayView // Добавляем TextView для прокрутки
     ) {
         this.context = context;
         this.keyboardCells = keyboardCells;
@@ -55,8 +62,10 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         this.numbersButton = numbersButton;
         this.prevPageButton = prevPageButton;
         this.nextPageButton = nextPageButton;
+        this.buttonScrollDown = buttonScrollDown; // Инициализируем кнопку
+        this.displayView = displayView; // Инициализируем TextView
 
-        // шрифт
+        // Загрузка шрифта
         try {
             stixTypeface = Typeface.createFromAsset(context.getAssets(), "fonts/stix_two_text_italic.ttf");
         } catch (Exception e) {
@@ -66,7 +75,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         designationButton.setTag("MODE_BUTTON");
         unitsButton.setTag("MODE_BUTTON");
         numbersButton.setTag("MODE_BUTTON");
-
 
         keyboardData = new HashMap<>();
 
@@ -80,7 +88,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                         new SymbolKey("m_latin", "m", true, true),
                         new SymbolKey("F_latin", "F", true, true),
                         new SymbolKey("designation_g", "g", false, true),
-                        // переход
                         new SymbolKey("P_latin", "P", true, true),
                         new SymbolKey("E_latin", "E", true, true),
                         new SymbolKey("designation_W", "W", false, true),
@@ -88,7 +95,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                         new SymbolKey("N_latin", "N", true, true),
                         new SymbolKey("S_latin", "S", true, true),
                         new SymbolKey("h_latin", "h", true, true),
-                        // переход
                         new SymbolKey("designation_I", "I", false, true),
                         new SymbolKey("U_latin", "U", true, true),
                         new SymbolKey("R_latin", "R", true, true),
@@ -97,7 +103,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                         new SymbolKey("designation_Φ", "Φ", true, true),
                         new SymbolKey("B_latin", "B", true, true)
                 ),
-                // Страница 2
                 Arrays.asList(
                         new SymbolKey("designation_rho", "ρ", false),
                         new SymbolKey("designation_V", "V", false),
@@ -111,7 +116,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
 
         // Режим "Units_of_measurement"
         keyboardData.put("Units_of_measurement", Arrays.asList(
-                // Страница 1 – единицы, связанные с механическими величинами и температурой
                 Arrays.asList(
                         new SymbolKey("unit_m/s", "m/s", false),
                         new SymbolKey("unit_km/h", "km/h", false),
@@ -125,7 +129,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                         new SymbolKey("unit_min", "min", false),
                         new SymbolKey("unit_h", "h", false)
                 ),
-                // Страница 2 – единицы для силы, давления, энергии, электрических величин и др.
                 Arrays.asList(
                         new SymbolKey("unit_N", "N", false),
                         new SymbolKey("unit_Pa", "Pa", false),
@@ -158,7 +161,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                         new SymbolKey("num_dot2", "ю", false),
                         new SymbolKey("num_dot3", "ю", false),
                         new SymbolKey("num_dot4", "ю", false),
-                        // переход
                         new SymbolKey("num_4", "4", false),
                         new SymbolKey("num_5", "5", false),
                         new SymbolKey("num_6", "6", false),
@@ -166,7 +168,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                         new SymbolKey("num_dot6", "ю", false),
                         new SymbolKey("num_dot7", "ю", false),
                         new SymbolKey("num_dot8", "ю", false),
-                        // переход
                         new SymbolKey("num_7", "ю", false),
                         new SymbolKey("num_8", "ю", false),
                         new SymbolKey("num_9", "9", false),
@@ -175,7 +176,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                         new SymbolKey("num_dot10", "ю", false),
                         new SymbolKey("num_minus", "-", false)
                 ),
-                // Страница 2
                 Arrays.asList(
                         new SymbolKey("op_plus", "+", false),
                         new SymbolKey("op_openParen", "(", false),
@@ -184,7 +184,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                         new SymbolKey("op_sqrt", "√", false),
                         new SymbolKey("op_ln", "ln", false),
                         new SymbolKey("op_log", "log", false),
-                        // переход
                         new SymbolKey("op_plus2", "+", false),
                         new SymbolKey("op_openParen2", "(", false),
                         new SymbolKey("op_closeParen2", ")", false),
@@ -192,7 +191,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                         new SymbolKey("op_sqrt2", "√", false),
                         new SymbolKey("op_ln2", "ln", false),
                         new SymbolKey("op_log2", "log", false),
-                        // переход
                         new SymbolKey("op_sin", "sin", false),
                         new SymbolKey("op_cos", "cos", false),
                         new SymbolKey("op_tan", "tan", false),
@@ -203,27 +201,78 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                 )
         ));
 
-      //смена страниц
+        // Настройка кнопки прокрутки
+        setupScrollButton();
+
+        // Остальные настройки
         setModeListeners();
         setPageListeners();
-
         applyModeButtonAnimations();
         updateModeButtonStyles();
         updateKeyboard();
     }
 
+    // Метод для настройки кнопки прокрутки
+    private void setupScrollButton() {
+        buttonScrollDown.setOnClickListener(v -> {
+            Log.d("KeyboardLogic", "Нажата кнопка прокрутки вниз");
+            scrollToBottom();
+        });
+
+        displayView.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                updateScrollButtonVisibility();
+            }
+        });
+
+        displayView.getViewTreeObserver().addOnScrollChangedListener(this::updateScrollButtonVisibility);
+    }
+
+    // Метод для прокрутки к низу
+    private void scrollToBottom() {
+        displayView.post(() -> {
+            int scrollY = displayView.getLayout().getHeight() - displayView.getHeight();
+            if (scrollY > 0) {
+                displayView.scrollTo(0, scrollY);
+                Log.d("KeyboardLogic", "Прокручено к низу, scrollY = " + scrollY);
+            } else {
+                Log.d("KeyboardLogic", "Прокрутка не требуется, scrollY = " + scrollY);
+            }
+        });
+    }
+
+    // Метод для обновления видимости кнопки
+    private void updateScrollButtonVisibility() {
+        if (displayView.getLayout() == null) {
+            buttonScrollDown.setVisibility(View.GONE);
+            Log.d("KeyboardLogic", "Layout не готов, кнопка скрыта");
+            return;
+        }
+        int scrollRange = displayView.getLayout().getHeight() - displayView.getHeight();
+        if (scrollRange > 0) {
+            buttonScrollDown.setVisibility(View.VISIBLE);
+            Log.d("KeyboardLogic", "Кнопка прокрутки видна, scrollRange = " + scrollRange);
+        } else {
+            buttonScrollDown.setVisibility(View.GONE);
+            Log.d("KeyboardLogic", "Кнопка прокрутки скрыта, scrollRange = " + scrollRange);
+        }
+    }
 
     public void setInputController(InputController inputController) {
         this.inputController = inputController;
-
         inputController.setKeyboardModeSwitcher(this);
     }
-
 
     public Typeface getStixTypeface() {
         return stixTypeface;
     }
-
 
     public void setUseStixFont(boolean useStixFont) {
         this.useStixFont = useStixFont;
@@ -239,7 +288,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         List<List<SymbolKey>> pages = keyboardData.get(currentMode);
         if (pages == null || pages.isEmpty()) return;
 
-
         if (currentPage >= pages.size()) {
             currentPage = pages.size() - 1;
         }
@@ -251,7 +299,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
             if (i < currentKeys.size()) {
                 SymbolKey symbolKey = currentKeys.get(i);
                 keyView.setText(symbolKey.getDisplayText());
-
 
                 if (symbolKey.shouldUseStixFont()) {
                     keyView.setTypeface(stixTypeface);
@@ -274,10 +321,8 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
             }
         }
 
-
         pageNumberView.setText(String.format("%d | %d", currentPage + 1, pages.size()));
     }
-
 
     private void updateModeButtonStyles() {
         if ("Designation".equals(currentMode)) {
@@ -311,7 +356,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         }
     }
 
-//режимы снизу
     private void setModeListeners() {
         View.OnClickListener modeClickListener = view -> {
             String selectedMode = "";
@@ -338,7 +382,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         numbersButton.setOnClickListener(modeClickListener);
     }
 
-
     private void setPageListeners() {
         prevPageButton.setOnClickListener(view -> {
             if (currentPage > 0) {
@@ -361,7 +404,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         });
     }
 
-
     @Override
     public void switchToNumbersAndOperations() {
         if (!"Numbers_and_operations".equals(currentMode)) {
@@ -371,7 +413,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
             updateKeyboard();
         }
     }
-
 
     @Override
     public void switchToDesignation() {
