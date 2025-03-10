@@ -1,5 +1,6 @@
 package com.example.fizmind.keyboard;
 
+import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.util.Log;
 import android.widget.TextView;
@@ -137,31 +138,63 @@ public class InputController {
     }
 
    //новое
-    private void updateDisplay() {
-        SpannableStringBuilder displayText = new SpannableStringBuilder();
+   private void updateDisplay() {
+       SpannableStringBuilder displayText = new SpannableStringBuilder();
 
-  //типа история
-        for (SpannableStringBuilder historicalEntry : history) {
-            displayText.append(historicalEntry);
-            displayText.append("\n \n"); //перевод строки ПОМЕНЯТЬ КАКТО
-        }
+       // Добавляем записи истории с двумя новыми строками между ними
+       for (int i = 0; i < history.size(); i++) {
+           displayText.append(history.get(i));
+           if (i < history.size() - 1) {
+               displayText.append("\n\n");  // Два символа новой строки между записями
+           }
+       }
 
-        //ПОЛЕ ВВОДА
-        int start = displayText.length();
-        displayText.append(designationBuffer.toString());
-        if (designationUsesStix != null && designationUsesStix && designationBuffer.length() > 0 && stixTypeface != null) {
-            displayText.setSpan(new CustomTypefaceSpan(stixTypeface), start, displayText.length(), 0);
-        }
-        if (designationBuffer.length() > 0) {
-            displayText.append(" = ");
-        }
-        displayText.append(valueBuffer.toString());
-        if (unitBuffer.length() > 0) {
-            displayText.append(" ").append(unitBuffer.toString());
-        }
+       // Если есть история, добавляем два символа новой строки перед текущим вводом или подсказкой
+       if (history.size() > 0) {
+           displayText.append("\n\n");
+       }
 
-        displayView.setText(displayText);
-    }
+       // Проверяем, есть ли текущий ввод
+       if (designationBuffer.length() == 0 && valueBuffer.length() == 0 && unitBuffer.length() == 0) {
+           // Если буферы пусты, добавляем подсказку "Введите обозначение"
+           int start = displayText.length();
+           displayText.append("Введите обозначение");
+           // Применяем серый цвет для подсказки
+           displayText.setSpan(new android.text.style.ForegroundColorSpan(android.graphics.Color.GRAY),
+                   start, displayText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+       } else {
+           // Если есть текущий ввод, отображаем его
+           int start = displayText.length();
+           displayText.append(designationBuffer.toString());
+           if (designationUsesStix != null && designationUsesStix && designationBuffer.length() > 0 && stixTypeface != null) {
+               displayText.setSpan(new CustomTypefaceSpan(stixTypeface), start, displayText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+           }
+           if (designationBuffer.length() > 0) {
+               displayText.append(" = ");
+           }
+           displayText.append(valueBuffer.toString());
+           if (unitBuffer.length() > 0) {
+               displayText.append(" ").append(unitBuffer.toString());
+           }
+       }
+
+       displayView.setText(displayText);
+
+       // Прокручиваем вниз, чтобы показать последнюю введенную область
+       displayView.post(new Runnable() {
+           @Override
+           public void run() {
+               if (displayView.getLayout() != null) {
+                   int scrollAmount = displayView.getLayout().getHeight() - displayView.getHeight();
+                   if (scrollAmount > 0) {
+                       displayView.scrollTo(0, scrollAmount);
+                   } else {
+                       displayView.scrollTo(0, 0);
+                   }
+               }
+           }
+       });
+   }
 
    // save
    public void onDownArrowPressed() {
