@@ -4,8 +4,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-
-
 public class PhysicalQuantityRegistry {
     private static final Map<String, PhysicalQuantity> registry = new HashMap<>();
 
@@ -15,11 +13,9 @@ public class PhysicalQuantityRegistry {
 
         // Скорость: v (латинская и нелатинская)
         registry.put("v_latin", new PhysicalQuantity("v_latin", "m/s", Arrays.asList("m/s", "km/h", "mi/h")));
-
-
         registry.put("v", new PhysicalQuantity("v", "м/с", Arrays.asList("м/с", "км/ч")));
 
-        // Длина/расстояние: s (например, для перемещения)
+        // Длина/расстояние: s
         registry.put("s_latin", new PhysicalQuantity("s_latin", "m", Arrays.asList("m", "km", "cm")));
 
         // Время: t
@@ -31,30 +27,28 @@ public class PhysicalQuantityRegistry {
         // Сила: F
         registry.put("F_latin", new PhysicalQuantity("F_latin", "N", Arrays.asList("N", "kN")));
 
-        // Гравитационное ускорение: g
-        registry.put("designation_g", new PhysicalQuantity("designation_g", "m/s²", Arrays.asList("m/s²")));
+        // Гравитационное ускорение: g (константа)
+        registry.put("designation_g", new PhysicalQuantity("designation_g", "m/s²", Arrays.asList("m/s²"), true, 9.81));
 
         // Давление: P
         registry.put("P_latin", new PhysicalQuantity("P_latin", "Pa", Arrays.asList("Pa", "kPa", "atm")));
 
         // Энергия: E
         registry.put("E_latin", new PhysicalQuantity("E_latin", "J", Arrays.asList("J", "kJ", "cal")));
-        // Альтернативное обозначение для энергии (страница 2)
         registry.put("designation_E", new PhysicalQuantity("designation_E", "J", Arrays.asList("J", "kJ", "cal")));
 
         // Мощность: W
         registry.put("designation_W", new PhysicalQuantity("designation_W", "W", Arrays.asList("W", "kW")));
-        // Если имеется повторное обозначение W на другой странице, можно использовать то же определение
 
         // Плотность: ρ (rho)
         registry.put("designation_ρ", new PhysicalQuantity("designation_ρ", "kg/m³", Arrays.asList("kg/m³", "g/cm³")));
         registry.put("designation_rho", new PhysicalQuantity("designation_rho", "kg/m³", Arrays.asList("kg/m³", "g/cm³")));
 
-        // Сила (дополнительно): N
+        // Сила: N
         registry.put("N_latin", new PhysicalQuantity("N_latin", "N", Arrays.asList("N", "kN")));
-        // Или, если N используется для другой физической величины, уточните назначение
+        registry.put("designation_N", new PhysicalQuantity("designation_N", "N", Arrays.asList("N", "kN")));
 
-        // Площадь: S (например, площадь поверхности)
+        // Площадь: S
         registry.put("S_latin", new PhysicalQuantity("S_latin", "m²", Arrays.asList("m²", "cm²")));
 
         // Высота: h
@@ -84,13 +78,10 @@ public class PhysicalQuantityRegistry {
         // Объём: V
         registry.put("designation_V", new PhysicalQuantity("designation_V", "m³", Arrays.asList("m³", "L")));
 
-        // Дополнительное обозначение N (если используется как сила)
-        registry.put("designation_N", new PhysicalQuantity("designation_N", "N", Arrays.asList("N", "kN")));
-
-        // Коэффициент или константа: k (если безразмерный, можно оставить пустой базовой единицей)
+        // Коэффициент: k
         registry.put("designation_k", new PhysicalQuantity("designation_k", "", Arrays.asList("")));
 
-        // Температура: T (на странице 2)
+        // Температура: T
         registry.put("designation_T", new PhysicalQuantity("designation_T", "K", Arrays.asList("K", "°C")));
     }
 

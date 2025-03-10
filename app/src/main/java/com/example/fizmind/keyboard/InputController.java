@@ -14,7 +14,6 @@ import com.example.fizmind.measurement.Measurement;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class InputController {
 
     public enum InputState {
@@ -31,12 +30,12 @@ public class InputController {
     private final StringBuilder unitBuffer;
     private final TextView displayView;
     private final List<Measurement> measurements;
-    private final List<SpannableStringBuilder> history; // хранит историю  записей. пока плохо сделано
-
+    private final List<SpannableStringBuilder> history;
     private Boolean designationUsesStix;
     private String logicalDesignation;
     private android.graphics.Typeface stixTypeface;
     private KeyboardModeSwitcher keyboardModeSwitcher;
+    private boolean isCurrentConstant; // Флаг, указывающий, является ли текущее измерение константой
 
     public InputController(TextView displayView) {
         this.displayView = displayView;
@@ -45,9 +44,10 @@ public class InputController {
         this.valueBuffer = new StringBuilder();
         this.unitBuffer = new StringBuilder();
         this.measurements = new ArrayList<>();
-        this.history = new ArrayList<>(); //  истории
+        this.history = new ArrayList<>();
         this.designationUsesStix = null;
         this.logicalDesignation = null;
+        this.isCurrentConstant = false;
         updateDisplay();
     }
 
@@ -63,7 +63,7 @@ public class InputController {
         if (currentState == InputState.ENTERING_DESIGNATION) {
             if (designationBuffer.length() == 0) {
                 if (!"Designation".equals(sourceKeyboardMode)) {
-                    Log.w("InputController", " символ обозначения должен быть из режима 'Designation'");
+                    Log.w("InputController", "Символ обозначения должен быть из режима 'Designation'");
                     return;
                 }
                 if (input.length() > MAX_DESIGNATION_LENGTH) {
@@ -72,30 +72,36 @@ public class InputController {
                 designationUsesStix = keyUsesStix;
                 designationBuffer.append(designationUsesStix ? convertToStix(input) : input);
                 logicalDesignation = logicalId;
-                if (designationBuffer.length() == MAX_DESIGNATION_LENGTH) {
+                PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(logicalDesignation);
+                if (pq != null && pq.isConstant()) {
+                    // Это константа, подставляем значение и единицу
+                    valueBuffer.append(String.valueOf(pq.getConstantValue()));
+                    unitBuffer.append(pq.getSiUnit());
+                    isCurrentConstant = true;
+                    onDownArrowPressed(); // Сразу сохраняем измерение
+                } else {
                     currentState = InputState.ENTERING_VALUE;
                     if (keyboardModeSwitcher != null) {
                         keyboardModeSwitcher.switchToNumbersAndOperations();
                     }
                 }
             } else {
-                Log.w("InputController", " обозначение уже введено, нужен ввод числа.");
+                Log.w("InputController", "Обозначение уже введено, нужен ввод числа.");
             }
         } else if (currentState == InputState.ENTERING_VALUE) {
             if (input.matches("[0-9]")) {
                 valueBuffer.append(input);
             } else if (".".equals(input)) {
-                // Запрещаем точку, если число ещё не содержит цифр (учитывая возможный минус)
                 if (valueBuffer.length() == 0 || valueBuffer.toString().equals("-")) {
                     Log.e("InputController", "Ошибка ввода: числовое значение не может начинаться с точки.");
                 } else if (valueBuffer.indexOf(".") != -1) {
-                    Log.e("InputController", "Ошибка ввода: числовое значение уже содержит .");
+                    Log.e("InputController", "Ошибка ввода: числовое значение уже содержит точку.");
                 } else {
                     valueBuffer.append(input);
                 }
             } else if ("-".equals(input)) {
                 if (valueBuffer.length() > 0) {
-                    Log.e("InputController", "ошибка хз  почему.");
+                    Log.e("InputController", "Ошибка: минус можно вводить только в начале.");
                 } else {
                     valueBuffer.append(input);
                 }
@@ -107,7 +113,7 @@ public class InputController {
         } else if (currentState == InputState.ENTERING_UNIT) {
             PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(logicalDesignation);
             if (pq == null) {
-                Log.e("InputController", "нет данных о  величине для: " + logicalDesignation);
+                Log.e("InputController", "Нет данных о величине для: " + logicalDesignation);
                 return;
             }
             int maxAllowedLength = 0;
@@ -127,7 +133,7 @@ public class InputController {
             if (validPrefix && potentialUnit.length() <= maxAllowedLength) {
                 unitBuffer.append(input);
             } else {
-                Log.w("InputController", "введен недопустимый символ для единицы измерения: " + input);
+                Log.w("InputController", "Введён недопустимый символ для единицы измерения: " + input);
             }
         }
         updateDisplay();
@@ -137,117 +143,105 @@ public class InputController {
         onKeyInput(input, "Designation", false, "");
     }
 
-   //новое
-   private void updateDisplay() {
-       SpannableStringBuilder displayText = new SpannableStringBuilder();
+    private void updateDisplay() {
+        SpannableStringBuilder displayText = new SpannableStringBuilder();
 
-       // Добавляем записи истории с двумя новыми строками между ними
-       for (int i = 0; i < history.size(); i++) {
-           displayText.append(history.get(i));
-           if (i < history.size() - 1) {
-               displayText.append("\n\n");  // Два символа новой строки между записями
-           }
-       }
+        for (int i = 0; i < history.size(); i++) {
+            displayText.append(history.get(i));
+            if (i < history.size() - 1) {
+                displayText.append("\n\n");
+            }
+        }
 
-       // Если есть история, добавляем два символа новой строки перед текущим вводом или подсказкой
-       if (history.size() > 0) {
-           displayText.append("\n\n");
-       }
+        if (history.size() > 0) {
+            displayText.append("\n\n");
+        }
 
-       // Проверяем, есть ли текущий ввод
-       if (designationBuffer.length() == 0 && valueBuffer.length() == 0 && unitBuffer.length() == 0) {
-           // Если буферы пусты, добавляем подсказку "Введите обозначение"
-           int start = displayText.length();
-           displayText.append("Введите обозначение");
-           // Применяем серый цвет для подсказки
-           displayText.setSpan(new android.text.style.ForegroundColorSpan(android.graphics.Color.GRAY),
-                   start, displayText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-       } else {
-           // Если есть текущий ввод, отображаем его
-           int start = displayText.length();
-           displayText.append(designationBuffer.toString());
-           if (designationUsesStix != null && designationUsesStix && designationBuffer.length() > 0 && stixTypeface != null) {
-               displayText.setSpan(new CustomTypefaceSpan(stixTypeface), start, displayText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-           }
-           if (designationBuffer.length() > 0) {
-               displayText.append(" = ");
-           }
-           displayText.append(valueBuffer.toString());
-           if (unitBuffer.length() > 0) {
-               displayText.append(" ").append(unitBuffer.toString());
-           }
-       }
+        if (designationBuffer.length() == 0 && valueBuffer.length() == 0 && unitBuffer.length() == 0) {
+            int start = displayText.length();
+            displayText.append("Введите обозначение");
+            displayText.setSpan(new android.text.style.ForegroundColorSpan(android.graphics.Color.GRAY),
+                    start, displayText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        } else {
+            int start = displayText.length();
+            displayText.append(designationBuffer.toString());
+            if (designationUsesStix != null && designationUsesStix && designationBuffer.length() > 0 && stixTypeface != null) {
+                displayText.setSpan(new CustomTypefaceSpan(stixTypeface), start, displayText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+            if (designationBuffer.length() > 0) {
+                displayText.append(" = ");
+            }
+            displayText.append(valueBuffer.toString());
+            if (unitBuffer.length() > 0) {
+                displayText.append(" ").append(unitBuffer.toString());
+            }
+        }
 
-       displayView.setText(displayText);
+        displayView.setText(displayText);
 
-       // Прокручиваем вниз, чтобы показать последнюю введенную область
-       displayView.post(new Runnable() {
-           @Override
-           public void run() {
-               if (displayView.getLayout() != null) {
-                   int scrollAmount = displayView.getLayout().getHeight() - displayView.getHeight();
-                   if (scrollAmount > 0) {
-                       displayView.scrollTo(0, scrollAmount);
-                   } else {
-                       displayView.scrollTo(0, 0);
-                   }
-               }
-           }
-       });
-   }
+        displayView.post(() -> {
+            if (displayView.getLayout() != null) {
+                int scrollAmount = displayView.getLayout().getHeight() - displayView.getHeight();
+                if (scrollAmount > 0) {
+                    displayView.scrollTo(0, scrollAmount);
+                } else {
+                    displayView.scrollTo(0, 0);
+                }
+            }
+        });
+    }
 
-   // save
-   public void onDownArrowPressed() {
-       if (designationBuffer.length() > 0 && valueBuffer.length() > 0) {
-           String unit = unitBuffer.toString();
-           // Если единица измерения не введена, подставляем SI-единицу
-           if (unit.isEmpty()) {
-               PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(logicalDesignation);
-               if (pq == null) {
-                   Log.e("InputController", "Не найдена информация для физической величины: " + logicalDesignation);
-                   return;
-               }
-               unit = pq.getSiUnit();
-               Log.d("InputController", "Единица измерения не указана, подставлена SI-единица: " + unit);
-           }
+    public void onDownArrowPressed() {
+        if (designationBuffer.length() > 0 && valueBuffer.length() > 0) {
+            String unit = unitBuffer.toString();
+            if (unit.isEmpty()) {
+                PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(logicalDesignation);
+                if (pq == null) {
+                    Log.e("InputController", "Не найдена информация для физической величины: " + logicalDesignation);
+                    return;
+                }
+                unit = pq.getSiUnit();
+                Log.d("InputController", "Единица измерения не указана, подставлена SI-единица: " + unit);
+            }
 
-           try {
-               double value = Double.parseDouble(valueBuffer.toString());
-               ConcreteMeasurement measurement = new ConcreteMeasurement(logicalDesignation, value, unit);
-               if (!measurement.validate()) {
-                   Log.e("InputController", "Ошибка: измерение не прошло проверку: " + measurement.toString());
-               } else {
-                   measurements.add(measurement);
-                   Log.d("InputController", "Измерение сохранено: " + measurement.toString());
+            try {
+                double value = Double.parseDouble(valueBuffer.toString());
+                ConcreteMeasurement measurement = new ConcreteMeasurement(logicalDesignation, value, unit);
+                if (!measurement.validate()) {
+                    Log.e("InputController", "Ошибка: измерение не прошло проверку: " + measurement.toString());
+                } else {
+                    measurements.add(measurement);
+                    Log.d("InputController", "Измерение сохранено: " + measurement.toString());
+                    // Выводим все сохранённые измерения
+                    Log.d("InputController", "Все сохранённые измерения:");
+                    for (Measurement m : measurements) {
+                        Log.d("InputController", m.toString());
+                    }
 
-                   // Создание записи для истории
-                   SpannableStringBuilder historyEntry = new SpannableStringBuilder();
-                   int start = historyEntry.length();
-                   historyEntry.append(designationBuffer.toString());
-                   // Применяем шрифт STIX для обозначения, если требуется
-                   if (designationUsesStix != null && designationUsesStix && stixTypeface != null) {
-                       historyEntry.setSpan(new CustomTypefaceSpan(stixTypeface), start, historyEntry.length(), 0);
-                   }
-                   historyEntry.append(" = ").append(valueBuffer.toString());
-                   // Добавляем единицу измерения, если она есть (SI или введенная)
-                   if (!unit.isEmpty()) {
-                       historyEntry.append(" ").append(unit);
-                   }
-                   history.add(historyEntry);
+                    SpannableStringBuilder historyEntry = new SpannableStringBuilder();
+                    int start = historyEntry.length();
+                    historyEntry.append(designationBuffer.toString());
+                    if (designationUsesStix != null && designationUsesStix && stixTypeface != null) {
+                        historyEntry.setSpan(new CustomTypefaceSpan(stixTypeface), start, historyEntry.length(), 0);
+                    }
+                    historyEntry.append(" = ").append(valueBuffer.toString());
+                    if (!unit.isEmpty()) {
+                        historyEntry.append(" ").append(unit);
+                    }
+                    history.add(historyEntry);
 
-                   resetInput();
-                   if (keyboardModeSwitcher != null) {
-                       keyboardModeSwitcher.switchToDesignation();
-                   }
-                   updateDisplay(); // Обновляем отображение после сохранения
-               }
-           } catch (NumberFormatException e) {
-               Log.e("InputController", "Ошибка формата числа: " + valueBuffer.toString(), e);
-           }
-       } else {
-           Log.d("InputController", "Недостаточно данных для сохранения измерения.");
-       }
-   }
+                    resetInput();
+                    if (keyboardModeSwitcher != null) {
+                        keyboardModeSwitcher.switchToDesignation();
+                    }
+                }
+            } catch (NumberFormatException e) {
+                Log.e("InputController", "Ошибка формата числа: " + valueBuffer.toString(), e);
+            }
+        } else {
+            Log.d("InputController", "Недостаточно данных для сохранения измерения.");
+        }
+    }
 
     public void onLeftArrowPressed() {
         Log.d("InputController", "Действие не определено.");
@@ -258,35 +252,41 @@ public class InputController {
     }
 
     public void onDeletePressed() {
-        if (currentState == InputState.ENTERING_UNIT) {
-            if (unitBuffer.length() > 0) {
-                unitBuffer.setLength(0);
-                currentState = InputState.ENTERING_VALUE;
-            } else if (valueBuffer.length() > 0) {
-                valueBuffer.setLength(valueBuffer.length() - 1);
-            } else if (designationBuffer.length() > 0) {
-                designationBuffer.setLength(designationBuffer.length() - 1);
-                currentState = InputState.ENTERING_DESIGNATION;
-                designationUsesStix = null;
-                logicalDesignation = null;
+        if (designationBuffer.length() == 0 && valueBuffer.length() == 0 && unitBuffer.length() == 0) {
+            // Буферы пусты, удаляем последнее измерение из истории
+            if (!history.isEmpty()) {
+                history.remove(history.size() - 1);
+                measurements.remove(measurements.size() - 1);
+                updateDisplay();
             }
-        } else if (currentState == InputState.ENTERING_VALUE) {
-            if (valueBuffer.length() > 0) {
-                valueBuffer.setLength(valueBuffer.length() - 1);
-            } else if (designationBuffer.length() > 0) {
-                designationBuffer.setLength(designationBuffer.length() - 1);
-                currentState = InputState.ENTERING_DESIGNATION;
-                designationUsesStix = null;
-                logicalDesignation = null;
+        } else {
+            // Удаляем текущее измерение
+            if (currentState == InputState.ENTERING_UNIT) {
+                if (unitBuffer.length() > 0) {
+                    unitBuffer.deleteCharAt(unitBuffer.length() - 1);
+                } else {
+                    currentState = InputState.ENTERING_VALUE;
+                }
+            } else if (currentState == InputState.ENTERING_VALUE) {
+                if (valueBuffer.length() > 0) {
+                    valueBuffer.deleteCharAt(valueBuffer.length() - 1);
+                } else {
+                    currentState = InputState.ENTERING_DESIGNATION;
+                    designationBuffer.deleteCharAt(designationBuffer.length() - 1);
+                    designationUsesStix = null;
+                    logicalDesignation = null;
+                    isCurrentConstant = false;
+                }
+            } else if (currentState == InputState.ENTERING_DESIGNATION) {
+                if (designationBuffer.length() > 0) {
+                    designationBuffer.deleteCharAt(designationBuffer.length() - 1);
+                    designationUsesStix = null;
+                    logicalDesignation = null;
+                    isCurrentConstant = false;
+                }
             }
-        } else if (currentState == InputState.ENTERING_DESIGNATION) {
-            if (designationBuffer.length() > 0) {
-                designationBuffer.setLength(designationBuffer.length() - 1);
-                designationUsesStix = null;
-                logicalDesignation = null;
-            }
+            updateDisplay();
         }
-        updateDisplay();
 
         if (currentState == InputState.ENTERING_DESIGNATION && keyboardModeSwitcher != null) {
             keyboardModeSwitcher.switchToDesignation();
@@ -300,7 +300,9 @@ public class InputController {
         currentState = InputState.ENTERING_DESIGNATION;
         designationUsesStix = null;
         logicalDesignation = null;
-        history.clear(); //чистка имтории
+        isCurrentConstant = false;
+        history.clear();
+        measurements.clear();
         updateDisplay();
         if (keyboardModeSwitcher != null) {
             keyboardModeSwitcher.switchToDesignation();
@@ -314,6 +316,7 @@ public class InputController {
         currentState = InputState.ENTERING_DESIGNATION;
         designationUsesStix = null;
         logicalDesignation = null;
+        isCurrentConstant = false;
         updateDisplay();
     }
 
