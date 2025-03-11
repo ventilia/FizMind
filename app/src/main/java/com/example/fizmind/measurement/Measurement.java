@@ -4,18 +4,48 @@ public abstract class Measurement {
     protected String designation;
     protected double value;
     protected String unit;
+    protected String designationOperations; // Операции над обозначением
+    protected String valueOperations;       // Операции над числом
 
-    public Measurement(String designation, double value, String unit) {
+    public Measurement(String designation, double value, String unit, String designationOperations, String valueOperations) {
         this.designation = designation;
         this.value = value;
         this.unit = unit;
+        this.designationOperations = designationOperations;
+        this.valueOperations = valueOperations;
     }
 
-    //  для проверки корректности введённых данных
+    public Measurement(String designation, double value, String unit) {
+        this(designation, value, unit, "", "");
+    }
+
+    public String getDesignationOperations() {
+        return designationOperations;
+    }
+
+    public String getValueOperations() {
+        return valueOperations;
+    }
+
     public abstract boolean validate();
 
     @Override
     public String toString() {
-        return designation + " = " + value + " " + unit;
+        StringBuilder sb = new StringBuilder();
+        if (!designationOperations.isEmpty()) {
+            sb.append(designationOperations).append("(").append(designation).append(")");
+        } else {
+            sb.append(designation);
+        }
+        sb.append(" = ");
+        if (!valueOperations.isEmpty()) {
+            sb.append(valueOperations);
+        } else {
+            sb.append(value);
+        }
+        if (!unit.isEmpty()) {
+            sb.append(" ").append(unit);
+        }
+        return sb.toString();
     }
 }

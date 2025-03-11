@@ -66,6 +66,10 @@ public class PhysicsCalculatorActivity extends AppCompatActivity {
         ImageButton buttonScrollDown = findViewById(R.id.button_scroll_down); // Кнопка прокрутки
         TextView displayView = findViewById(R.id.editText_designations); // Поле ввода
 
+        // Инициализация кнопок стрелок
+        ImageButton buttonLeft = findViewById(R.id.button_left);
+        ImageButton buttonRight = findViewById(R.id.button_right);
+
         // Экземпляр KeyboardLogic с новыми параметрами
         KeyboardLogic keyboardLogic = new KeyboardLogic(
                 this,
@@ -76,8 +80,10 @@ public class PhysicsCalculatorActivity extends AppCompatActivity {
                 numbersButton,
                 prevPageButton,
                 nextPageButton,
-                buttonScrollDown, // Передаем кнопку прокрутки
-                displayView // Передаем TextView
+                buttonScrollDown,
+                displayView,
+                buttonLeft,   // Передаём кнопку влево
+                buttonRight   // Передаём кнопку вправо
         );
 
         // Настройка шрифта
@@ -91,8 +97,6 @@ public class PhysicsCalculatorActivity extends AppCompatActivity {
 
         // Обработчики других кнопок
         ImageButton buttonSave = findViewById(R.id.button_save);
-        ImageButton buttonLeft = findViewById(R.id.button_left);
-        ImageButton buttonRight = findViewById(R.id.button_right);
         ImageButton buttonClear = findViewById(R.id.button_clear);
 
         buttonSave.setOnClickListener(v -> {

@@ -27,20 +27,16 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
     private final TextView numbersButton;
     private final ImageButton prevPageButton;
     private final ImageButton nextPageButton;
-    private InputController inputController;
-    private boolean useStixFont;
-
-    private String currentMode = "Designation"; // по умолчанию
-    private int currentPage = 0;
-
-    // режим -> список страниц -> список кнопок (SymbolKey)
-    private final Map<String, List<List<SymbolKey>>> keyboardData;
-
-    private Typeface stixTypeface;
-
-    // Новые поля для кнопки прокрутки и TextView
     private final ImageButton buttonScrollDown;
     private final TextView displayView;
+    private InputController inputController;
+    private boolean useStixFont;
+    private String currentMode = "Designation";
+    private int currentPage = 0;
+    private final Map<String, List<List<SymbolKey>>> keyboardData;
+    private Typeface stixTypeface;
+    private final ImageButton leftArrowButton;
+    private final ImageButton rightArrowButton;
 
     public KeyboardLogic(
             Context context,
@@ -51,8 +47,10 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
             TextView numbersButton,
             ImageButton prevPageButton,
             ImageButton nextPageButton,
-            ImageButton buttonScrollDown, // Добавляем кнопку прокрутки
-            TextView displayView // Добавляем TextView для прокрутки
+            ImageButton buttonScrollDown,
+            TextView displayView,
+            ImageButton leftArrowButton,
+            ImageButton rightArrowButton
     ) {
         this.context = context;
         this.keyboardCells = keyboardCells;
@@ -62,10 +60,11 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         this.numbersButton = numbersButton;
         this.prevPageButton = prevPageButton;
         this.nextPageButton = nextPageButton;
-        this.buttonScrollDown = buttonScrollDown; // Инициализируем кнопку
-        this.displayView = displayView; // Инициализируем TextView
+        this.buttonScrollDown = buttonScrollDown;
+        this.displayView = displayView;
+        this.leftArrowButton = leftArrowButton;
+        this.rightArrowButton = rightArrowButton;
 
-        // Загрузка шрифта
         try {
             stixTypeface = Typeface.createFromAsset(context.getAssets(), "fonts/stix_two_text_italic.ttf");
         } catch (Exception e) {
@@ -78,7 +77,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
 
         keyboardData = new HashMap<>();
 
-        // Режим "Designation"
         keyboardData.put("Designation", Arrays.asList(
                 Arrays.asList(
                         new SymbolKey("a_latin", "a", true, true),
@@ -114,7 +112,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                 )
         ));
 
-        // Режим "Units_of_measurement"
         keyboardData.put("Units_of_measurement", Arrays.asList(
                 Arrays.asList(
                         new SymbolKey("unit_m/s", "m/s", false),
@@ -151,44 +148,40 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                 )
         ));
 
-        // Режим "Numbers_and_operations"
         keyboardData.put("Numbers_and_operations", Arrays.asList(
                 Arrays.asList(
                         new SymbolKey("num_1", "1", false),
                         new SymbolKey("num_2", "2", false),
                         new SymbolKey("num_3", "3", false),
-                        new SymbolKey("num_dot1", ".", false),
-                        new SymbolKey("num_dot2", "ю", false),
-                        new SymbolKey("num_dot3", "ю", false),
-                        new SymbolKey("num_dot4", "ю", false),
+                        new SymbolKey("op_abs_open", "|", false),
+                        new SymbolKey("op_abs_close", "|", false),
+                        new SymbolKey("op_vec", "vec", false),
                         new SymbolKey("num_4", "4", false),
                         new SymbolKey("num_5", "5", false),
                         new SymbolKey("num_6", "6", false),
-                        new SymbolKey("num_dot5", "ю", false),
-                        new SymbolKey("num_dot6", "ю", false),
-                        new SymbolKey("num_dot7", "ю", false),
-                        new SymbolKey("num_dot8", "ю", false),
-                        new SymbolKey("num_7", "ю", false),
-                        new SymbolKey("num_8", "ю", false),
+                        new SymbolKey("op_subscript", "_", false),
+                        new SymbolKey("op_superscript", "^", false),
+                        new SymbolKey("num_7", "7", false),
+                        new SymbolKey("num_8", "8", false),
                         new SymbolKey("num_9", "9", false),
-                        new SymbolKey("num_dot9", "ю", false),
                         new SymbolKey("num_0", "0", false),
-                        new SymbolKey("num_dot10", "ю", false),
-                        new SymbolKey("num_minus", "-", false)
+                        new SymbolKey("num_minus", "-", false),
+                        new SymbolKey("num_dot", ".", false),
+                        new SymbolKey("op_plus", "+", false),
+                        new SymbolKey("op_openParen", "(", false),
+                        new SymbolKey("op_closeParen", ")", false)
                 ),
                 Arrays.asList(
                         new SymbolKey("op_plus", "+", false),
                         new SymbolKey("op_openParen", "(", false),
                         new SymbolKey("op_closeParen", ")", false),
                         new SymbolKey("op_power", "^", false),
-                        new SymbolKey("op_sqrt", "√", false),
                         new SymbolKey("op_ln", "ln", false),
                         new SymbolKey("op_log", "log", false),
                         new SymbolKey("op_plus2", "+", false),
                         new SymbolKey("op_openParen2", "(", false),
                         new SymbolKey("op_closeParen2", ")", false),
                         new SymbolKey("op_power2", "^", false),
-                        new SymbolKey("op_sqrt2", "√", false),
                         new SymbolKey("op_ln2", "ln", false),
                         new SymbolKey("op_log2", "log", false),
                         new SymbolKey("op_sin", "sin", false),
@@ -201,18 +194,64 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                 )
         ));
 
-        // Настройка кнопки прокрутки
         setupScrollButton();
-
-        // Остальные настройки
         setModeListeners();
         setPageListeners();
+        setupArrowButtons();
         applyModeButtonAnimations();
         updateModeButtonStyles();
         updateKeyboard();
     }
 
-    // Метод для настройки кнопки прокрутки
+    private void setupArrowButtons() {
+        leftArrowButton.setOnClickListener(v -> {
+            if (inputController != null) {
+                inputController.onLeftArrowPressed();
+            }
+        });
+
+        rightArrowButton.setOnClickListener(v -> {
+            if (inputController != null) {
+                inputController.onRightArrowPressed();
+            }
+        });
+    }
+
+    public void setInputController(InputController inputController) {
+        this.inputController = inputController;
+        inputController.setKeyboardModeSwitcher(this);
+    }
+
+    @Override
+    public void switchToNumbersAndOperations() {
+        if (!"Numbers_and_operations".equals(currentMode)) {
+            currentMode = "Numbers_and_operations";
+            currentPage = 0;
+            updateModeButtonStyles();
+            updateKeyboard();
+        }
+    }
+
+    @Override
+    public void switchToDesignation() {
+        if (!"Designation".equals(currentMode)) {
+            currentMode = "Designation";
+            currentPage = 0;
+            updateModeButtonStyles();
+            updateKeyboard();
+        }
+    }
+
+    @Override
+    public void switchToUnits() {
+        if (!"Units_of_measurement".equals(currentMode)) {
+            currentMode = "Units_of_measurement";
+            currentPage = 0;
+            updateModeButtonStyles();
+            updateKeyboard();
+        }
+    }
+
     private void setupScrollButton() {
         buttonScrollDown.setOnClickListener(v -> {
             Log.d("KeyboardLogic", "Нажата кнопка прокрутки вниз");
@@ -235,7 +274,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         displayView.getViewTreeObserver().addOnScrollChangedListener(this::updateScrollButtonVisibility);
     }
 
-    // Метод для прокрутки к низу
     private void scrollToBottom() {
         displayView.post(() -> {
             int scrollY = displayView.getLayout().getHeight() - displayView.getHeight();
@@ -248,7 +286,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         });
     }
 
-    // Метод для обновления видимости кнопки
     private void updateScrollButtonVisibility() {
         if (displayView.getLayout() == null) {
             buttonScrollDown.setVisibility(View.GONE);
@@ -263,11 +300,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
             buttonScrollDown.setVisibility(View.GONE);
             Log.d("KeyboardLogic", "Кнопка прокрутки скрыта, scrollRange = " + scrollRange);
         }
-    }
-
-    public void setInputController(InputController inputController) {
-        this.inputController = inputController;
-        inputController.setKeyboardModeSwitcher(this);
     }
 
     public Typeface getStixTypeface() {
@@ -402,25 +434,5 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
             }
             updateKeyboard();
         });
-    }
-
-    @Override
-    public void switchToNumbersAndOperations() {
-        if (!"Numbers_and_operations".equals(currentMode)) {
-            currentMode = "Numbers_and_operations";
-            currentPage = 0;
-            updateModeButtonStyles();
-            updateKeyboard();
-        }
-    }
-
-    @Override
-    public void switchToDesignation() {
-        if (!"Designation".equals(currentMode)) {
-            currentMode = "Designation";
-            currentPage = 0;
-            updateModeButtonStyles();
-            updateKeyboard();
-        }
     }
 }
