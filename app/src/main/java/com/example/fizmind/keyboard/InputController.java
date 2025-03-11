@@ -1,5 +1,6 @@
 package com.example.fizmind.keyboard;
 
+import android.graphics.Color;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.util.Log;
@@ -18,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Контроллер ввода для управления вводом в поля "Введите обозначение" и "Введите неизвестное".
+ * Контроллер ввода для управления полями "Введите обозначение" и "Введите неизвестное".
  */
 public class InputController {
 
@@ -183,7 +184,7 @@ public class InputController {
                     unknownDesignation = input;
                     logicalUnknownDesignation = logicalId;
                     Log.d("InputController", "Введено неизвестное обозначение: " + input);
-                    updateDisplay();
+                    saveUnknown(); // Автоматическое сохранение
                 } else {
                     Log.w("InputController", "В 'Введите неизвестное' можно вводить только обозначения из режима 'Designation'");
                 }
@@ -192,6 +193,19 @@ public class InputController {
             }
         }
         updateDisplay();
+    }
+
+    /** Автоматическое сохранение неизвестного */
+    private void saveUnknown() {
+        if (unknownDesignation != null) {
+            UnknownQuantity unknown = new UnknownQuantity(logicalUnknownDesignation);
+            if (!unknown.validate()) {
+                Log.e("InputController", "Ошибка валидации неизвестного: " + unknown.toString());
+                return;
+            }
+            unknowns.add(unknown);
+            Log.d("InputController", "Автоматически сохранено неизвестное: " + unknown.toString());
+        }
     }
 
     /** Обработка нажатия клавиши Delete */
@@ -258,7 +272,10 @@ public class InputController {
                 String removedUnknown = unknownDesignation;
                 unknownDesignation = null;
                 logicalUnknownDesignation = null;
-                Log.d("InputController", "Удалено неизвестное обозначение: " + removedUnknown);
+                if (!unknowns.isEmpty()) {
+                    unknowns.remove(unknowns.size() - 1); // Удаляем последнее сохраненное неизвестное
+                    Log.d("InputController", "Удалено неизвестное обозначение: " + removedUnknown + " из списка");
+                }
                 updateDisplay();
             }
         }
@@ -361,21 +378,6 @@ public class InputController {
             if (keyboardModeSwitcher != null) {
                 keyboardModeSwitcher.switchToDesignation();
             }
-        } else if ("unknown".equals(currentInputField)) {
-            if (unknownDesignation != null) {
-                UnknownQuantity unknown = new UnknownQuantity(logicalUnknownDesignation);
-                if (!unknown.validate()) {
-                    Log.e("InputController", "Ошибка валидации неизвестного: " + unknown.toString());
-                    return;
-                }
-                unknowns.add(unknown);
-                Log.d("InputController", "Сохранено неизвестное: " + unknown.toString());
-                unknownDesignation = null;
-                logicalUnknownDesignation = null;
-                updateDisplay();
-            } else {
-                Log.w("InputController", "Невозможно сохранить: отсутствует неизвестное обозначение");
-            }
         }
     }
 
@@ -395,62 +397,65 @@ public class InputController {
     /** Обновление отображаемого текста */
     private void updateDisplay() {
         if ("designations".equals(currentInputField)) {
-            SpannableStringBuilder displayText = new SpannableStringBuilder();
-            for (int i = 0; i < history.size(); i++) {
-                displayText.append(history.get(i));
-                if (i < history.size() - 1) displayText.append("\n\n");
-            }
-            if (history.size() > 0) displayText.append("\n\n");
-
-            if (designationBuffer.length() == 0 && valueBuffer.length() == 0 && unitBuffer.length() == 0 &&
-                    operationBuffer.length() == 0 && valueOperationBuffer.length() == 0) {
-                int start = displayText.length();
-                displayText.append("Введите обозначение");
-                displayText.setSpan(new android.text.style.ForegroundColorSpan(android.graphics.Color.GRAY),
-                        start, displayText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            } else {
-                if (designationBuffer.length() > 0) {
-                    int start = displayText.length();
-                    if (operationBuffer.length() > 0) {
-                        displayText.append(operationBuffer).append("(").append(designationBuffer).append(")");
-                    } else {
-                        displayText.append(designationBuffer);
-                    }
-                    if (designationUsesStix != null && designationUsesStix && stixTypeface != null) {
-                        displayText.setSpan(new CustomTypefaceSpan(stixTypeface), start, displayText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                    }
-                    displayText.append(" = ");
-                } else if (valueBuffer.length() > 0 || valueOperationBuffer.length() > 0) {
-                    displayText.append("= ");
-                }
-                if (valueOperationBuffer.length() > 0) {
-                    displayText.append(valueOperationBuffer);
-                } else {
-                    displayText.append(valueBuffer);
-                }
-                if (unitBuffer.length() > 0) {
-                    displayText.append(" ").append(unitBuffer);
-                } else if ((valueBuffer.length() > 0 || valueOperationBuffer.length() > 0) && designationBuffer.length() > 0) {
-                    displayText.append(" ?");
-                }
-            }
-            designationsView.setText(displayText);
-            designationsView.post(() -> {
-                int scrollAmount = designationsView.getLayout().getHeight() - designationsView.getHeight();
-                designationsView.scrollTo(0, Math.max(scrollAmount, 0));
-            });
+            designationsView.setTextColor(Color.BLACK);       // Активное поле — чёрный текст
+            unknownView.setTextColor(Color.parseColor("#A0A0A0")); // Неактивное поле — чуть серее
         } else if ("unknown".equals(currentInputField)) {
-            SpannableStringBuilder displayText = new SpannableStringBuilder();
-            if (unknownDesignation != null) {
-                displayText.append(unknownDesignation).append(" = ?");
-                Log.d("InputController", "Отображено неизвестное: " + displayText.toString());
-            } else {
-                displayText.append("Введите неизвестное");
-                displayText.setSpan(new android.text.style.ForegroundColorSpan(android.graphics.Color.GRAY),
-                        0, displayText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            }
-            unknownView.setText(displayText);
+            designationsView.setTextColor(Color.parseColor("#A0A0A0")); // Неактивное поле — чуть серее
+            unknownView.setTextColor(Color.BLACK);            // Активное поле — чёрный текст
+
         }
+
+        SpannableStringBuilder designationsText = new SpannableStringBuilder();
+        for (int i = 0; i < history.size(); i++) {
+            designationsText.append(history.get(i));
+            if (i < history.size() - 1) designationsText.append("\n\n");
+        }
+        if (history.size() > 0) designationsText.append("\n\n");
+
+        if (designationBuffer.length() == 0 && valueBuffer.length() == 0 && unitBuffer.length() == 0 &&
+                operationBuffer.length() == 0 && valueOperationBuffer.length() == 0) {
+            int start = designationsText.length();
+            designationsText.append("Введите обозначение");
+            designationsText.setSpan(new android.text.style.ForegroundColorSpan(android.graphics.Color.GRAY),
+                    start, designationsText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        } else {
+            if (designationBuffer.length() > 0) {
+                int start = designationsText.length();
+                if (operationBuffer.length() > 0) {
+                    designationsText.append(operationBuffer).append("(").append(designationBuffer).append(")");
+                } else {
+                    designationsText.append(designationBuffer);
+                }
+                if (designationUsesStix != null && designationUsesStix && stixTypeface != null) {
+                    designationsText.setSpan(new CustomTypefaceSpan(stixTypeface), start, designationsText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+                designationsText.append(" = ");
+            } else if (valueBuffer.length() > 0 || valueOperationBuffer.length() > 0) {
+                designationsText.append("= ");
+            }
+            if (valueOperationBuffer.length() > 0) {
+                designationsText.append(valueOperationBuffer);
+            } else {
+                designationsText.append(valueBuffer);
+            }
+            if (unitBuffer.length() > 0) {
+                designationsText.append(" ").append(unitBuffer);
+            } else if ((valueBuffer.length() > 0 || valueOperationBuffer.length() > 0) && designationBuffer.length() > 0) {
+                designationsText.append(" ?");
+            }
+        }
+        designationsView.setText(designationsText);
+
+        SpannableStringBuilder unknownText = new SpannableStringBuilder();
+        if (unknownDesignation != null) {
+            unknownText.append(unknownDesignation).append(" = ?");
+            Log.d("InputController", "Отображено неизвестное: " + unknownText.toString());
+        } else {
+            unknownText.append("Введите неизвестное");
+            unknownText.setSpan(new android.text.style.ForegroundColorSpan(android.graphics.Color.GRAY),
+                    0, unknownText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        unknownView.setText(unknownText);
     }
 
     /** Очистка всего ввода */
