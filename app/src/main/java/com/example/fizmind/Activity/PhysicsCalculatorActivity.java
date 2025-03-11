@@ -18,6 +18,10 @@ import com.example.fizmind.R;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Активность физического калькулятора.
+ * Управляет вводом данных в поля "Введите обозначение" и "Введите неизвестное".
+ */
 public class PhysicsCalculatorActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,6 +29,7 @@ public class PhysicsCalculatorActivity extends AppCompatActivity {
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setContentView(R.layout.activity_physics_calculator);
 
+        // Кнопка "Назад"
         ImageView backButton = findViewById(R.id.backButton);
         backButton.setOnClickListener(v -> {
             Intent intent = new Intent(PhysicsCalculatorActivity.this, MainActivity.class);
@@ -63,14 +68,16 @@ public class PhysicsCalculatorActivity extends AppCompatActivity {
         TextView numbersButton = findViewById(R.id.Numbers_and_operations);
         ImageButton prevPageButton = findViewById(R.id.button_prev_page);
         ImageButton nextPageButton = findViewById(R.id.button_next_page);
-        ImageButton buttonScrollDown = findViewById(R.id.button_scroll_down); // Кнопка прокрутки
-        TextView displayView = findViewById(R.id.editText_designations); // Поле ввода
-
-        // Инициализация кнопок стрелок
+        ImageButton buttonScrollDown = findViewById(R.id.button_scroll_down);
+        TextView editTextDesignations = findViewById(R.id.editText_designations);
+        TextView editTextUnknown = findViewById(R.id.editText_unknown);
         ImageButton buttonLeft = findViewById(R.id.button_left);
         ImageButton buttonRight = findViewById(R.id.button_right);
 
-        // Экземпляр KeyboardLogic с новыми параметрами
+        // Настройка прокрутки для поля "Введите обозначение"
+        editTextDesignations.setMovementMethod(new ScrollingMovementMethod());
+
+        // Экземпляр KeyboardLogic
         KeyboardLogic keyboardLogic = new KeyboardLogic(
                 this,
                 keyboardCells,
@@ -81,21 +88,30 @@ public class PhysicsCalculatorActivity extends AppCompatActivity {
                 prevPageButton,
                 nextPageButton,
                 buttonScrollDown,
-                displayView,
-                buttonLeft,   // Передаём кнопку влево
-                buttonRight   // Передаём кнопку вправо
+                editTextDesignations,
+                buttonLeft,
+                buttonRight
         );
 
-        // Настройка шрифта
         keyboardLogic.setUseStixFont(true);
 
-        // Настройка InputController
-        InputController inputController = new InputController(displayView);
-        displayView.setMovementMethod(new ScrollingMovementMethod());
-        keyboardLogic.setInputController(inputController);
+        // Настройка InputController с двумя полями ввода
+        InputController inputController = new InputController(editTextDesignations, editTextUnknown);
         inputController.setStixTypeface(keyboardLogic.getStixTypeface());
+        keyboardLogic.setInputController(inputController);
 
-        // Обработчики других кнопок
+        // Переключение между полями через касание
+        editTextDesignations.setOnClickListener(v -> {
+            inputController.setCurrentInputField("designations");
+            Log.d("PhysicsCalculatorActivity", "Фокус переключен на 'Введите обозначение'");
+        });
+
+        editTextUnknown.setOnClickListener(v -> {
+            inputController.setCurrentInputField("unknown");
+            Log.d("PhysicsCalculatorActivity", "Фокус переключен на 'Введите неизвестное'");
+        });
+
+        // Обработчики кнопок
         ImageButton buttonSave = findViewById(R.id.button_save);
         ImageButton buttonClear = findViewById(R.id.button_clear);
 
@@ -115,12 +131,12 @@ public class PhysicsCalculatorActivity extends AppCompatActivity {
         });
 
         buttonClear.setOnClickListener(v -> {
-            Log.d("PhysicsCalculatorActivity", "Нажата кнопка делет");
+            Log.d("PhysicsCalculatorActivity", "Нажата кнопка DELETE");
             inputController.onDeletePressed();
         });
 
         buttonClear.setOnLongClickListener(v -> {
-            Log.d("PhysicsCalculatorActivity", "Длительное нажатие на кнопку делет");
+            Log.d("PhysicsCalculatorActivity", "Длительное нажатие на кнопку DELETE");
             inputController.clearAll();
             return true;
         });

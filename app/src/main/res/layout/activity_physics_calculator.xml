@@ -40,6 +40,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- Поле "Введите обозначение" -->
     <TextView
         android:id="@+id/editText_designations"
         android:layout_width="0dp"
@@ -58,9 +59,7 @@
         app:layout_constraintTop_toBottomOf="@id/header_background"
         app:layout_constraintVertical_bias="0.0" />
 
-
-
-
+    <!-- Панель калькулятора -->
     <LinearLayout
         android:id="@+id/calculator_panel"
         android:layout_width="0dp"
@@ -73,27 +72,24 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/editText_designations">
 
-    <!-- Поле "введите неизвестное" внутри панели -->
-    <TextView
-        android:id="@+id/editText_unknown"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Введите неизвестное..."
-        android:padding="10dp"
-        android:textColor="@android:color/black"
-        android:textSize="16sp"
-        android:background="@android:color/transparent"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="8dp"
-        android:gravity="center"
-        />
+        <!-- Поле "Введите неизвестное" -->
+        <TextView
+            android:id="@+id/editText_unknown"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Введите неизвестное..."
+            android:padding="10dp"
+            android:textColor="@android:color/black"
+            android:textSize="16sp"
+            android:background="@android:color/transparent"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="8dp"
+            android:gravity="center" />
 
         <View
             android:layout_width="match_parent"
             android:layout_height="2dp"
-            android:background="#000000"
-
-            />
+            android:background="#000000" />
 
         <!-- Верхняя панель с кнопками -->
         <LinearLayout
@@ -190,7 +186,6 @@
                 android:textSize="16sp"
                 android:background="@drawable/ic_back" />
         </LinearLayout>
-
         <!-- Сетка клавиатуры -->
         <GridLayout
             android:id="@+id/grid_layout"
@@ -450,7 +445,6 @@
         </LinearLayout>
     </LinearLayout>
 
-
     <ImageButton
         android:id="@+id/button_scroll_down"
         android:layout_width="50dp"
@@ -460,10 +454,5 @@
         android:background="@drawable/circle_scroll"
         android:elevation="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-
-
-
-        />
-
+        app:layout_constraintEnd_toEndOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>
