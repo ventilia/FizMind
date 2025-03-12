@@ -81,10 +81,7 @@ public class InputController {
         this.keyboardModeSwitcher = switcher;
     }
 
-    /**
-     * Установка текущего активного поля ввода.
-     * @param field "designations" или "unknown"
-     */
+    /** Установка текущего активного поля ввода */
     public void setCurrentInputField(String field) {
         this.currentInputField = field;
         updateDisplay();
@@ -93,38 +90,7 @@ public class InputController {
 
     /**
      * Обработка ввода с клавиатуры.
-     * @param input Введенный символ
-     * @param sourceKeyboardMode Режим клавиатуры
-     * @param keyUsesStix Используется ли STIX
-     * @param logicalId Логический идентификатор
      */
-
-    /** Логирование всех сохраненных данных */
-    public void logAllSavedData() {
-        StringBuilder logMessage = new StringBuilder("Все сохраненные данные:\n");
-
-        // Сохраненные измерения
-        logMessage.append("Измерения ('Введите обозначение'):\n");
-        if (measurements.isEmpty()) {
-            logMessage.append("  Нет сохраненных измерений\n");
-        } else {
-            for (Measurement m : measurements) {
-                logMessage.append("  ").append(m.toString()).append("\n");
-            }
-        }
-
-        // Сохраненные неизвестные
-        logMessage.append("Неизвестные ('Введите неизвестное'):\n");
-        if (unknowns.isEmpty()) {
-            logMessage.append("  Нет сохраненных неизвестных\n");
-        } else {
-            for (UnknownQuantity u : unknowns) {
-                logMessage.append("  ").append(u.toString()).append("\n");
-            }
-        }
-
-        Log.d("InputController", logMessage.toString());
-    }
     public void onKeyInput(String input, String sourceKeyboardMode, boolean keyUsesStix, String logicalId) {
         if ("designations".equals(currentInputField)) {
             if (currentState == InputState.ENTERING_DESIGNATION) {
@@ -161,6 +127,10 @@ public class InputController {
                     Log.w("InputController", "Обозначение уже введено, ожидается число или операция.");
                 }
             } else if (currentState == InputState.ENTERING_VALUE) {
+                if (designationBuffer.length() == 0) {
+                    Log.w("InputController", "Невозможно ввести число: отсутствует обозначение");
+                    return;
+                }
                 if (input.matches("[0-9]") || ".".equals(input) || "-".equals(input)) {
                     if (input.matches("[0-9]")) {
                         valueBuffer.append(input);
@@ -186,8 +156,6 @@ public class InputController {
                     valueOperationBuffer.append(valueBuffer).append("|");
                     valueBuffer.setLength(0);
                     updateDisplay();
-                } else if (logicalId.equals("op_vec") || logicalId.equals("op_subscript") || logicalId.equals("op_superscript")) {
-                    Log.w("InputController", "Операция " + input + " применима только к обозначению.");
                 } else {
                     currentState = InputState.ENTERING_UNIT;
                     onKeyInput(input, sourceKeyboardMode, keyUsesStix, logicalId);
@@ -234,85 +202,64 @@ public class InputController {
     }
 
     /** Обработка нажатия клавиши Delete */
+    /** Обработка нажатия клавиши Delete */
     public void onDeletePressed() {
         if ("designations".equals(currentInputField)) {
-            if (currentState == InputState.ENTERING_VALUE) {
+            if (currentState == InputState.ENTERING_UNIT) {
+                unitBuffer.setLength(0); // Удаляем всю единицу измерения
+                currentState = InputState.ENTERING_VALUE;
+                updateKeyboardMode();
+                Log.d("InputController", "Удалены единицы измерения, переключено в режим ввода числа");
+            } else if (currentState == InputState.ENTERING_VALUE) {
                 if (valueBuffer.length() > 0) {
-                    char removedChar = valueBuffer.charAt(valueBuffer.length() - 1);
                     valueBuffer.deleteCharAt(valueBuffer.length() - 1);
-                    Log.d("InputController", "Удалён символ из числа: " + removedChar);
+                    Log.d("InputController", "Удалён последний символ из числа");
                 } else if (valueOperationBuffer.length() > 0) {
-                    char removedChar = valueOperationBuffer.charAt(valueOperationBuffer.length() - 1);
                     valueOperationBuffer.deleteCharAt(valueOperationBuffer.length() - 1);
-                    Log.d("InputController", "Удалён символ из операции над числом: " + removedChar);
+                    Log.d("InputController", "Удалён последний символ из операции над числом");
                 }
+                // Проверка на пустые буферы чисел и операций
                 if (valueBuffer.length() == 0 && valueOperationBuffer.length() == 0) {
-                    currentState = InputState.ENTERING_DESIGNATION;
-                    updateKeyboardMode();
-                    Log.d("InputController", "Число полностью удалено, переключено в режим ввода обозначения");
+                    if (designationBuffer.length() > 0) {
+                        currentState = InputState.ENTERING_DESIGNATION;
+                        updateKeyboardMode();
+                        Log.d("InputController", "Число и операции удалены, переключено в режим ввода обозначения");
+                    } else {
+                        Log.d("InputController", "Все данные удалены, остаёмся в текущем режиме");
+                    }
                 }
             } else if (currentState == InputState.ENTERING_DESIGNATION) {
                 if (designationBuffer.length() > 0) {
-                    String removedDesignation = designationBuffer.toString();
                     designationBuffer.setLength(0);
                     logicalDesignation = null;
                     designationUsesStix = null;
                     isCurrentConstant = false;
-                    unitBuffer.setLength(0); // Очищаем единицу измерения
-                    operationBuffer.setLength(0); // Очищаем операции над обозначением
-                    currentState = InputState.ENTERING_VALUE; // Переключаем в режим ввода числа
-                    Log.d("InputController", "Удалено обозначение '" + removedDesignation + "', единица измерения очищена, переключено в режим ввода числа");
-                }
-            } else if (currentState == InputState.ENTERING_UNIT) {
-                if (unitBuffer.length() > 0) {
-                    String removedUnit = unitBuffer.toString();
                     unitBuffer.setLength(0);
-                    Log.d("InputController", "Удалена единица измерения: " + removedUnit);
-                    currentState = InputState.ENTERING_VALUE;
-                    updateKeyboardMode();
-                    Log.d("InputController", "Переключено в режим ввода числа");
-                } else {
-                    currentState = InputState.ENTERING_VALUE;
-                    updateKeyboardMode();
-                    Log.d("InputController", "Буфер единицы пуст, переключено в режим ввода числа");
-                    if (valueBuffer.length() > 0) {
-                        char removedChar = valueBuffer.charAt(valueBuffer.length() - 1);
-                        valueBuffer.deleteCharAt(valueBuffer.length() - 1);
-                        Log.d("InputController", "Удалён символ из числа: " + removedChar);
-                    } else if (valueOperationBuffer.length() > 0) {
-                        char removedChar = valueOperationBuffer.charAt(valueOperationBuffer.length() - 1);
-                        valueOperationBuffer.deleteCharAt(valueOperationBuffer.length() - 1);
-                        Log.d("InputController", "Удалён символ из операции над числом: " + removedChar);
-                    }
-                    if (valueBuffer.length() == 0 && valueOperationBuffer.length() == 0) {
-                        currentState = InputState.ENTERING_DESIGNATION;
-                        updateKeyboardMode();
-                        Log.d("InputController", "Число полностью удалено, переключено в режим ввода обозначения");
-                    }
+                    operationBuffer.setLength(0);
+                    valueBuffer.setLength(0);
+                    valueOperationBuffer.setLength(0);
+                    Log.d("InputController", "Удалено обозначение, все буферы очищены");
                 }
             }
         } else if ("unknown".equals(currentInputField)) {
             if (unknownDesignation != null) {
-                String removedUnknown = unknownDesignation;
                 unknownDesignation = null;
                 logicalUnknownDesignation = null;
                 if (!unknowns.isEmpty()) {
                     unknowns.remove(unknowns.size() - 1);
-                    Log.d("InputController", "Удалено неизвестное обозначение: " + removedUnknown + " из списка");
+                    Log.d("InputController", "Удалено неизвестное обозначение из списка");
                 }
-                updateDisplay();
             }
         }
         updateDisplay();
     }
-
     /** Переключение влево по режимам */
     public void onLeftArrowPressed() {
         if ("designations".equals(currentInputField)) {
             if (currentState == InputState.ENTERING_UNIT) {
                 currentState = InputState.ENTERING_VALUE;
                 Log.d("InputController", "Переключено в режим ввода числа");
-            } else if (currentState == InputState.ENTERING_VALUE) {
+            } else if (currentState == InputState.ENTERING_VALUE && designationBuffer.length() > 0) {
                 currentState = InputState.ENTERING_DESIGNATION;
                 Log.d("InputController", "Переключено в режим ввода обозначения");
             }
@@ -327,7 +274,8 @@ public class InputController {
             if (currentState == InputState.ENTERING_DESIGNATION && designationBuffer.length() > 0) {
                 currentState = InputState.ENTERING_VALUE;
                 Log.d("InputController", "Переключено в режим ввода числа");
-            } else if (currentState == InputState.ENTERING_VALUE && (valueBuffer.length() > 0 || valueOperationBuffer.length() > 0)) {
+            } else if (currentState == InputState.ENTERING_VALUE &&
+                    (valueBuffer.length() > 0 || valueOperationBuffer.length() > 0 || unitBuffer.length() > 0)) {
                 currentState = InputState.ENTERING_UNIT;
                 Log.d("InputController", "Переключено в режим ввода единицы измерения");
             }
@@ -336,7 +284,6 @@ public class InputController {
         }
     }
 
-    /** Подтверждение ввода (нажатие вниз) */
     /** Подтверждение ввода (нажатие вниз) */
     public void onDownArrowPressed() {
         if ("designations".equals(currentInputField)) {
@@ -403,7 +350,7 @@ public class InputController {
             if (keyboardModeSwitcher != null) {
                 keyboardModeSwitcher.switchToDesignation();
             }
-            logAllSavedData(); // Логируем все сохраненные данные
+            logAllSavedData();
         }
     }
 
@@ -465,7 +412,6 @@ public class InputController {
         SpannableStringBuilder unknownText = new SpannableStringBuilder();
         if (unknownDesignation != null) {
             unknownText.append(unknownDesignation).append(" = ?");
-            Log.d("InputController", "Отображено неизвестное: " + unknownText.toString());
         } else {
             unknownText.append("Введите неизвестное");
             int color = "unknown".equals(currentInputField) ? Color.BLACK : Color.GRAY;
@@ -524,13 +470,35 @@ public class InputController {
         updateDisplay();
     }
 
-    /** Получение списка сохраненных измерений для логирования */
+    /** Получение списка сохраненных измерений */
     public List<Measurement> getMeasurements() {
         return new ArrayList<>(measurements);
     }
 
-    /** Получение списка сохраненных неизвестных для логирования */
+    /** Получение списка сохраненных неизвестных */
     public List<UnknownQuantity> getUnknowns() {
         return new ArrayList<>(unknowns);
+    }
+
+    /** Логирование всех сохраненных данных */
+    public void logAllSavedData() {
+        StringBuilder logMessage = new StringBuilder("Все сохраненные данные:\n");
+        logMessage.append("Измерения ('Введите обозначение'):\n");
+        if (measurements.isEmpty()) {
+            logMessage.append("  Нет сохраненных измерений\n");
+        } else {
+            for (Measurement m : measurements) {
+                logMessage.append("  ").append(m.toString()).append("\n");
+            }
+        }
+        logMessage.append("Неизвестные ('Введите неизвестное'):\n");
+        if (unknowns.isEmpty()) {
+            logMessage.append("  Нет сохраненных неизвестных\n");
+        } else {
+            for (UnknownQuantity u : unknowns) {
+                logMessage.append("  ").append(u.toString()).append("\n");
+            }
+        }
+        Log.d("InputController", logMessage.toString());
     }
 }
