@@ -81,15 +81,31 @@ public class InputController {
         this.keyboardModeSwitcher = switcher;
     }
 
-    /** Установка текущего активного поля ввода */
+    /**
+     * Установка текущего активного поля ввода.
+     * @param field "designations" или "unknown"
+     */
     public void setCurrentInputField(String field) {
         this.currentInputField = field;
+        if ("unknown".equals(field)) {
+            // Автоматически переключаем клавиатуру в режим физических обозначений
+            if (keyboardModeSwitcher != null) {
+                keyboardModeSwitcher.switchToDesignation();
+            }
+        } else if ("designations".equals(field)) {
+            // Переключаем клавиатуру в режим, соответствующий текущему состоянию
+            updateKeyboardMode();
+        }
         updateDisplay();
         Log.d("InputController", "Текущее поле ввода: " + field);
     }
 
     /**
      * Обработка ввода с клавиатуры.
+     * @param input Введенный символ
+     * @param sourceKeyboardMode Режим клавиатуры
+     * @param keyUsesStix Используется ли STIX
+     * @param logicalId Логический идентификатор
      */
     public void onKeyInput(String input, String sourceKeyboardMode, boolean keyUsesStix, String logicalId) {
         if ("designations".equals(currentInputField)) {
@@ -156,6 +172,8 @@ public class InputController {
                     valueOperationBuffer.append(valueBuffer).append("|");
                     valueBuffer.setLength(0);
                     updateDisplay();
+                } else if (logicalId.equals("op_vec") || logicalId.equals("op_subscript") || logicalId.equals("op_superscript")) {
+                    Log.w("InputController", "Операция " + input + " применима только к обозначению.");
                 } else {
                     currentState = InputState.ENTERING_UNIT;
                     onKeyInput(input, sourceKeyboardMode, keyUsesStix, logicalId);
@@ -202,7 +220,6 @@ public class InputController {
     }
 
     /** Обработка нажатия клавиши Delete */
-    /** Обработка нажатия клавиши Delete */
     public void onDeletePressed() {
         if ("designations".equals(currentInputField)) {
             if (currentState == InputState.ENTERING_UNIT) {
@@ -224,8 +241,6 @@ public class InputController {
                         currentState = InputState.ENTERING_DESIGNATION;
                         updateKeyboardMode();
                         Log.d("InputController", "Число и операции удалены, переключено в режим ввода обозначения");
-                    } else {
-                        Log.d("InputController", "Все данные удалены, остаёмся в текущем режиме");
                     }
                 }
             } else if (currentState == InputState.ENTERING_DESIGNATION) {
@@ -253,6 +268,7 @@ public class InputController {
         }
         updateDisplay();
     }
+
     /** Переключение влево по режимам */
     public void onLeftArrowPressed() {
         if ("designations".equals(currentInputField)) {
@@ -274,8 +290,7 @@ public class InputController {
             if (currentState == InputState.ENTERING_DESIGNATION && designationBuffer.length() > 0) {
                 currentState = InputState.ENTERING_VALUE;
                 Log.d("InputController", "Переключено в режим ввода числа");
-            } else if (currentState == InputState.ENTERING_VALUE &&
-                    (valueBuffer.length() > 0 || valueOperationBuffer.length() > 0 || unitBuffer.length() > 0)) {
+            } else if (currentState == InputState.ENTERING_VALUE && (valueBuffer.length() > 0 || valueOperationBuffer.length() > 0)) {
                 currentState = InputState.ENTERING_UNIT;
                 Log.d("InputController", "Переключено в режим ввода единицы измерения");
             }
@@ -403,7 +418,10 @@ public class InputController {
             } else {
                 designationsText.append(valueBuffer);
             }
-            if (unitBuffer.length() > 0) {
+            // Добавляем "?" если нет единицы измерения и есть число
+            if (unitBuffer.length() == 0 && (valueBuffer.length() > 0 || valueOperationBuffer.length() > 0)) {
+                designationsText.append(" ?");
+            } else if (unitBuffer.length() > 0) {
                 designationsText.append(" ").append(unitBuffer);
             }
         }
@@ -470,12 +488,12 @@ public class InputController {
         updateDisplay();
     }
 
-    /** Получение списка сохраненных измерений */
+    /** Получение списка сохраненных измерений для логирования */
     public List<Measurement> getMeasurements() {
         return new ArrayList<>(measurements);
     }
 
-    /** Получение списка сохраненных неизвестных */
+    /** Получение списка сохраненных неизвестных для логирования */
     public List<UnknownQuantity> getUnknowns() {
         return new ArrayList<>(unknowns);
     }
@@ -483,6 +501,8 @@ public class InputController {
     /** Логирование всех сохраненных данных */
     public void logAllSavedData() {
         StringBuilder logMessage = new StringBuilder("Все сохраненные данные:\n");
+
+        // Сохраненные измерения
         logMessage.append("Измерения ('Введите обозначение'):\n");
         if (measurements.isEmpty()) {
             logMessage.append("  Нет сохраненных измерений\n");
@@ -491,6 +511,8 @@ public class InputController {
                 logMessage.append("  ").append(m.toString()).append("\n");
             }
         }
+
+        // Сохраненные неизвестные
         logMessage.append("Неизвестные ('Введите неизвестное'):\n");
         if (unknowns.isEmpty()) {
             logMessage.append("  Нет сохраненных неизвестных\n");
@@ -499,6 +521,7 @@ public class InputController {
                 logMessage.append("  ").append(u.toString()).append("\n");
             }
         }
+
         Log.d("InputController", logMessage.toString());
     }
 }
