@@ -98,9 +98,35 @@ public class InputController {
      * @param keyUsesStix Используется ли STIX
      * @param logicalId Логический идентификатор
      */
+
+    /** Логирование всех сохраненных данных */
+    public void logAllSavedData() {
+        StringBuilder logMessage = new StringBuilder("Все сохраненные данные:\n");
+
+        // Сохраненные измерения
+        logMessage.append("Измерения ('Введите обозначение'):\n");
+        if (measurements.isEmpty()) {
+            logMessage.append("  Нет сохраненных измерений\n");
+        } else {
+            for (Measurement m : measurements) {
+                logMessage.append("  ").append(m.toString()).append("\n");
+            }
+        }
+
+        // Сохраненные неизвестные
+        logMessage.append("Неизвестные ('Введите неизвестное'):\n");
+        if (unknowns.isEmpty()) {
+            logMessage.append("  Нет сохраненных неизвестных\n");
+        } else {
+            for (UnknownQuantity u : unknowns) {
+                logMessage.append("  ").append(u.toString()).append("\n");
+            }
+        }
+
+        Log.d("InputController", logMessage.toString());
+    }
     public void onKeyInput(String input, String sourceKeyboardMode, boolean keyUsesStix, String logicalId) {
         if ("designations".equals(currentInputField)) {
-            // Логика для "Введите обозначение"
             if (currentState == InputState.ENTERING_DESIGNATION) {
                 if (designationBuffer.length() == 0) {
                     if (!"Designation".equals(sourceKeyboardMode)) {
@@ -178,13 +204,12 @@ public class InputController {
                 }
             }
         } else if ("unknown".equals(currentInputField)) {
-            // Логика для "Введите неизвестное"
             if (unknownDesignation == null) {
                 if ("Designation".equals(sourceKeyboardMode)) {
                     unknownDesignation = input;
                     logicalUnknownDesignation = logicalId;
                     Log.d("InputController", "Введено неизвестное обозначение: " + input);
-                    saveUnknown(); // Автоматическое сохранение
+                    saveUnknown();
                 } else {
                     Log.w("InputController", "В 'Введите неизвестное' можно вводить только обозначения из режима 'Designation'");
                 }
@@ -233,11 +258,10 @@ public class InputController {
                     logicalDesignation = null;
                     designationUsesStix = null;
                     isCurrentConstant = false;
-                    valueBuffer.setLength(0);
-                    unitBuffer.setLength(0);
-                    valueOperationBuffer.setLength(0);
-                    operationBuffer.setLength(0);
-                    Log.d("InputController", "Удалено обозначение: " + removedDesignation + ", сброшены все буферы");
+                    unitBuffer.setLength(0); // Очищаем единицу измерения
+                    operationBuffer.setLength(0); // Очищаем операции над обозначением
+                    currentState = InputState.ENTERING_VALUE; // Переключаем в режим ввода числа
+                    Log.d("InputController", "Удалено обозначение '" + removedDesignation + "', единица измерения очищена, переключено в режим ввода числа");
                 }
             } else if (currentState == InputState.ENTERING_UNIT) {
                 if (unitBuffer.length() > 0) {
@@ -273,7 +297,7 @@ public class InputController {
                 unknownDesignation = null;
                 logicalUnknownDesignation = null;
                 if (!unknowns.isEmpty()) {
-                    unknowns.remove(unknowns.size() - 1); // Удаляем последнее сохраненное неизвестное
+                    unknowns.remove(unknowns.size() - 1);
                     Log.d("InputController", "Удалено неизвестное обозначение: " + removedUnknown + " из списка");
                 }
                 updateDisplay();
@@ -312,6 +336,7 @@ public class InputController {
         }
     }
 
+    /** Подтверждение ввода (нажатие вниз) */
     /** Подтверждение ввода (нажатие вниз) */
     public void onDownArrowPressed() {
         if ("designations".equals(currentInputField)) {
@@ -378,6 +403,7 @@ public class InputController {
             if (keyboardModeSwitcher != null) {
                 keyboardModeSwitcher.switchToDesignation();
             }
+            logAllSavedData(); // Логируем все сохраненные данные
         }
     }
 
@@ -396,15 +422,6 @@ public class InputController {
 
     /** Обновление отображаемого текста */
     private void updateDisplay() {
-        if ("designations".equals(currentInputField)) {
-            designationsView.setTextColor(Color.BLACK);       // Активное поле — чёрный текст
-            unknownView.setTextColor(Color.parseColor("#A0A0A0")); // Неактивное поле — чуть серее
-        } else if ("unknown".equals(currentInputField)) {
-            designationsView.setTextColor(Color.parseColor("#A0A0A0")); // Неактивное поле — чуть серее
-            unknownView.setTextColor(Color.BLACK);            // Активное поле — чёрный текст
-
-        }
-
         SpannableStringBuilder designationsText = new SpannableStringBuilder();
         for (int i = 0; i < history.size(); i++) {
             designationsText.append(history.get(i));
@@ -416,7 +433,8 @@ public class InputController {
                 operationBuffer.length() == 0 && valueOperationBuffer.length() == 0) {
             int start = designationsText.length();
             designationsText.append("Введите обозначение");
-            designationsText.setSpan(new android.text.style.ForegroundColorSpan(android.graphics.Color.GRAY),
+            int color = "designations".equals(currentInputField) ? Color.BLACK : Color.GRAY;
+            designationsText.setSpan(new android.text.style.ForegroundColorSpan(color),
                     start, designationsText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         } else {
             if (designationBuffer.length() > 0) {
@@ -430,7 +448,7 @@ public class InputController {
                     designationsText.setSpan(new CustomTypefaceSpan(stixTypeface), start, designationsText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                 }
                 designationsText.append(" = ");
-            } else if (valueBuffer.length() > 0 || valueOperationBuffer.length() > 0) {
+            } else {
                 designationsText.append("= ");
             }
             if (valueOperationBuffer.length() > 0) {
@@ -440,8 +458,6 @@ public class InputController {
             }
             if (unitBuffer.length() > 0) {
                 designationsText.append(" ").append(unitBuffer);
-            } else if ((valueBuffer.length() > 0 || valueOperationBuffer.length() > 0) && designationBuffer.length() > 0) {
-                designationsText.append(" ?");
             }
         }
         designationsView.setText(designationsText);
@@ -452,10 +468,19 @@ public class InputController {
             Log.d("InputController", "Отображено неизвестное: " + unknownText.toString());
         } else {
             unknownText.append("Введите неизвестное");
-            unknownText.setSpan(new android.text.style.ForegroundColorSpan(android.graphics.Color.GRAY),
+            int color = "unknown".equals(currentInputField) ? Color.BLACK : Color.GRAY;
+            unknownText.setSpan(new android.text.style.ForegroundColorSpan(color),
                     0, unknownText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         unknownView.setText(unknownText);
+
+        if ("designations".equals(currentInputField)) {
+            designationsView.setTextColor(Color.BLACK);
+            unknownView.setTextColor(Color.parseColor("#A0A0A0"));
+        } else if ("unknown".equals(currentInputField)) {
+            designationsView.setTextColor(Color.parseColor("#A0A0A0"));
+            unknownView.setTextColor(Color.BLACK);
+        }
     }
 
     /** Очистка всего ввода */
@@ -497,5 +522,15 @@ public class InputController {
         logicalDesignation = null;
         isCurrentConstant = false;
         updateDisplay();
+    }
+
+    /** Получение списка сохраненных измерений для логирования */
+    public List<Measurement> getMeasurements() {
+        return new ArrayList<>(measurements);
+    }
+
+    /** Получение списка сохраненных неизвестных для логирования */
+    public List<UnknownQuantity> getUnknowns() {
+        return new ArrayList<>(unknowns);
     }
 }
