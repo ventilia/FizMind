@@ -1,9 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">FizMind</string>
     <string name="menu">Меню</string>
     <string name="image_description">Описание изображения</string>
-
-
 
     <string name="down">Down</string>
     <string name="left">Left</string>
@@ -16,8 +15,13 @@
     <string name="x">x</string>
     <string name="left_page">Left Page</string>
 
+    <string name="about_us">О нас</string>
+    <string name="optimization_text">Оптимизация и упрощение —\nэто ключевые качество человека.\nИменно эти качества мы развили в\nFizMind: мы стремимся сделать\nизучение физики максимально\nдоступным и легким.</string>
+    <string name="physics_easy">физика - легко вместе c</string>
+    <string name="contributors">Над проектом работали:\nМ.К Алиханов\nА.А Мкоян</string>
+    <string name="accordion_header">Заголовок аккордеона</string>
+    <string name="accordion_content">Содержимое аккордеона</string>
+
     <string name="right_page">Right Page</string>
     <string name="page_number">%d  %d</string>
-
-
 </resources>
