@@ -55,9 +55,11 @@
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:includeFontPadding="false"
-                />
+                android:layout_marginTop="5dp"/>
 
             <TextView
+                android:layout_marginTop="5dp"
+                android:layout_marginStart="5dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/optimization_body"
@@ -66,6 +68,7 @@
                 android:textColor="#000000"
                 android:includeFontPadding="false"
                 android:lineSpacingExtra="4dp" />
+
         </LinearLayout>
 
         <!-- Второй блок -->
