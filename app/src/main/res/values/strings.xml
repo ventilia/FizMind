@@ -16,11 +16,14 @@
     <string name="left_page">Left Page</string>
 
     <string name="about_us">О нас</string>
-    <string name="optimization_text">Оптимизация и упрощение —\nэто ключевые качество человека.\nИменно эти качества мы развили в\nFizMind: мы стремимся сделать\nизучение физики максимально\nдоступным и легким.</string>
+    <string name="optimization_title">Оптимизация и упрощение —</string>
+    <string name="optimization_body">это ключевые качество человека. Именно эти качества мы развили в &lt;b>FizMind&lt;/b>: мы стремимся сделать изучение физики максимально доступным и легким.</string>
+
     <string name="physics_easy">физика - легко вместе c</string>
-    <string name="contributors">Над проектом работали:\nМ.К Алиханов\nА.А Мкоян</string>
-    <string name="accordion_header">Заголовок аккордеона</string>
-    <string name="accordion_content">Содержимое аккордеона</string>
+    <string name="contributors">Над проектом работали:</string>
+    <string name="accordion_header">Особые благодарности</string>
+    <string name="accordion_content">...</string>
+    <string name="contributors_names">Ученики МБОУ СОШ “МОЗАИКА”</string>
 
     <string name="right_page">Right Page</string>
     <string name="page_number">%d  %d</string>

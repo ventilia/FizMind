@@ -26,15 +26,6 @@ public class AboutUsActivity extends AppCompatActivity {
             finish();
         });
 
-        // Настройка аккордеона
-        TextView accordionHeader = findViewById(R.id.accordion_header);
-        LinearLayout accordionContent = findViewById(R.id.accordion_content);
-        accordionHeader.setOnClickListener(v -> {
-            if (accordionContent.getVisibility() == View.GONE) {
-                accordionContent.setVisibility(View.VISIBLE);
-            } else {
-                accordionContent.setVisibility(View.GONE);
-            }
-        });
+
     }
 }
