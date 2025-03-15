@@ -1,8 +1,11 @@
 package com.example.fizmind.keyboard;
 
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.StyleSpan;
 import android.util.Log;
 import android.widget.TextView;
 
@@ -384,58 +387,68 @@ public class InputController {
     // Обновление отображения
     private void updateDisplay() {
         SpannableStringBuilder designationsText = new SpannableStringBuilder();
+
+        // Отображаем историю измерений
         for (int i = 0; i < history.size(); i++) {
             designationsText.append(history.get(i));
             if (i < history.size() - 1) designationsText.append("\n\n");
         }
         if (history.size() > 0) designationsText.append("\n\n");
 
-        if (designationBuffer.length() == 0 && valueBuffer.length() == 0 && unitBuffer.length() == 0 &&
-                operationBuffer.length() == 0 && valueOperationBuffer.length() == 0) {
+        // Если ничего не введено, показываем подсказку
+        if (designationBuffer.length() == 0 && valueBuffer.length() == 0 && unitBuffer.length() == 0) {
             int start = designationsText.length();
             designationsText.append("Введите обозначение");
             int color = "designations".equals(currentInputField) ? Color.BLACK : Color.GRAY;
-            designationsText.setSpan(new android.text.style.ForegroundColorSpan(color),
-                    start, designationsText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            designationsText.setSpan(new ForegroundColorSpan(color), start, designationsText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         } else {
+            // Начало обозначения
+            int designationStart = designationsText.length();
             if (designationBuffer.length() > 0) {
-                int start = designationsText.length();
-                if (operationBuffer.length() > 0) {
-                    designationsText.append(operationBuffer).append("(").append(designationBuffer).append(")");
-                } else {
-                    designationsText.append(designationBuffer);
-                }
-                if (designationUsesStix != null && designationUsesStix && stixTypeface != null) {
-                    designationsText.setSpan(new CustomTypefaceSpan(stixTypeface), start, designationsText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                }
-                designationsText.append(" = ");
+                designationsText.append(designationBuffer).append(" = ");
             } else {
                 designationsText.append("= ");
             }
-            if (valueOperationBuffer.length() > 0) {
-                designationsText.append(valueOperationBuffer);
-            } else {
+
+            // Начало числа
+            int valueStart = designationsText.length();
+            if (valueBuffer.length() > 0) {
                 designationsText.append(valueBuffer);
             }
-            if (unitBuffer.length() == 0 && (valueBuffer.length() > 0 || valueOperationBuffer.length() > 0)) {
+
+            // Начало единицы измерения
+            int unitStart = designationsText.length();
+            if (unitBuffer.length() == 0 && valueBuffer.length() > 0) {
                 designationsText.append(" ?");
             } else if (unitBuffer.length() > 0) {
                 designationsText.append(" ").append(unitBuffer);
             }
+
+            // Применяем жирный шрифт к активной части
+            if ("designations".equals(currentInputField)) {
+                if (currentState == InputState.ENTERING_DESIGNATION && designationStart < valueStart - 3) {
+                    designationsText.setSpan(new StyleSpan(Typeface.BOLD), designationStart, valueStart - 3, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE); // до " = "
+                } else if (currentState == InputState.ENTERING_VALUE && valueStart < unitStart) {
+                    designationsText.setSpan(new StyleSpan(Typeface.BOLD), valueStart, unitStart, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                } else if (currentState == InputState.ENTERING_UNIT && unitStart < designationsText.length()) {
+                    designationsText.setSpan(new StyleSpan(Typeface.BOLD), unitStart, designationsText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+            }
         }
         designationsView.setText(designationsText);
 
+        // Обработка поля неизвестного (не меняется для вашей задачи)
         SpannableStringBuilder unknownText = new SpannableStringBuilder();
         if (unknownDesignation != null) {
             unknownText.append(unknownDesignation).append(" = ?");
         } else {
             unknownText.append("Введите неизвестное");
             int color = "unknown".equals(currentInputField) ? Color.BLACK : Color.GRAY;
-            unknownText.setSpan(new android.text.style.ForegroundColorSpan(color),
-                    0, unknownText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            unknownText.setSpan(new ForegroundColorSpan(color), 0, unknownText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         unknownView.setText(unknownText);
 
+        // Переключение цвета текста между полями
         if ("designations".equals(currentInputField)) {
             designationsView.setTextColor(Color.BLACK);
             unknownView.setTextColor(Color.parseColor("#A0A0A0"));
