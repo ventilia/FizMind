@@ -23,19 +23,20 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         drawerLayout = findViewById(R.id.drawer_layout);
 
-        // Устанавливаем цвет затемнения (scrim) для DrawerLayout
+
+        //я забыл что это
         drawerLayout.setScrimColor(Color.parseColor("#80000000"));
 
-        // Настройка иконки меню
+        // меню
         ImageView menuIcon = findViewById(R.id.menu_icon);
         menuIcon.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.START));
 
-        // Настройка кнопок
+        // кнопки
         configureButton(R.id.btn_si_conversion, SIConversionActivity.class);
         configureButton(R.id.btn_physics_calculator, PhysicsCalculatorActivity.class);
         configureButton(R.id.btn_theory, TheoryActivity.class);
 
-        // Настройка элементов бокового меню
+        // боковое меню
         LinearLayout settingsLayout = findViewById(R.id.settings_layout);
         LinearLayout aboutUsLayout = findViewById(R.id.about_us_layout);
 

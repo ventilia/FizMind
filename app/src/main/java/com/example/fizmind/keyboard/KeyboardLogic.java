@@ -153,23 +153,27 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                         new SymbolKey("num_1", "1", false),
                         new SymbolKey("num_2", "2", false),
                         new SymbolKey("num_3", "3", false),
-                        new SymbolKey("op_abs_open", "|", false),
-                        new SymbolKey("op_abs_close", "|", false),
-                        new SymbolKey("op_vec", "vec", false),
+                        new SymbolKey("..", "..", false),
+                        new SymbolKey("..", "..", false),
+                        new SymbolKey("..", "..", false),
+                        new SymbolKey("..", "..", false),
+
+
                         new SymbolKey("num_4", "4", false),
                         new SymbolKey("num_5", "5", false),
                         new SymbolKey("num_6", "6", false),
-                        new SymbolKey("op_subscript", "_", false),
-                        new SymbolKey("op_superscript", "^", false),
+                        new SymbolKey("op_step", "^", false),
+                        new SymbolKey("..", "..", false),
+                        new SymbolKey("..", "..", false),
+                        new SymbolKey("..", "..", false),
+
+
                         new SymbolKey("num_7", "7", false),
                         new SymbolKey("num_8", "8", false),
                         new SymbolKey("num_9", "9", false),
                         new SymbolKey("num_0", "0", false),
                         new SymbolKey("num_minus", "-", false),
-                        new SymbolKey("num_dot", ".", false),
-                        new SymbolKey("op_plus", "+", false),
-                        new SymbolKey("op_openParen", "(", false),
-                        new SymbolKey("op_closeParen", ")", false)
+                        new SymbolKey("num_dot", ".", false)
                 ),
                 Arrays.asList(
                         new SymbolKey("op_plus", "+", false),

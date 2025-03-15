@@ -18,10 +18,7 @@ import com.example.fizmind.R;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Активность физического калькулятора.
- * Управляет вводом данных в поля "Введите обозначение" и "Введите неизвестное".
- */
+
 public class PhysicsCalculatorActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,7 +26,7 @@ public class PhysicsCalculatorActivity extends AppCompatActivity {
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setContentView(R.layout.activity_physics_calculator);
 
-        // Кнопка "Назад"
+        // кнопка назад
         ImageView backButton = findViewById(R.id.backButton);
         backButton.setOnClickListener(v -> {
             Intent intent = new Intent(PhysicsCalculatorActivity.this, MainActivity.class);
@@ -37,7 +34,7 @@ public class PhysicsCalculatorActivity extends AppCompatActivity {
             finish();
         });
 
-        // Инициализация клавиатурных ячеек
+
         List<TextView> keyboardCells = Arrays.asList(
                 findViewById(R.id.key_1),
                 findViewById(R.id.key_2),
@@ -74,10 +71,10 @@ public class PhysicsCalculatorActivity extends AppCompatActivity {
         ImageButton buttonLeft = findViewById(R.id.button_left);
         ImageButton buttonRight = findViewById(R.id.button_right);
 
-        // Настройка прокрутки для поля "Введите обозначение"
+        // гастройка прокрутки для поля "Введите обозначение"
         editTextDesignations.setMovementMethod(new ScrollingMovementMethod());
 
-        // Экземпляр KeyboardLogic
+        // экземпляр KeyboardLogic
         KeyboardLogic keyboardLogic = new KeyboardLogic(
                 this,
                 keyboardCells,
@@ -95,12 +92,12 @@ public class PhysicsCalculatorActivity extends AppCompatActivity {
 
         keyboardLogic.setUseStixFont(true);
 
-        // Настройка InputController с двумя полями ввода
+        // инициализая полей ввода
         InputController inputController = new InputController(editTextDesignations, editTextUnknown);
         inputController.setStixTypeface(keyboardLogic.getStixTypeface());
         keyboardLogic.setInputController(inputController);
 
-        // Переключение между полями через касание
+        // переключение между полями через касание
         editTextDesignations.setOnClickListener(v -> {
             inputController.setCurrentInputField("designations");
             Log.d("PhysicsCalculatorActivity", "Фокус переключен на 'Введите обозначение'");
@@ -111,7 +108,7 @@ public class PhysicsCalculatorActivity extends AppCompatActivity {
             Log.d("PhysicsCalculatorActivity", "Фокус переключен на 'Введите неизвестное'");
         });
 
-        // Обработчики кнопок
+        // обработчики кнопок
         ImageButton buttonSave = findViewById(R.id.button_save);
         ImageButton buttonClear = findViewById(R.id.button_clear);
 

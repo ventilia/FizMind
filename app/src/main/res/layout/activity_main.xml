@@ -43,13 +43,14 @@
             app:cardBackgroundColor="@color/button_background">
 
             <TextView
+                android:fontFamily="@font/montserrat_alternates"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center"
                 android:text="Перевод в СИ"
                 android:textColor="#2D1067"
                 android:textSize="16sp"
-                android:fontFamily="sans-serif-medium" />
+              />
         </androidx.cardview.widget.CardView>
 
         <androidx.cardview.widget.CardView
@@ -64,13 +65,14 @@
             app:cardBackgroundColor="@color/button_background">
 
             <TextView
+                android:fontFamily="@font/montserrat_alternates"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center"
                 android:text="Физический калькулятор"
                 android:textColor="#2D1067"
                 android:textSize="16sp"
-                android:fontFamily="sans-serif-medium" />
+             />
         </androidx.cardview.widget.CardView>
 
         <androidx.cardview.widget.CardView
@@ -85,13 +87,14 @@
             app:cardBackgroundColor="@color/button_background">
 
             <TextView
+                android:fontFamily="@font/montserrat_alternates"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center"
                 android:text="Теория"
                 android:textColor="#2D1067"
-                android:textSize="16sp"
-                android:fontFamily="sans-serif-medium" />
+                android:textSize="16sp" />
+
         </androidx.cardview.widget.CardView>
 
     </RelativeLayout>

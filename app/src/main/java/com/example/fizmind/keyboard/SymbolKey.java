@@ -7,7 +7,7 @@ public class SymbolKey {
     private final boolean useStixFont;
     private final boolean explanation;
 
-    //  конструктор указывается все параметры
+    //  конструктор
     public SymbolKey(String logicalId, String displayText, boolean useStixFont, boolean explanation) {
         this.logicalId = logicalId;
         this.displayText = displayText;

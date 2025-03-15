@@ -9,6 +9,7 @@
         android:icon="@drawable/ic_settings"
         android:title="Настройки" />
     <item
+
         android:id="@+id/nav_placeholder"
         android:icon="@drawable/ic_info"
         android:title="О нас" />

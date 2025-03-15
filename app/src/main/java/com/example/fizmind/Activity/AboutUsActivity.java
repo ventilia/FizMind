@@ -17,7 +17,7 @@ public class AboutUsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_about_us);
 
-        // Настройка кнопки "назад"
+        // назад
         ImageView backArrow = findViewById(R.id.backButton);
         backArrow.setOnClickListener(v -> {
             Intent intent = new Intent(this, MainActivity.class);

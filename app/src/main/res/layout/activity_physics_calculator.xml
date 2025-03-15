@@ -28,6 +28,7 @@
         android:layout_marginStart="16dp" />
 
     <TextView
+        android:fontFamily="@font/montserrat_alternates"
         android:id="@+id/header_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -42,6 +43,7 @@
 
     <!-- Поле "Введите обозначение" -->
     <TextView
+        android:fontFamily="@font/montserrat_alternates"
         android:id="@+id/editText_designations"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -74,6 +76,7 @@
 
         <!-- Поле "Введите неизвестное" -->
         <TextView
+            android:fontFamily="@font/montserrat_alternates"
             android:id="@+id/editText_unknown"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -156,6 +159,7 @@
             android:layout_marginBottom="10dp">
 
             <TextView
+                android:fontFamily="@font/montserrat_alternates"
                 android:id="@+id/Designation"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -166,6 +170,7 @@
                 android:background="@drawable/ic_back" />
 
             <TextView
+                android:fontFamily="@font/montserrat_alternates"
                 android:id="@+id/Numbers_and_operations"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -176,6 +181,7 @@
                 android:background="@drawable/ic_back" />
 
             <TextView
+                android:fontFamily="@font/montserrat_alternates"
                 android:id="@+id/Units_of_measurement"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"

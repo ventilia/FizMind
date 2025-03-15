@@ -18,43 +18,37 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Контроллер ввода для управления полями "Введите обозначение" и "Введите неизвестное".
- */
+
 public class InputController {
 
     public enum InputState {
-        ENTERING_DESIGNATION, // Ввод обозначения
-        ENTERING_VALUE,       // Ввод числового значения
-        ENTERING_UNIT         // Ввод единицы измерения
+        ENTERING_DESIGNATION, // вводы для разных режимов
+        ENTERING_VALUE,
+        ENTERING_UNIT
     }
 
-    private InputState currentState;                    // Текущее состояние ввода для "Введите обозначение"
-    private final StringBuilder designationBuffer;      // Буфер для обозначения
-    private final StringBuilder valueBuffer;            // Буфер для числового значения
-    private final StringBuilder unitBuffer;             // Буфер для единицы измерения
-    private final TextView designationsView;            // Поле для "Введите обозначение"
-    private final TextView unknownView;                 // Поле для "Введите неизвестное"
-    private final List<Measurement> measurements;       // Список сохраненных измерений
-    private final List<SpannableStringBuilder> history; // История введенных данных
-    private final List<UnknownQuantity> unknowns;       // Список сохраненных неизвестных
-    private Boolean designationUsesStix;                // Используется ли шрифт STIX для обозначения
-    private String logicalDesignation;                  // Логический идентификатор обозначения
-    private android.graphics.Typeface stixTypeface;     // Шрифт STIX
-    private KeyboardModeSwitcher keyboardModeSwitcher;  // Переключатель режимов клавиатуры
-    private boolean isCurrentConstant;                  // Является ли текущая величина константой
-    private final StringBuilder operationBuffer = new StringBuilder();         // Буфер операций над обозначением
-    private final StringBuilder valueOperationBuffer = new StringBuilder();    // Буфер операций над числом
-    private final Map<String, String> lastUnitForDesignation = new HashMap<>(); // Карта для хранения последних единиц
-    private String currentInputField = "designations";  // Текущее активное поле ("designations" или "unknown")
-    private String unknownDesignation;                  // Обозначение для "Введите неизвестное"
-    private String logicalUnknownDesignation;           // Логический идентификатор для неизвестного
+    private InputState currentState;                    // текущее состояние ввода для "Введите обозначение"
+    private final StringBuilder designationBuffer;      // буфер для обозначения
+    private final StringBuilder valueBuffer;            // буфер для числового значения
+    private final StringBuilder unitBuffer;             // буфер для единицы измерения
+    private final TextView designationsView;            // поле для "Введите обозначение"
+    private final TextView unknownView;                 // поле для "Введите неизвестное"
+    private final List<Measurement> measurements;       // список сохраненных измерений
+    private final List<SpannableStringBuilder> history; // история введенных данных
+    private final List<UnknownQuantity> unknowns;       // список сохраненных неизвестных
+    private Boolean designationUsesStix;                // используется ли шрифт STIX для обозначения
+    private String logicalDesignation;                  // логический идентификатор обозначения
+    private android.graphics.Typeface stixTypeface;     // шрифты
+    private KeyboardModeSwitcher keyboardModeSwitcher;  // режимы
+    private boolean isCurrentConstant;                  //конс
+    private final StringBuilder operationBuffer = new StringBuilder();         // буфер операций над обозначением
+    private final StringBuilder valueOperationBuffer = new StringBuilder();    // буфер операции над числами
+    private final Map<String, String> lastUnitForDesignation = new HashMap<>(); // последних едениц
+    private String currentInputField = "designations";  // текущее поле
+    private String unknownDesignation;                  // обозначение для неизвсетного
+    private String logicalUnknownDesignation;           // иденетефикация для неизвестное
 
-    /**
-     * Конструктор класса.
-     * @param designationsView Поле для "Введите обозначение"
-     * @param unknownView Поле для "Введите неизвестное"
-     */
+    //констуктор класса
     public InputController(TextView designationsView, TextView unknownView) {
         this.designationsView = designationsView;
         this.unknownView = unknownView;
@@ -71,7 +65,7 @@ public class InputController {
         updateDisplay();
     }
 
-    /** Установка шрифта STIX */
+    //шрифт
     public void setStixTypeface(android.graphics.Typeface stixTypeface) {
         this.stixTypeface = stixTypeface;
     }
@@ -102,10 +96,10 @@ public class InputController {
 
     /**
      * Обработка ввода с клавиатуры.
-     * @param input Введенный символ
-     * @param sourceKeyboardMode Режим клавиатуры
-     * @param keyUsesStix Используется ли STIX
-     * @param logicalId Логический идентификатор
+     *  input Введенный символ
+     *  sourceKeyboardMode Режим клавиатуры
+     *  keyUsesStix Используется ли STIX
+     *  logicalId Логический идентификатор
      */
     public void onKeyInput(String input, String sourceKeyboardMode, boolean keyUsesStix, String logicalId) {
         if ("designations".equals(currentInputField)) {
@@ -206,7 +200,7 @@ public class InputController {
         updateDisplay();
     }
 
-    /** Автоматическое сохранение неизвестного */
+    //авто сохранение введите неизвестное
     private void saveUnknown() {
         if (unknownDesignation != null) {
             UnknownQuantity unknown = new UnknownQuantity(logicalUnknownDesignation);
@@ -219,7 +213,8 @@ public class InputController {
         }
     }
 
-    /** Обработка нажатия клавиши Delete */
+    //делет
+
     public void onDeletePressed() {
         if ("designations".equals(currentInputField)) {
             if (currentState == InputState.ENTERING_UNIT) {
@@ -269,7 +264,7 @@ public class InputController {
         updateDisplay();
     }
 
-    /** Переключение влево по режимам */
+    //лево
     public void onLeftArrowPressed() {
         if ("designations".equals(currentInputField)) {
             if (currentState == InputState.ENTERING_UNIT) {
@@ -284,7 +279,7 @@ public class InputController {
         }
     }
 
-    /** Переключение вправо по режимам */
+    //вправо влево соси делай вправо-влево делай влево влево ю
     public void onRightArrowPressed() {
         if ("designations".equals(currentInputField)) {
             if (currentState == InputState.ENTERING_DESIGNATION && designationBuffer.length() > 0) {
@@ -299,7 +294,7 @@ public class InputController {
         }
     }
 
-    /** Подтверждение ввода (нажатие вниз) */
+    // сейв
     public void onDownArrowPressed() {
         if ("designations".equals(currentInputField)) {
             if (designationBuffer.length() == 0) {
@@ -369,7 +364,7 @@ public class InputController {
         }
     }
 
-    /** Обновление режима клавиатуры */
+    //обнволение режима
     private void updateKeyboardMode() {
         if (keyboardModeSwitcher != null && "designations".equals(currentInputField)) {
             if (currentState == InputState.ENTERING_DESIGNATION) {
@@ -382,7 +377,7 @@ public class InputController {
         }
     }
 
-    /** Обновление отображаемого текста */
+    //обновление ввода
     private void updateDisplay() {
         SpannableStringBuilder designationsText = new SpannableStringBuilder();
         for (int i = 0; i < history.size(); i++) {
@@ -418,7 +413,7 @@ public class InputController {
             } else {
                 designationsText.append(valueBuffer);
             }
-            // Добавляем "?" если нет единицы измерения и есть число
+            // ???????????
             if (unitBuffer.length() == 0 && (valueBuffer.length() > 0 || valueOperationBuffer.length() > 0)) {
                 designationsText.append(" ?");
             } else if (unitBuffer.length() > 0) {
@@ -447,7 +442,7 @@ public class InputController {
         }
     }
 
-    /** Очистка всего ввода */
+    //очистка ввода
     public void clearAll() {
         if ("designations".equals(currentInputField)) {
             designationBuffer.setLength(0);
@@ -474,7 +469,7 @@ public class InputController {
         }
     }
 
-    /** Сброс текущего ввода для "Введите обозначение" */
+    //сброс изменений
     private void resetInput() {
         designationBuffer.setLength(0);
         valueBuffer.setLength(0);
@@ -488,21 +483,20 @@ public class InputController {
         updateDisplay();
     }
 
-    /** Получение списка сохраненных измерений для логирования */
     public List<Measurement> getMeasurements() {
         return new ArrayList<>(measurements);
     }
 
-    /** Получение списка сохраненных неизвестных для логирования */
+
     public List<UnknownQuantity> getUnknowns() {
         return new ArrayList<>(unknowns);
     }
 
-    /** Логирование всех сохраненных данных */
+    //лог данных
     public void logAllSavedData() {
         StringBuilder logMessage = new StringBuilder("Все сохраненные данные:\n");
 
-        // Сохраненные измерения
+        // cохр изменения
         logMessage.append("Измерения ('Введите обозначение'):\n");
         if (measurements.isEmpty()) {
             logMessage.append("  Нет сохраненных измерений\n");
@@ -512,7 +506,7 @@ public class InputController {
             }
         }
 
-        // Сохраненные неизвестные
+        // незизвестнео
         logMessage.append("Неизвестные ('Введите неизвестное'):\n");
         if (unknowns.isEmpty()) {
             logMessage.append("  Нет сохраненных неизвестных\n");
