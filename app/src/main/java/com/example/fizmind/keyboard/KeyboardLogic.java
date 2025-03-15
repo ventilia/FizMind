@@ -162,7 +162,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                         new SymbolKey("num_4", "4", false),
                         new SymbolKey("num_5", "5", false),
                         new SymbolKey("num_6", "6", false),
-                        new SymbolKey("op_step", "^", false),
+                        new SymbolKey("..", "..", false),
                         new SymbolKey("..", "..", false),
                         new SymbolKey("..", "..", false),
                         new SymbolKey("..", "..", false),
@@ -172,29 +172,9 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                         new SymbolKey("num_8", "8", false),
                         new SymbolKey("num_9", "9", false),
                         new SymbolKey("num_0", "0", false),
-                        new SymbolKey("num_minus", "-", false),
+                        new SymbolKey("..", "..", false),
                         new SymbolKey("num_dot", ".", false)
-                ),
-                Arrays.asList(
-                        new SymbolKey("op_plus", "+", false),
-                        new SymbolKey("op_openParen", "(", false),
-                        new SymbolKey("op_closeParen", ")", false),
-                        new SymbolKey("op_power", "^", false),
-                        new SymbolKey("op_ln", "ln", false),
-                        new SymbolKey("op_log", "log", false),
-                        new SymbolKey("op_plus2", "+", false),
-                        new SymbolKey("op_openParen2", "(", false),
-                        new SymbolKey("op_closeParen2", ")", false),
-                        new SymbolKey("op_power2", "^", false),
-                        new SymbolKey("op_ln2", "ln", false),
-                        new SymbolKey("op_log2", "log", false),
-                        new SymbolKey("op_sin", "sin", false),
-                        new SymbolKey("op_cos", "cos", false),
-                        new SymbolKey("op_tan", "tan", false),
-                        new SymbolKey("op_e", "e", false),
-                        new SymbolKey("op_pi", "π", false),
-                        new SymbolKey("op_EXP", "EXP", false),
-                        new SymbolKey("op_equals", "=", false)
+
                 )
         ));
 
