@@ -40,7 +40,7 @@ public class InputController {
     private final List<UnknownQuantity> unknowns;       // Список сохраненных неизвестных
     private Boolean designationUsesStix;                // Используется ли шрифт STIX для обозначения
     private String logicalDesignation;                  // Логический идентификатор обозначения
-    private android.graphics.Typeface stixTypeface;     // Шрифт STIX
+    private Typeface stixTypeface;                      // Шрифт STIX
     private KeyboardModeSwitcher keyboardModeSwitcher;  // Переключатель режимов клавиатуры
     private boolean isCurrentConstant;                  // Является ли текущая величина константой
     private final StringBuilder operationBuffer;        // Буфер операций над обозначением
@@ -72,7 +72,7 @@ public class InputController {
     }
 
     // Установка шрифта STIX
-    public void setStixTypeface(android.graphics.Typeface stixTypeface) {
+    public void setStixTypeface(Typeface stixTypeface) {
         this.stixTypeface = stixTypeface;
     }
 
@@ -351,7 +351,7 @@ public class InputController {
                 historyEntry.append(designationBuffer);
             }
             if (designationUsesStix != null && designationUsesStix && stixTypeface != null) {
-                historyEntry.setSpan(new CustomTypefaceSpan(stixTypeface), start, historyEntry.length(), 0);
+                historyEntry.setSpan(new CustomTypefaceSpan(stixTypeface), start, historyEntry.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
             historyEntry.append(" = ").append(valueStr);
             if (!unit.isEmpty()) {
@@ -395,56 +395,103 @@ public class InputController {
         }
         if (history.size() > 0) designationsText.append("\n\n");
 
-        // Если ничего не введено, показываем подсказку
-        if (designationBuffer.length() == 0 && valueBuffer.length() == 0 && unitBuffer.length() == 0) {
-            int start = designationsText.length();
-            designationsText.append("Введите обозначение");
-            int color = "designations".equals(currentInputField) ? Color.BLACK : Color.GRAY;
-            designationsText.setSpan(new ForegroundColorSpan(color), start, designationsText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        } else {
-            // Начало обозначения
+        // Текущий ввод
+        if (designationBuffer.length() > 0 || valueBuffer.length() > 0 || unitBuffer.length() > 0) {
             int designationStart = designationsText.length();
-            if (designationBuffer.length() > 0) {
-                designationsText.append(designationBuffer).append(" = ");
+            if (operationBuffer.length() > 0) {
+                designationsText.append(operationBuffer).append("(").append(designationBuffer).append(")");
             } else {
-                designationsText.append("= ");
+                designationsText.append(designationBuffer);
             }
-
-            // Начало числа
+            int designationEnd = designationsText.length();
+            if (designationUsesStix != null && designationUsesStix && stixTypeface != null) {
+                designationsText.setSpan(
+                        new CustomTypefaceSpan(stixTypeface),
+                        designationStart,
+                        designationEnd,
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                );
+            }
+            designationsText.append(" = ");
             int valueStart = designationsText.length();
-            if (valueBuffer.length() > 0) {
+            if (valueOperationBuffer.length() > 0) {
+                designationsText.append(valueOperationBuffer);
+            } else {
                 designationsText.append(valueBuffer);
             }
-
-            // Начало единицы измерения
-            int unitStart = designationsText.length();
-            if (unitBuffer.length() == 0 && valueBuffer.length() > 0) {
-                designationsText.append(" ?");
-            } else if (unitBuffer.length() > 0) {
+            int valueEnd = designationsText.length();
+            if (unitBuffer.length() > 0) {
                 designationsText.append(" ").append(unitBuffer);
+            } else if (valueBuffer.length() > 0 || valueOperationBuffer.length() > 0) {
+                designationsText.append(" ?");
             }
 
             // Применяем жирный шрифт к активной части
             if ("designations".equals(currentInputField)) {
                 if (currentState == InputState.ENTERING_DESIGNATION && designationStart < valueStart - 3) {
-                    designationsText.setSpan(new StyleSpan(Typeface.BOLD), designationStart, valueStart - 3, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE); // до " = "
-                } else if (currentState == InputState.ENTERING_VALUE && valueStart < unitStart) {
-                    designationsText.setSpan(new StyleSpan(Typeface.BOLD), valueStart, unitStart, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                } else if (currentState == InputState.ENTERING_UNIT && unitStart < designationsText.length()) {
-                    designationsText.setSpan(new StyleSpan(Typeface.BOLD), unitStart, designationsText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    designationsText.setSpan(
+                            new StyleSpan(Typeface.BOLD),
+                            designationStart,
+                            valueStart - 3,
+                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    );
+                } else if (currentState == InputState.ENTERING_VALUE && valueStart < valueEnd) {
+                    designationsText.setSpan(
+                            new StyleSpan(Typeface.BOLD),
+                            valueStart,
+                            valueEnd,
+                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    );
+                } else if (currentState == InputState.ENTERING_UNIT && valueEnd < designationsText.length()) {
+                    designationsText.setSpan(
+                            new StyleSpan(Typeface.BOLD),
+                            valueEnd + 1,
+                            designationsText.length(),
+                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    );
                 }
             }
+        } else {
+            // Если ничего не введено, показываем подсказку
+            int start = designationsText.length();
+            designationsText.append("Введите обозначение");
+            int color = "designations".equals(currentInputField) ? Color.BLACK : Color.GRAY;
+            designationsText.setSpan(
+                    new ForegroundColorSpan(color),
+                    start,
+                    designationsText.length(),
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            );
         }
         designationsView.setText(designationsText);
 
-        // Обработка поля неизвестного (не меняется для вашей задачи)
+        // Обработка поля неизвестного
         SpannableStringBuilder unknownText = new SpannableStringBuilder();
         if (unknownDesignation != null) {
-            unknownText.append(unknownDesignation).append(" = ?");
+            int start = unknownText.length();
+            unknownText.append(unknownDesignation);
+            int end = unknownText.length();
+            // Применяем шрифт STIX к неизвестному, если оно использует STIX (по аналогии с designationUsesStix)
+            // Здесь предполагается, что для unknownDesignation нужно отдельное поле useStixFont, но в текущем коде его нет,
+            // поэтому используем designationUsesStix как временное решение
+            if (designationUsesStix != null && designationUsesStix && stixTypeface != null) {
+                unknownText.setSpan(
+                        new CustomTypefaceSpan(stixTypeface),
+                        start,
+                        end,
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                );
+            }
+            unknownText.append(" = ?");
         } else {
             unknownText.append("Введите неизвестное");
             int color = "unknown".equals(currentInputField) ? Color.BLACK : Color.GRAY;
-            unknownText.setSpan(new ForegroundColorSpan(color), 0, unknownText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            unknownText.setSpan(
+                    new ForegroundColorSpan(color),
+                    0,
+                    unknownText.length(),
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            );
         }
         unknownView.setText(unknownText);
 
