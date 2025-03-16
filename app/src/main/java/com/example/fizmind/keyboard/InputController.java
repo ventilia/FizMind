@@ -39,6 +39,7 @@ public class InputController {
     private final List<SpannableStringBuilder> history; // История введенных данных
     private final List<UnknownQuantity> unknowns;       // Список сохраненных неизвестных
     private Boolean designationUsesStix;                // Используется ли шрифт STIX для обозначения
+    private Boolean unknownUsesStix;                    // Используется ли шрифт STIX для неизвестного
     private String logicalDesignation;                  // Логический идентификатор обозначения
     private Typeface stixTypeface;                      // Шрифт STIX
     private KeyboardModeSwitcher keyboardModeSwitcher;  // Переключатель режимов клавиатуры
@@ -64,6 +65,7 @@ public class InputController {
         this.history = new ArrayList<>();
         this.unknowns = new ArrayList<>();
         this.designationUsesStix = null;
+        this.unknownUsesStix = null; // Инициализация нового поля
         this.logicalDesignation = null;
         this.isCurrentConstant = false;
         this.currentInputField = "designations";
@@ -161,6 +163,7 @@ public class InputController {
                 if ("Designation".equals(sourceKeyboardMode)) {
                     unknownDesignation = input;
                     logicalUnknownDesignation = logicalId;
+                    unknownUsesStix = keyUsesStix; // Устанавливаем флаг STIX для неизвестного
                     Log.d("InputController", "Введено неизвестное обозначение: " + input);
                     saveUnknown();
                 } else {
@@ -262,6 +265,7 @@ public class InputController {
             if (unknownDesignation != null) {
                 unknownDesignation = null;
                 logicalUnknownDesignation = null;
+                unknownUsesStix = null; // Сброс флага STIX
                 if (!unknowns.isEmpty()) {
                     unknowns.remove(unknowns.size() - 1);
                     Log.d("InputController", "Удалено неизвестное обозначение из списка");
@@ -471,10 +475,7 @@ public class InputController {
             int start = unknownText.length();
             unknownText.append(unknownDesignation);
             int end = unknownText.length();
-            // Применяем шрифт STIX к неизвестному, если оно использует STIX (по аналогии с designationUsesStix)
-            // Здесь предполагается, что для unknownDesignation нужно отдельное поле useStixFont, но в текущем коде его нет,
-            // поэтому используем designationUsesStix как временное решение
-            if (designationUsesStix != null && designationUsesStix && stixTypeface != null) {
+            if (unknownUsesStix != null && unknownUsesStix && stixTypeface != null) { // Используем новый флаг
                 unknownText.setSpan(
                         new CustomTypefaceSpan(stixTypeface),
                         start,
@@ -523,6 +524,7 @@ public class InputController {
         } else if ("unknown".equals(currentInputField)) {
             unknownDesignation = null;
             logicalUnknownDesignation = null;
+            unknownUsesStix = null; // Сброс флага STIX
             unknowns.clear();
             Log.d("InputController", "Очищены все данные для 'Введите неизвестное'");
         }
