@@ -65,7 +65,7 @@ public class InputController {
         this.history = new ArrayList<>();
         this.unknowns = new ArrayList<>();
         this.designationUsesStix = null;
-        this.unknownUsesStix = null; // Инициализация нового поля
+        this.unknownUsesStix = null;
         this.logicalDesignation = null;
         this.isCurrentConstant = false;
         this.currentInputField = "designations";
@@ -163,7 +163,7 @@ public class InputController {
                 if ("Designation".equals(sourceKeyboardMode)) {
                     unknownDesignation = input;
                     logicalUnknownDesignation = logicalId;
-                    unknownUsesStix = keyUsesStix; // Устанавливаем флаг STIX для неизвестного
+                    unknownUsesStix = keyUsesStix;
                     Log.d("InputController", "Введено неизвестное обозначение: " + input);
                     saveUnknown();
                 } else {
@@ -240,13 +240,19 @@ public class InputController {
                 } else if (valueOperationBuffer.length() > 0) {
                     valueOperationBuffer.deleteCharAt(valueOperationBuffer.length() - 1);
                     Log.d("InputController", "Удалён последний символ из операции над числом");
-                }
-                if (valueBuffer.length() == 0 && valueOperationBuffer.length() == 0) {
-                    if (designationBuffer.length() > 0) {
-                        currentState = InputState.ENTERING_DESIGNATION;
-                        updateKeyboardMode();
-                        Log.d("InputController", "Число и операции удалены, переключено в режим ввода обозначения");
-                    }
+                } else if (designationBuffer.length() > 0) {
+                    // Исправление: удаляем обозначение, если число и операции пусты
+                    designationBuffer.setLength(0);
+                    logicalDesignation = null;
+                    designationUsesStix = null;
+                    isCurrentConstant = false;
+                    unitBuffer.setLength(0);
+                    operationBuffer.setLength(0);
+                    valueBuffer.setLength(0);
+                    valueOperationBuffer.setLength(0);
+                    currentState = InputState.ENTERING_DESIGNATION;
+                    updateKeyboardMode();
+                    Log.d("InputController", "Число и операции пусты, удалено обозначение");
                 }
             } else if (currentState == InputState.ENTERING_DESIGNATION) {
                 if (designationBuffer.length() > 0) {
@@ -265,7 +271,7 @@ public class InputController {
             if (unknownDesignation != null) {
                 unknownDesignation = null;
                 logicalUnknownDesignation = null;
-                unknownUsesStix = null; // Сброс флага STIX
+                unknownUsesStix = null;
                 if (!unknowns.isEmpty()) {
                     unknowns.remove(unknowns.size() - 1);
                     Log.d("InputController", "Удалено неизвестное обозначение из списка");
@@ -475,7 +481,7 @@ public class InputController {
             int start = unknownText.length();
             unknownText.append(unknownDesignation);
             int end = unknownText.length();
-            if (unknownUsesStix != null && unknownUsesStix && stixTypeface != null) { // Используем новый флаг
+            if (unknownUsesStix != null && unknownUsesStix && stixTypeface != null) {
                 unknownText.setSpan(
                         new CustomTypefaceSpan(stixTypeface),
                         start,
@@ -524,7 +530,7 @@ public class InputController {
         } else if ("unknown".equals(currentInputField)) {
             unknownDesignation = null;
             logicalUnknownDesignation = null;
-            unknownUsesStix = null; // Сброс флага STIX
+            unknownUsesStix = null;
             unknowns.clear();
             Log.d("InputController", "Очищены все данные для 'Введите неизвестное'");
         }
