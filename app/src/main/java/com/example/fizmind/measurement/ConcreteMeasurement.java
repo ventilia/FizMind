@@ -5,13 +5,17 @@ import com.example.fizmind.PhysicalQuantity;
 import com.example.fizmind.PhysicalQuantityRegistry;
 
 public class ConcreteMeasurement extends Measurement {
+    private String exponent; // Степень для числа
+    private String subscript; // Индекс для обозначения
 
-    public ConcreteMeasurement(String designation, double value, String unit, String designationOperations, String valueOperations) {
+    public ConcreteMeasurement(String designation, double value, String unit, String designationOperations, String valueOperations, String exponent, String subscript) {
         super(designation, value, unit, designationOperations, valueOperations);
+        this.exponent = exponent;
+        this.subscript = subscript;
     }
 
     public ConcreteMeasurement(String designation, double value, String unit) {
-        super(designation, value, unit);
+        this(designation, value, unit, "", "", "", "");
     }
 
     @Override
@@ -36,5 +40,35 @@ public class ConcreteMeasurement extends Measurement {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        if (!designationOperations.isEmpty()) {
+            sb.append(designationOperations).append("(").append(designation);
+            if (subscript != null && !subscript.isEmpty()) {
+                sb.append("_").append(subscript);
+            }
+            sb.append(")");
+        } else {
+            sb.append(designation);
+            if (subscript != null && !subscript.isEmpty()) {
+                sb.append("_").append(subscript);
+            }
+        }
+        sb.append(" = ");
+        if (!valueOperations.isEmpty()) {
+            sb.append(valueOperations);
+        } else {
+            sb.append(value);
+            if (exponent != null && !exponent.isEmpty()) {
+                sb.append("^").append(exponent);
+            }
+        }
+        if (!unit.isEmpty()) {
+            sb.append(" ").append(unit);
+        }
+        return sb.toString();
     }
 }

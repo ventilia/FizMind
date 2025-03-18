@@ -2,8 +2,8 @@ package com.example.fizmind.modules;
 
 import android.text.SpannableStringBuilder;
 import android.text.style.RelativeSizeSpan;
-import android.text.style.SuperscriptSpan;
 import android.text.style.SubscriptSpan;
+import android.text.style.SuperscriptSpan;
 import android.util.Log;
 
 /**
@@ -83,6 +83,7 @@ public class InputModule {
                 result.setSpan(new SubscriptSpan(), start, end, SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
                 result.setSpan(new RelativeSizeSpan(0.75f), start, end, SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
+            // STIX не применяется, чтобы индекс оставался в стандартном шрифте
         } else if (isActive) {
             result.append(type.getSymbol());  // Показываем символ модуля, если он активен и пуст
         }

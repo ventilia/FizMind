@@ -184,7 +184,7 @@ public class InputController {
                     currentModule = new InputModule(ModuleType.EXPONENT);
                     updateDisplay();
                 } else if (logicalId.equals("op_subscript")) {
-                    // Активируем нижний индекс для обозначения (можно в режиме числа)
+                    // Активируем нижний индекс для обозначения
                     if (currentModule != null) {
                         Log.w("InputController", "Нельзя применить два модуля одновременно");
                         return;
@@ -205,18 +205,34 @@ public class InputController {
                 }
             }
         } else if ("unknown".equals(currentInputField)) {
+            if (currentModule != null && currentModule.isActive()) {
+                currentModule.apply(input);
+                updateDisplay();
+                return;
+            }
             if (unknownDesignation == null) {
                 if ("Designation".equals(sourceKeyboardMode)) {
                     unknownDesignation = input;
                     logicalUnknownDesignation = logicalId;
                     unknownUsesStix = keyUsesStix;
                     Log.d("InputController", "Введено неизвестное обозначение: " + input);
-                    saveUnknown();
                 } else {
                     Log.w("InputController", "В 'Введите неизвестное' можно вводить только обозначения из режима 'Designation'");
+                    return;
                 }
             } else {
-                Log.w("InputController", "В 'Введите неизвестное' можно ввести только одно обозначение.");
+                if (logicalId.equals("op_subscript")) {
+                    if (currentModule != null) {
+                        Log.w("InputController", "Нельзя применить два модуля одновременно");
+                        return;
+                    }
+                    currentModule = new InputModule(ModuleType.SUBSCRIPT);
+                    updateDisplay();
+                } else if (logicalId.equals("op_exponent")) {
+                    Log.w("InputController", "Степень применима только к числу в поле 'Введите обозначение'");
+                } else {
+                    Log.w("InputController", "В 'Введите неизвестное' можно ввести только одно обозначение и индекс");
+                }
             }
         }
         updateDisplay();
@@ -259,13 +275,19 @@ public class InputController {
     // Автоматическое сохранение неизвестного
     private void saveUnknown() {
         if (unknownDesignation != null) {
-            UnknownQuantity unknown = new UnknownQuantity(logicalUnknownDesignation);
+            String subscript = (currentModule != null && currentModule.getType() == ModuleType.SUBSCRIPT) ? currentModule.getDisplayText().toString() : "";
+            UnknownQuantity unknown = new UnknownQuantity(logicalUnknownDesignation, subscript);
             if (!unknown.validate()) {
                 Log.e("InputController", "Ошибка валидации неизвестного: " + unknown.toString());
                 return;
             }
             unknowns.add(unknown);
             Log.d("InputController", "Автоматически сохранено неизвестное: " + unknown.toString());
+            unknownDesignation = null;
+            logicalUnknownDesignation = null;
+            unknownUsesStix = null;
+            currentModule = null;
+            updateDisplay();
         }
     }
 
@@ -302,6 +324,7 @@ public class InputController {
                     valueBuffer.setLength(0);
                     valueOperationBuffer.setLength(0);
                     currentState = InputState.ENTERING_DESIGNATION;
+                    currentModule = null;
                     updateKeyboardMode();
                     Log.d("InputController", "Число и операции пусты, удалено обозначение");
                 }
@@ -315,14 +338,24 @@ public class InputController {
                     operationBuffer.setLength(0);
                     valueBuffer.setLength(0);
                     valueOperationBuffer.setLength(0);
+                    currentModule = null;
                     Log.d("InputController", "Удалено обозначение, все буферы очищены");
                 }
             }
         } else if ("unknown".equals(currentInputField)) {
+            if (currentModule != null && currentModule.isActive()) {
+                if (currentModule.delete()) {
+                    currentModule = null;
+                    Log.d("InputController", "Модуль удалён полностью в 'Введите неизвестное'");
+                }
+                updateDisplay();
+                return;
+            }
             if (unknownDesignation != null) {
                 unknownDesignation = null;
                 logicalUnknownDesignation = null;
                 unknownUsesStix = null;
+                currentModule = null;
                 if (!unknowns.isEmpty()) {
                     unknowns.remove(unknowns.size() - 1);
                     Log.d("InputController", "Удалено неизвестное обозначение из списка");
@@ -337,7 +370,6 @@ public class InputController {
         if ("designations".equals(currentInputField)) {
             if (currentModule != null && currentModule.isActive()) {
                 currentModule.deactivate();
-                currentModule = null;
                 Log.d("InputController", "Фокус снят с модуля");
                 updateDisplay();
                 return;
@@ -359,7 +391,6 @@ public class InputController {
         if ("designations".equals(currentInputField)) {
             if (currentModule != null && currentModule.isActive()) {
                 currentModule.deactivate();
-                currentModule = null;
                 Log.d("InputController", "Фокус снят с модуля");
                 updateDisplay();
                 return;
@@ -410,8 +441,11 @@ public class InputController {
                 return;
             }
 
+            String exponent = (currentModule != null && currentModule.getType() == ModuleType.EXPONENT) ? currentModule.getDisplayText().toString() : "";
+            String subscript = (currentModule != null && currentModule.getType() == ModuleType.SUBSCRIPT) ? currentModule.getDisplayText().toString() : "";
+
             ConcreteMeasurement measurement = new ConcreteMeasurement(
-                    logicalDesignation, value, unit, operationBuffer.toString(), valueOperationBuffer.toString());
+                    logicalDesignation, value, unit, operationBuffer.toString(), valueOperationBuffer.toString(), exponent, subscript);
             if (!measurement.validate()) {
                 Log.e("InputController", "Ошибка валидации: " + measurement.toString());
                 return;
@@ -421,12 +455,16 @@ public class InputController {
             SpannableStringBuilder historyEntry = new SpannableStringBuilder();
             int start = historyEntry.length();
             if (operationBuffer.length() > 0) {
-                historyEntry.append(operationBuffer).append("(").append(designationBuffer).append(")");
+                historyEntry.append(operationBuffer).append("(").append(designationBuffer);
+                if (!subscript.isEmpty()) {
+                    historyEntry.append("_").append(subscript);
+                }
+                historyEntry.append(")");
             } else {
                 historyEntry.append(designationBuffer);
-            }
-            if (currentModule != null && currentModule.getType() == ModuleType.SUBSCRIPT) {
-                historyEntry.append(currentModule.getDisplayText());
+                if (!subscript.isEmpty()) {
+                    historyEntry.append("_").append(subscript);
+                }
             }
             if (designationUsesStix != null && designationUsesStix && stixTypeface != null) {
                 historyEntry.setSpan(new CustomTypefaceSpan(stixTypeface), start, historyEntry.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -436,9 +474,9 @@ public class InputController {
                 historyEntry.append(valueOperationBuffer);
             } else {
                 historyEntry.append(valueBuffer);
-            }
-            if (currentModule != null && currentModule.getType() == ModuleType.EXPONENT) {
-                historyEntry.append(currentModule.getDisplayText());
+                if (!exponent.isEmpty()) {
+                    historyEntry.append("^").append(exponent);
+                }
             }
             if (!unit.isEmpty()) {
                 historyEntry.append(" ").append(unit);
@@ -454,6 +492,8 @@ public class InputController {
                 keyboardModeSwitcher.switchToDesignation();
             }
             logAllSavedData();
+        } else if ("unknown".equals(currentInputField)) {
+            saveUnknown();
         }
     }
 
@@ -567,10 +607,15 @@ public class InputController {
 
         // Обработка поля неизвестного
         SpannableStringBuilder unknownText = new SpannableStringBuilder();
-        if (unknownDesignation != null) {
+        if (unknownDesignation != null || (currentModule != null && currentModule.isActive())) {
             int start = unknownText.length();
-            unknownText.append(unknownDesignation);
+            if (unknownDesignation != null) {
+                unknownText.append(unknownDesignation);
+            }
             int end = unknownText.length();
+            if (currentModule != null && currentModule.getType() == ModuleType.SUBSCRIPT) {
+                unknownText.append(currentModule.getDisplayText());
+            }
             if (unknownUsesStix != null && unknownUsesStix && stixTypeface != null) {
                 unknownText.setSpan(
                         new CustomTypefaceSpan(stixTypeface),
@@ -580,6 +625,16 @@ public class InputController {
                 );
             }
             unknownText.append(" = ?");
+            if ("unknown".equals(currentInputField) && currentModule != null && currentModule.isActive()) {
+                unknownText.setSpan(
+                        new StyleSpan(Typeface.BOLD),
+                        end,
+                        unknownText.length() - 4,
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                );
+            }
+        } else if (!unknowns.isEmpty()) {
+            unknownText.append(unknowns.get(unknowns.size() - 1).toString());
         } else {
             unknownText.append("Введите неизвестное");
             int color = "unknown".equals(currentInputField) ? Color.BLACK : Color.GRAY;
@@ -621,6 +676,7 @@ public class InputController {
             unknownDesignation = null;
             logicalUnknownDesignation = null;
             unknownUsesStix = null;
+            currentModule = null;
             unknowns.clear();
             Log.d("InputController", "Очищены все данные для 'Введите неизвестное'");
         }
