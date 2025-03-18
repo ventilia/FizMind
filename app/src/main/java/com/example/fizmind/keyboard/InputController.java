@@ -6,8 +6,6 @@ import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
-import android.text.style.SuperscriptSpan;
-import android.text.style.SubscriptSpan;
 import android.util.Log;
 import android.widget.TextView;
 
@@ -17,7 +15,6 @@ import com.example.fizmind.animation.CustomTypefaceSpan;
 import com.example.fizmind.measurement.ConcreteMeasurement;
 import com.example.fizmind.measurement.Measurement;
 import com.example.fizmind.measurement.UnknownQuantity;
-import com.example.fizmind.modules.ModuleHandler;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,15 +23,10 @@ import java.util.Map;
 
 public class InputController {
 
-    /**
-     * Состояния ввода, включая новые состояния для модулей.
-     */
     public enum InputState {
-        ENTERING_DESIGNATION,  // Ввод обозначения
-        ENTERING_VALUE,        // Ввод числа
-        ENTERING_UNIT,         // Ввод единицы измерения
-        ENTERING_EXPONENT,     // Ввод аргумента степени
-        ENTERING_SUBSCRIPT     // Ввод аргумента нижнего индекса
+        ENTERING_DESIGNATION, // Ввод обозначения
+        ENTERING_VALUE,       // Ввод числа
+        ENTERING_UNIT         // Ввод единицы измерения
     }
 
     private InputState currentState;                    // Текущее состояние ввода
@@ -52,8 +44,8 @@ public class InputController {
     private Typeface stixTypeface;                      // Шрифт STIX
     private KeyboardModeSwitcher keyboardModeSwitcher;  // Переключатель режимов клавиатуры
     private boolean isCurrentConstant;                  // Является ли текущая величина константой
-    private final StringBuilder moduleArgumentBuffer;   // Буфер для аргумента текущего модуля
-    private ModuleHandler currentModule;                // Текущий активный модуль
+    private final StringBuilder operationBuffer;        // Буфер операций над обозначением
+    private final StringBuilder valueOperationBuffer;   // Буфер операций над числом
     private final Map<String, String> lastUnitForDesignation; // Последние единицы для обозначений
     private String currentInputField;                   // Текущее поле ввода
     private String unknownDesignation;                  // Обозначение для неизвестного
@@ -67,7 +59,8 @@ public class InputController {
         this.designationBuffer = new StringBuilder();
         this.valueBuffer = new StringBuilder();
         this.unitBuffer = new StringBuilder();
-        this.moduleArgumentBuffer = new StringBuilder();
+        this.operationBuffer = new StringBuilder();
+        this.valueOperationBuffer = new StringBuilder();
         this.measurements = new ArrayList<>();
         this.history = new ArrayList<>();
         this.unknowns = new ArrayList<>();
@@ -142,16 +135,11 @@ public class InputController {
                             keyboardModeSwitcher.switchToNumbersAndOperations();
                         }
                         handleValueInput(input, logicalId);
-                    } else if (logicalId.equals("op_superscript")) {
-                        if (currentModule != null) {
-                            Log.w("InputController", "Модуль уже активен: " + currentModule.getSymbol());
-                            return;
-                        }
-                        currentModule = new ModuleHandler(ModuleHandler.ModuleType.SUBSCRIPT, "");
-                        currentState = InputState.ENTERING_SUBSCRIPT;
-                        if (keyboardModeSwitcher != null) {
-                            keyboardModeSwitcher.switchToNumbersAndOperations();
-                        }
+                    } else if (logicalId.equals("op_vec") || logicalId.equals("op_subscript") || logicalId.equals("op_superscript")) {
+                        operationBuffer.append(input);
+                        updateDisplay();
+                    } else {
+                        Log.w("InputController", "Обозначение уже введено, ожидается число или операция.");
                     }
                 }
             } else if (currentState == InputState.ENTERING_VALUE) {
@@ -168,24 +156,6 @@ public class InputController {
                 boolean validPrefix = pq.getAllowedUnits().stream().anyMatch(allowed -> allowed.startsWith(potentialUnit));
                 if (validPrefix && potentialUnit.length() <= maxAllowedLength) {
                     unitBuffer.append(input);
-                }
-            } else if (currentState == InputState.ENTERING_EXPONENT) {
-                if (input.matches("[0-9]")) {
-                    moduleArgumentBuffer.append(input);
-                } else {
-                    currentState = InputState.ENTERING_VALUE;
-                    currentModule = new ModuleHandler(ModuleHandler.ModuleType.EXPONENT, moduleArgumentBuffer.toString());
-                    moduleArgumentBuffer.setLength(0);
-                    updateKeyboardMode();
-                }
-            } else if (currentState == InputState.ENTERING_SUBSCRIPT) {
-                if (input.matches("[0-9]")) {
-                    moduleArgumentBuffer.append(input);
-                } else {
-                    currentState = InputState.ENTERING_DESIGNATION;
-                    currentModule = new ModuleHandler(ModuleHandler.ModuleType.SUBSCRIPT, moduleArgumentBuffer.toString());
-                    moduleArgumentBuffer.setLength(0);
-                    updateKeyboardMode();
                 }
             }
         } else if ("unknown".equals(currentInputField)) {
@@ -225,16 +195,15 @@ public class InputController {
             } else {
                 valueBuffer.append(input);
             }
-        } else if (logicalId.equals("op_superscript")) {
-            if (currentModule != null) {
-                Log.w("InputController", "Модуль уже активен: " + currentModule.getSymbol());
-                return;
-            }
-            currentModule = new ModuleHandler(ModuleHandler.ModuleType.EXPONENT, "");
-            currentState = InputState.ENTERING_EXPONENT;
-            if (keyboardModeSwitcher != null) {
-                keyboardModeSwitcher.switchToNumbersAndOperations();
-            }
+        } else if (logicalId.equals("op_abs_open")) {
+            valueOperationBuffer.append("|");
+            updateDisplay();
+        } else if (logicalId.equals("op_abs_close") && valueOperationBuffer.toString().contains("|")) {
+            valueOperationBuffer.append(valueBuffer).append("|");
+            valueBuffer.setLength(0);
+            updateDisplay();
+        } else if (logicalId.equals("op_vec") || logicalId.equals("op_subscript") || logicalId.equals("op_superscript")) {
+            Log.w("InputController", "Операция " + input + " применима только к обозначению.");
         } else {
             currentState = InputState.ENTERING_UNIT;
             onKeyInput(input, "Units_of_measurement", false, logicalId);
@@ -268,44 +237,34 @@ public class InputController {
                 if (valueBuffer.length() > 0) {
                     valueBuffer.deleteCharAt(valueBuffer.length() - 1);
                     Log.d("InputController", "Удалён последний символ из числа");
-                } else if (currentModule != null && currentModule.appliesToValue()) {
-                    currentModule = null;
-                    Log.d("InputController", "Удалён модуль числа");
+                } else if (valueOperationBuffer.length() > 0) {
+                    valueOperationBuffer.deleteCharAt(valueOperationBuffer.length() - 1);
+                    Log.d("InputController", "Удалён последний символ из операции над числом");
                 } else if (designationBuffer.length() > 0) {
+                    // Исправление: удаляем обозначение, если число и операции пусты
                     designationBuffer.setLength(0);
                     logicalDesignation = null;
                     designationUsesStix = null;
                     isCurrentConstant = false;
                     unitBuffer.setLength(0);
-                    currentModule = null;
+                    operationBuffer.setLength(0);
+                    valueBuffer.setLength(0);
+                    valueOperationBuffer.setLength(0);
                     currentState = InputState.ENTERING_DESIGNATION;
                     updateKeyboardMode();
-                    Log.d("InputController", "Число и модули пусты, удалено обозначение");
+                    Log.d("InputController", "Число и операции пусты, удалено обозначение");
                 }
             } else if (currentState == InputState.ENTERING_DESIGNATION) {
                 if (designationBuffer.length() > 0) {
-                    if (currentModule != null && !currentModule.appliesToValue()) {
-                        currentModule = null;
-                        Log.d("InputController", "Удалён модуль обозначения");
-                    } else {
-                        designationBuffer.setLength(0);
-                        logicalDesignation = null;
-                        designationUsesStix = null;
-                        isCurrentConstant = false;
-                        unitBuffer.setLength(0);
-                        currentModule = null;
-                        Log.d("InputController", "Удалено обозначение, все буферы очищены");
-                    }
-                }
-            } else if (currentState == InputState.ENTERING_EXPONENT || currentState == InputState.ENTERING_SUBSCRIPT) {
-                if (moduleArgumentBuffer.length() > 0) {
-                    moduleArgumentBuffer.deleteCharAt(moduleArgumentBuffer.length() - 1);
-                    Log.d("InputController", "Удалён символ из аргумента модуля");
-                } else {
-                    currentModule = null;
-                    currentState = currentState == InputState.ENTERING_EXPONENT ? InputState.ENTERING_VALUE : InputState.ENTERING_DESIGNATION;
-                    updateKeyboardMode();
-                    Log.d("InputController", "Удалён модуль, возвращено предыдущее состояние");
+                    designationBuffer.setLength(0);
+                    logicalDesignation = null;
+                    designationUsesStix = null;
+                    isCurrentConstant = false;
+                    unitBuffer.setLength(0);
+                    operationBuffer.setLength(0);
+                    valueBuffer.setLength(0);
+                    valueOperationBuffer.setLength(0);
+                    Log.d("InputController", "Удалено обозначение, все буферы очищены");
                 }
             }
         } else if ("unknown".equals(currentInputField)) {
@@ -331,18 +290,6 @@ public class InputController {
             } else if (currentState == InputState.ENTERING_VALUE && designationBuffer.length() > 0) {
                 currentState = InputState.ENTERING_DESIGNATION;
                 Log.d("InputController", "Переключено в режим ввода обозначения");
-            } else if (currentState == InputState.ENTERING_EXPONENT) {
-                currentState = InputState.ENTERING_VALUE;
-                currentModule = moduleArgumentBuffer.length() > 0 ?
-                        new ModuleHandler(ModuleHandler.ModuleType.EXPONENT, moduleArgumentBuffer.toString()) : null;
-                moduleArgumentBuffer.setLength(0);
-                Log.d("InputController", "Переключено из степени в режим ввода числа");
-            } else if (currentState == InputState.ENTERING_SUBSCRIPT) {
-                currentState = InputState.ENTERING_DESIGNATION;
-                currentModule = moduleArgumentBuffer.length() > 0 ?
-                        new ModuleHandler(ModuleHandler.ModuleType.SUBSCRIPT, moduleArgumentBuffer.toString()) : null;
-                moduleArgumentBuffer.setLength(0);
-                Log.d("InputController", "Переключено из нижнего индекса в режим ввода обозначения");
             }
             updateKeyboardMode();
             updateDisplay();
@@ -355,7 +302,7 @@ public class InputController {
             if (currentState == InputState.ENTERING_DESIGNATION && designationBuffer.length() > 0) {
                 currentState = InputState.ENTERING_VALUE;
                 Log.d("InputController", "Переключено в режим ввода числа");
-            } else if (currentState == InputState.ENTERING_VALUE && valueBuffer.length() > 0) {
+            } else if (currentState == InputState.ENTERING_VALUE && (valueBuffer.length() > 0 || valueOperationBuffer.length() > 0)) {
                 currentState = InputState.ENTERING_UNIT;
                 Log.d("InputController", "Переключено в режим ввода единицы измерения");
             }
@@ -371,7 +318,7 @@ public class InputController {
                 Log.w("InputController", "Невозможно сохранить: отсутствует обозначение");
                 return;
             }
-            if (valueBuffer.length() == 0) {
+            if (valueBuffer.length() == 0 && valueOperationBuffer.length() == 0) {
                 Log.w("InputController", "Невозможно сохранить: отсутствует числовое значение");
                 return;
             }
@@ -389,24 +336,37 @@ public class InputController {
                 }
             }
 
+            String valueStr = valueOperationBuffer.length() > 0 ? valueOperationBuffer.toString() : valueBuffer.toString();
             double value;
             try {
-                value = Double.parseDouble(valueBuffer.toString());
+                value = Double.parseDouble(valueBuffer.length() > 0 ? valueBuffer.toString() : "0");
             } catch (NumberFormatException e) {
-                Log.e("InputController", "Ошибка формата числа: " + valueBuffer.toString(), e);
+                Log.e("InputController", "Ошибка формата числа: " + valueStr, e);
                 return;
             }
 
-            String designationOps = currentModule != null && !currentModule.appliesToValue() ? currentModule.apply("") : "";
-            String valueOps = currentModule != null && currentModule.appliesToValue() ? currentModule.apply("") : "";
-            ConcreteMeasurement measurement = new ConcreteMeasurement(logicalDesignation, value, unit, designationOps, valueOps);
+            ConcreteMeasurement measurement = new ConcreteMeasurement(
+                    logicalDesignation, value, unit, operationBuffer.toString(), valueOperationBuffer.toString());
             if (!measurement.validate()) {
                 Log.e("InputController", "Ошибка валидации: " + measurement.toString());
                 return;
             }
 
             measurements.add(measurement);
-            SpannableStringBuilder historyEntry = formatCurrentInput(true);
+            SpannableStringBuilder historyEntry = new SpannableStringBuilder();
+            int start = historyEntry.length();
+            if (operationBuffer.length() > 0) {
+                historyEntry.append(operationBuffer).append("(").append(designationBuffer).append(")");
+            } else {
+                historyEntry.append(designationBuffer);
+            }
+            if (designationUsesStix != null && designationUsesStix && stixTypeface != null) {
+                historyEntry.setSpan(new CustomTypefaceSpan(stixTypeface), start, historyEntry.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+            historyEntry.append(" = ").append(valueStr);
+            if (!unit.isEmpty()) {
+                historyEntry.append(" ").append(unit);
+            }
             history.add(historyEntry);
 
             if (!unit.isEmpty()) {
@@ -421,54 +381,15 @@ public class InputController {
         }
     }
 
-    // Форматирование текущего ввода для отображения
-    private SpannableStringBuilder formatCurrentInput(boolean forHistory) {
-        SpannableStringBuilder result = new SpannableStringBuilder();
-        int designationStart = result.length();
-        if (currentModule != null && !currentModule.appliesToValue() && currentModule.getArgument() != null) {
-            result.append(designationBuffer);
-            int baseEnd = result.length();
-            result.append(currentModule.getArgument());
-            result.setSpan(new SubscriptSpan(), baseEnd, result.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        } else {
-            result.append(designationBuffer);
-        }
-        int designationEnd = result.length();
-        if (designationUsesStix != null && designationUsesStix && stixTypeface != null) {
-            result.setSpan(new CustomTypefaceSpan(stixTypeface), designationStart, designationEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        }
-        result.append(" = ");
-        int valueStart = result.length();
-        if (currentModule != null && currentModule.appliesToValue() && currentModule.getArgument() != null) {
-            result.append(valueBuffer);
-            int baseEnd = result.length();
-            result.append(currentModule.getArgument());
-            result.setSpan(new SuperscriptSpan(), baseEnd, result.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        } else {
-            result.append(valueBuffer);
-        }
-        int valueEnd = result.length();
-        if (forHistory && unitBuffer.length() > 0) {
-            result.append(" ").append(unitBuffer);
-        }
-        return result;
-    }
-
     // Обновление режима клавиатуры
     private void updateKeyboardMode() {
         if (keyboardModeSwitcher != null && "designations".equals(currentInputField)) {
-            switch (currentState) {
-                case ENTERING_DESIGNATION:
-                    keyboardModeSwitcher.switchToDesignation();
-                    break;
-                case ENTERING_VALUE:
-                case ENTERING_EXPONENT:
-                case ENTERING_SUBSCRIPT:
-                    keyboardModeSwitcher.switchToNumbersAndOperations();
-                    break;
-                case ENTERING_UNIT:
-                    keyboardModeSwitcher.switchToUnits();
-                    break;
+            if (currentState == InputState.ENTERING_DESIGNATION) {
+                keyboardModeSwitcher.switchToDesignation();
+            } else if (currentState == InputState.ENTERING_VALUE) {
+                keyboardModeSwitcher.switchToNumbersAndOperations();
+            } else if (currentState == InputState.ENTERING_UNIT) {
+                keyboardModeSwitcher.switchToUnits();
             }
         }
     }
@@ -487,15 +408,8 @@ public class InputController {
         // Текущий ввод
         if (designationBuffer.length() > 0 || valueBuffer.length() > 0 || unitBuffer.length() > 0) {
             int designationStart = designationsText.length();
-            if (currentModule != null && !currentModule.appliesToValue()) {
-                designationsText.append(designationBuffer);
-                int baseEnd = designationsText.length();
-                if (currentState == InputState.ENTERING_SUBSCRIPT) {
-                    designationsText.append(currentModule.getSymbol());
-                } else if (currentModule.getArgument() != null) {
-                    designationsText.append(currentModule.getArgument());
-                    designationsText.setSpan(new SubscriptSpan(), baseEnd, designationsText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                }
+            if (operationBuffer.length() > 0) {
+                designationsText.append(operationBuffer).append("(").append(designationBuffer).append(")");
             } else {
                 designationsText.append(designationBuffer);
             }
@@ -510,32 +424,25 @@ public class InputController {
             }
             designationsText.append(" = ");
             int valueStart = designationsText.length();
-            if (currentModule != null && currentModule.appliesToValue()) {
-                designationsText.append(valueBuffer);
-                int baseEnd = designationsText.length();
-                if (currentState == InputState.ENTERING_EXPONENT) {
-                    designationsText.append(currentModule.getSymbol());
-                } else if (currentModule.getArgument() != null) {
-                    designationsText.append(currentModule.getArgument());
-                    designationsText.setSpan(new SuperscriptSpan(), baseEnd, designationsText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                }
+            if (valueOperationBuffer.length() > 0) {
+                designationsText.append(valueOperationBuffer);
             } else {
                 designationsText.append(valueBuffer);
             }
             int valueEnd = designationsText.length();
             if (unitBuffer.length() > 0) {
                 designationsText.append(" ").append(unitBuffer);
-            } else if (valueBuffer.length() > 0 && currentState != InputState.ENTERING_EXPONENT) {
+            } else if (valueBuffer.length() > 0 || valueOperationBuffer.length() > 0) {
                 designationsText.append(" ?");
             }
 
             // Применяем жирный шрифт к активной части
             if ("designations".equals(currentInputField)) {
-                if (currentState == InputState.ENTERING_DESIGNATION && designationStart < designationsText.length() - 3) {
+                if (currentState == InputState.ENTERING_DESIGNATION && designationStart < valueStart - 3) {
                     designationsText.setSpan(
                             new StyleSpan(Typeface.BOLD),
                             designationStart,
-                            designationEnd,
+                            valueStart - 3,
                             Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
                     );
                 } else if (currentState == InputState.ENTERING_VALUE && valueStart < valueEnd) {
@@ -552,16 +459,10 @@ public class InputController {
                             designationsText.length(),
                             Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
                     );
-                } else if (currentState == InputState.ENTERING_EXPONENT || currentState == InputState.ENTERING_SUBSCRIPT) {
-                    designationsText.setSpan(
-                            new StyleSpan(Typeface.BOLD),
-                            designationsText.length() - (moduleArgumentBuffer.length() > 0 ? moduleArgumentBuffer.length() : 1),
-                            designationsText.length(),
-                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                    );
                 }
             }
         } else {
+            // Если ничего не введено, показываем подсказку
             int start = designationsText.length();
             designationsText.append("Введите обозначение");
             int color = "designations".equals(currentInputField) ? Color.BLACK : Color.GRAY;
@@ -601,6 +502,7 @@ public class InputController {
         }
         unknownView.setText(unknownText);
 
+        // Переключение цвета текста между полями
         if ("designations".equals(currentInputField)) {
             designationsView.setTextColor(Color.BLACK);
             unknownView.setTextColor(Color.parseColor("#A0A0A0"));
@@ -616,8 +518,8 @@ public class InputController {
             designationBuffer.setLength(0);
             valueBuffer.setLength(0);
             unitBuffer.setLength(0);
-            moduleArgumentBuffer.setLength(0);
-            currentModule = null;
+            operationBuffer.setLength(0);
+            valueOperationBuffer.setLength(0);
             currentState = InputState.ENTERING_DESIGNATION;
             designationUsesStix = null;
             logicalDesignation = null;
@@ -643,8 +545,8 @@ public class InputController {
         designationBuffer.setLength(0);
         valueBuffer.setLength(0);
         unitBuffer.setLength(0);
-        moduleArgumentBuffer.setLength(0);
-        currentModule = null;
+        operationBuffer.setLength(0);
+        valueOperationBuffer.setLength(0);
         currentState = InputState.ENTERING_DESIGNATION;
         designationUsesStix = null;
         logicalDesignation = null;

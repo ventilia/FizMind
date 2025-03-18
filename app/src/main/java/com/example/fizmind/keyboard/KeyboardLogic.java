@@ -161,11 +161,10 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                         new SymbolKey("num_9", "9", false),
                         new SymbolKey("num_0", "0", false),
                         new SymbolKey("num_dot", ".", false),
-                        new SymbolKey("op_superscript", "^", false),
+                        new SymbolKey("op_exponent", "^", false),  // Кнопка степени
                         new SymbolKey("op_subscript", "_", false)
                 )
         ));
-
         setupScrollButton();
         setModeListeners();
         setPageListeners();
