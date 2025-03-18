@@ -1,5 +1,8 @@
 package com.example.fizmind.measurement;
 
+import android.text.SpannableStringBuilder;
+import android.text.style.RelativeSizeSpan;
+import android.text.style.SubscriptSpan;
 import android.util.Log;
 
 public class UnknownQuantity {
@@ -41,5 +44,24 @@ public class UnknownQuantity {
         }
         sb.append(" = ?");
         return sb.toString();
+    }
+
+    /**
+     * Returns a SpannableStringBuilder with proper subscript formatting for display.
+     */
+    public SpannableStringBuilder getDisplayText() {
+        SpannableStringBuilder sb = new SpannableStringBuilder();
+        int start = sb.length();
+        sb.append(designation);
+        int end = sb.length();
+        if (subscript != null && !subscript.isEmpty()) {
+            int subscriptStart = sb.length();
+            sb.append(subscript);
+            int subscriptEnd = sb.length();
+            sb.setSpan(new SubscriptSpan(), subscriptStart, subscriptEnd, SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
+            sb.setSpan(new RelativeSizeSpan(0.75f), subscriptStart, subscriptEnd, SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        sb.append(" = ?");
+        return sb;
     }
 }
