@@ -165,6 +165,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                         new SymbolKey("op_subscript", "_", false)
                 )
         ));
+
         setupScrollButton();
         setModeListeners();
         setPageListeners();
