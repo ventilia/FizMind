@@ -313,8 +313,13 @@ public class InputController {
     /** Автоматическое сохранение неизвестного */
     private void saveUnknown() {
         if (unknownDesignation != null) {
-            String subscript = (unknownSubscriptModule != null) ? unknownSubscriptModule.getDisplayText().toString() : "";
-            UnknownQuantity unknown = new UnknownQuantity(unknownDesignation, subscript);
+            // Проверка на пустой активный модуль
+            if (unknownSubscriptModule != null && unknownSubscriptModule.isActive() && unknownSubscriptModule.isEmpty()) {
+                Log.w("InputController", "Нельзя сохранить с пустым активным индексом");
+                return;
+            }
+            String subscript = (unknownSubscriptModule != null && !unknownSubscriptModule.isEmpty()) ? unknownSubscriptModule.getDisplayText().toString() : "";
+            UnknownQuantity unknown = new UnknownQuantity(unknownDesignation, subscript, unknownUsesStix != null && unknownUsesStix);
             if (!unknown.validate()) {
                 Log.e("InputController", "Ошибка валидации неизвестного: " + unknown.toString());
                 return;
@@ -511,6 +516,12 @@ public class InputController {
     /** Сохранение измерения */
     public void onDownArrowPressed() {
         if ("designations".equals(currentInputField)) {
+            // Проверка на пустые активные модули
+            if ((designationExponentModule != null && designationExponentModule.isActive() && designationExponentModule.isEmpty()) ||
+                    (designationSubscriptModule != null && designationSubscriptModule.isActive() && designationSubscriptModule.isEmpty())) {
+                Log.w("InputController", "Нельзя сохранить с пустым активным модулем");
+                return;
+            }
             if (designationBuffer.length() == 0) {
                 Log.w("InputController", "Невозможно сохранить: отсутствует обозначение");
                 return;
@@ -542,8 +553,8 @@ public class InputController {
                 return;
             }
 
-            String exponent = (designationExponentModule != null) ? designationExponentModule.getDisplayText().toString() : "";
-            String subscript = (designationSubscriptModule != null) ? designationSubscriptModule.getDisplayText().toString() : "";
+            String exponent = (designationExponentModule != null && !designationExponentModule.isEmpty()) ? designationExponentModule.getDisplayText().toString() : "";
+            String subscript = (designationSubscriptModule != null && !designationSubscriptModule.isEmpty()) ? designationSubscriptModule.getDisplayText().toString() : "";
 
             ConcreteMeasurement measurement = new ConcreteMeasurement(
                     logicalDesignation, value, unit, operationBuffer.toString(), valueOperationBuffer.toString(), exponent, subscript);
@@ -741,7 +752,7 @@ public class InputController {
                 );
             }
         } else if (!unknowns.isEmpty()) {
-            unknownText.append(unknowns.get(unknowns.size() - 1).getDisplayText());
+            unknownText.append(unknowns.get(unknowns.size() - 1).getDisplayText(stixTypeface));
         } else {
             unknownText.append("Введите неизвестное");
             int color = "unknown".equals(currentInputField) ? Color.BLACK : Color.GRAY;

@@ -91,11 +91,18 @@ public class InputModule {
                 result.setSpan(new SubscriptSpan(), start, end, SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
                 result.setSpan(new RelativeSizeSpan(0.75f), start, end, SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
-            // STIX не применяется, чтобы индекс оставался в стандартном шрифте
         } else if (isActive) {
             result.append(type.getSymbol());  // Показываем символ модуля, если он активен и пуст
         }
         return result;
+    }
+
+    /**
+     * Проверяет, пуст ли модуль.
+     * @return true, если модуль не содержит цифр, false — если содержит.
+     */
+    public boolean isEmpty() {
+        return content.length() == 0;
     }
 
     public ModuleType getType() {

@@ -173,6 +173,11 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         applyModeButtonAnimations();
         updateModeButtonStyles();
         updateKeyboard();
+
+        // Инициализация InputController с передачей stixTypeface
+        inputController = new InputController(displayView, displayView);
+        inputController.setStixTypeface(stixTypeface);
+        inputController.setKeyboardModeSwitcher(this);
     }
 
     private void setupArrowButtons() {
@@ -192,6 +197,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
     public void setInputController(InputController inputController) {
         this.inputController = inputController;
         inputController.setKeyboardModeSwitcher(this);
+        inputController.setStixTypeface(stixTypeface);
     }
 
     @Override
