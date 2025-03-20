@@ -6,21 +6,21 @@ import android.text.style.SubscriptSpan;
 import android.util.Log;
 
 public class UnknownQuantity {
-    private final String designation; // Логический идентификатор обозначения
+    private final String displayDesignation; // Отображаемый текст обозначения (например, "F")
     private String subscript; // Индекс для обозначения
 
-    public UnknownQuantity(String designation, String subscript) {
-        this.designation = designation;
+    public UnknownQuantity(String displayDesignation, String subscript) {
+        this.displayDesignation = displayDesignation;
         this.subscript = subscript;
-        Log.d("UnknownQuantity", "Создано неизвестное: " + designation + (subscript != null ? "_" + subscript : ""));
+        Log.d("UnknownQuantity", "Создано неизвестное: " + displayDesignation + (subscript != null ? "_" + subscript : ""));
     }
 
-    public UnknownQuantity(String designation) {
-        this(designation, "");
+    public UnknownQuantity(String displayDesignation) {
+        this(displayDesignation, "");
     }
 
-    public String getDesignation() {
-        return designation;
+    public String getDisplayDesignation() {
+        return displayDesignation;
     }
 
     public String getSubscript() {
@@ -28,7 +28,7 @@ public class UnknownQuantity {
     }
 
     public boolean validate() {
-        if (designation == null || designation.isEmpty()) {
+        if (displayDesignation == null || displayDesignation.isEmpty()) {
             Log.e("UnknownQuantity", "Пустое обозначение для неизвестного");
             return false;
         }
@@ -38,7 +38,7 @@ public class UnknownQuantity {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(designation);
+        sb.append(displayDesignation);
         if (subscript != null && !subscript.isEmpty()) {
             sb.append("_").append(subscript);
         }
@@ -46,14 +46,9 @@ public class UnknownQuantity {
         return sb.toString();
     }
 
-    /**
-     * Returns a SpannableStringBuilder with proper subscript formatting for display.
-     */
     public SpannableStringBuilder getDisplayText() {
         SpannableStringBuilder sb = new SpannableStringBuilder();
-        int start = sb.length();
-        sb.append(designation);
-        int end = sb.length();
+        sb.append(displayDesignation);
         if (subscript != null && !subscript.isEmpty()) {
             int subscriptStart = sb.length();
             sb.append(subscript);
