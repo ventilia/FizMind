@@ -263,6 +263,8 @@ public class InputController {
                     unknownUsesStix = keyUsesStix;
                     focusState = FocusState.DESIGNATION;
                     Log.d("InputController", "Введено неизвестное обозначение: " + input);
+                    // Автоматическое сохранение обозначения
+                    saveUnknown();
                 } else {
                     Log.w("InputController", "В 'Введите неизвестное' можно вводить только обозначения из режима 'Designation'");
                     return;
@@ -313,7 +315,6 @@ public class InputController {
     /** Автоматическое сохранение неизвестного */
     private void saveUnknown() {
         if (unknownDesignation != null) {
-            // Проверка на пустой активный модуль
             if (unknownSubscriptModule != null && unknownSubscriptModule.isActive() && unknownSubscriptModule.isEmpty()) {
                 Log.w("InputController", "Нельзя сохранить с пустым активным индексом");
                 return;
@@ -516,7 +517,6 @@ public class InputController {
     /** Сохранение измерения */
     public void onDownArrowPressed() {
         if ("designations".equals(currentInputField)) {
-            // Проверка на пустые активные модули
             if ((designationExponentModule != null && designationExponentModule.isActive() && designationExponentModule.isEmpty()) ||
                     (designationSubscriptModule != null && designationSubscriptModule.isActive() && designationSubscriptModule.isEmpty())) {
                 Log.w("InputController", "Нельзя сохранить с пустым активным модулем");
