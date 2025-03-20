@@ -58,6 +58,14 @@ public class InputModule {
     }
 
     /**
+     * Активирует модуль (установка фокуса).
+     */
+    public void activate() {
+        isActive = true;
+        Log.d("InputModule", "Модуль активирован: " + type.getDescription());
+    }
+
+    /**
      * Деактивирует модуль (снятие фокуса).
      */
     public void deactivate() {
