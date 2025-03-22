@@ -9,7 +9,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.example.fizmind.R;
-import com.example.fizmind.KeyboardFragment;
+import com.example.fizmind.keyboard.KeyboardFragment;
 
 /**
  * Активность для конвертации единиц СИ с использованием фрагмента клавиатуры.

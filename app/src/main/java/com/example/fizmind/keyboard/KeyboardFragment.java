@@ -1,4 +1,4 @@
-package com.example.fizmind;
+package com.example.fizmind.keyboard;
 
 import android.os.Bundle;
 import android.util.Log;
@@ -13,8 +13,6 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.fizmind.R;
-import com.example.fizmind.keyboard.InputController;
-import com.example.fizmind.keyboard.KeyboardLogic;
 
 import java.util.Arrays;
 import java.util.List;
