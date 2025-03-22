@@ -77,29 +77,31 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
 
         keyboardData = new HashMap<>();
 
+        // Пример заполнения keyboardData.
+        // Если необходимо, добавьте параметр color=true для нужных клавиш.
         keyboardData.put("Designation", Arrays.asList(
                 Arrays.asList(
-                        new SymbolKey("a_latin", "a", true, true),
-                        new SymbolKey("v_latin", "v", true, true),
-                        new SymbolKey("s_latin", "s", true, true),
-                        new SymbolKey("t_latin", "t", true, true),
-                        new SymbolKey("m_latin", "m", true, true),
-                        new SymbolKey("F_latin", "F", true, true),
-                        new SymbolKey("designation_g", "g", false, true),
-                        new SymbolKey("P_latin", "P", true, true),
-                        new SymbolKey("E_latin", "E", true, true),
-                        new SymbolKey("designation_W", "W", false, true),
-                        new SymbolKey("designation_ρ", "ρ", false, true),
-                        new SymbolKey("N_latin", "N", true, true),
-                        new SymbolKey("S_latin", "S", true, true),
-                        new SymbolKey("h_latin", "h", true, true),
-                        new SymbolKey("designation_I", "I", false, true),
-                        new SymbolKey("U_latin", "U", true, true),
-                        new SymbolKey("R_latin", "R", true, true),
-                        new SymbolKey("C_latin", "C", true, true),
-                        new SymbolKey("L_latin", "L", true, true),
-                        new SymbolKey("designation_Φ", "Φ", true, true),
-                        new SymbolKey("B_latin", "B", true, true)
+                        new SymbolKey("a_latin", "a", true),
+                        new SymbolKey("v_latin", "v", true),
+                        new SymbolKey("s_latin", "s", true),
+                        new SymbolKey("t_latin", "t", true),
+                        new SymbolKey("m_latin", "m", true),
+                        new SymbolKey("F_latin", "F", true),
+                        new SymbolKey("designation_g", "g", false),
+                        new SymbolKey("P_latin", "P", true),
+                        new SymbolKey("E_latin", "E", true),
+                        new SymbolKey("designation_W", "W", false),
+                        new SymbolKey("designation_ρ", "ρ", false),
+                        new SymbolKey("N_latin", "N", true),
+                        new SymbolKey("S_latin", "S", true),
+                        new SymbolKey("h_latin", "h", true),
+                        new SymbolKey("designation_I", "I", false),
+                        new SymbolKey("U_latin", "U", true),
+                        new SymbolKey("R_latin", "R", true),
+                        new SymbolKey("C_latin", "C", true),
+                        new SymbolKey("L_latin", "L", true),
+                        new SymbolKey("designation_Φ", "Φ", true),
+                        new SymbolKey("B_latin", "B", true)
                 ),
                 Arrays.asList(
                         new SymbolKey("designation_rho", "ρ", false),
@@ -157,9 +159,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                         new SymbolKey("num_dot", ".", false),
                         new SymbolKey(" ", " ", false),
                         new SymbolKey(" ", " ", false),
-
-
-
                         new SymbolKey("num_4", "4", false),
                         new SymbolKey("num_5", "5", false),
                         new SymbolKey("num_6", "6", false),
@@ -167,15 +166,11 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                         new SymbolKey("op_exponent", "^", false),  // Кнопка степени
                         new SymbolKey(" ", " ", false),
                         new SymbolKey(" ", " ", false),
-
-
-
                         new SymbolKey("num_7", "7", false),
                         new SymbolKey("num_8", "8", false),
                         new SymbolKey("num_9", "9", false),
                         new SymbolKey(" ", " ", false),
                         new SymbolKey("op_subscript", "_", false)
-
                 )
         ));
 
@@ -327,6 +322,13 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                     keyView.setTypeface(stixTypeface);
                 } else {
                     keyView.setTypeface(Typeface.DEFAULT);
+                }
+
+                //
+                if (symbolKey.isColor()) {
+                    keyView.setTextColor(Color.WHITE);
+                } else {
+                    keyView.setTextColor(Color.BLACK);
                 }
 
                 keyView.setOnClickListener(view -> {
