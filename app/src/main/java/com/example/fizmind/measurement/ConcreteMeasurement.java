@@ -5,10 +5,11 @@ import com.example.fizmind.PhysicalQuantity;
 import com.example.fizmind.PhysicalQuantityRegistry;
 
 public class ConcreteMeasurement extends Measurement {
-    private String exponent; // Степень для числа
-    private String subscript; // Индекс для обозначения
+    private String exponent;
+    private String subscript;
 
-    public ConcreteMeasurement(String designation, double value, String unit, String designationOperations, String valueOperations, String exponent, String subscript) {
+    public ConcreteMeasurement(String designation, double value, String unit, String designationOperations,
+                               String valueOperations, String exponent, String subscript) {
         super(designation, value, unit, designationOperations, valueOperations);
         this.exponent = exponent;
         this.subscript = subscript;
@@ -16,6 +17,11 @@ public class ConcreteMeasurement extends Measurement {
 
     public ConcreteMeasurement(String designation, double value, String unit) {
         this(designation, value, unit, "", "", "", "");
+    }
+
+    // Добавлен геттер для subscript
+    public String getSubscript() {
+        return subscript;
     }
 
     @Override

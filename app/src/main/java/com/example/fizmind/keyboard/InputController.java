@@ -29,51 +29,46 @@ import java.util.Map;
 
 public class InputController {
 
-    /** Перечисления для состояний ввода и фокуса */
     public enum InputState {
-        ENTERING_DESIGNATION, // Ввод обозначения
-        ENTERING_VALUE,       // Ввод числа
-        ENTERING_UNIT         // Ввод единицы измерения
+        ENTERING_DESIGNATION,
+        ENTERING_VALUE,
+        ENTERING_UNIT
     }
 
     public enum FocusState {
-        DESIGNATION,  // Фокус на обозначении
-        VALUE,        // Фокус на значении
-        UNIT,         // Фокус на единице измерения
-        MODULE        // Фокус на модуле
+        DESIGNATION,
+        VALUE,
+        UNIT,
+        MODULE
     }
 
-    /** Поля класса */
-    private InputState currentState;                    // Текущее состояние ввода
-    private FocusState focusState;                      // Текущее состояние фокуса
-    private final StringBuilder designationBuffer;      // Буфер для обозначения
-    private final StringBuilder valueBuffer;            // Буфер для числового значения
-    private final StringBuilder unitBuffer;             // Буфер для единицы измерения
-    private final TextView designationsView;            // Поле "Введите обозначение"
-    private final TextView unknownView;                 // Поле "Введите неизвестное"
-    private final List<Measurement> measurements;       // Список сохраненных измерений
-    private final List<SpannableStringBuilder> history; // История введенных данных
-    private final List<UnknownQuantity> unknowns;       // Список сохраненных неизвестных
-    private Boolean designationUsesStix;                // Используется ли шрифт STIX для обозначения
-    private Boolean unknownUsesStix;                    // Используется ли шрифт STIX для неизвестного
-    private String logicalDesignation;                  // Логический идентификатор обозначения
-    private Typeface stixTypeface;                      // Шрифт STIX
-    private KeyboardModeSwitcher keyboardModeSwitcher;  // Переключатель режимов клавиатуры
-    private boolean isCurrentConstant;                  // Является ли текущая величина константой
-    private final StringBuilder operationBuffer;        // Буфер операций над обозначением
-    private final StringBuilder valueOperationBuffer;   // Буфер операций над числом
-    private final Map<String, String> lastUnitForDesignation; // Последние единицы для обозначений
-    private String currentInputField;                   // Текущее поле ввода
-    private String unknownDesignation;                  // Обозначение для неизвестного
-    private String logicalUnknownDesignation;           // Логический идентификатор неизвестного
+    private InputState currentState;
+    private FocusState focusState;
+    private final StringBuilder designationBuffer;
+    private final StringBuilder valueBuffer;
+    private final StringBuilder unitBuffer;
+    private final TextView designationsView;
+    private final TextView unknownView;
+    private final List<Measurement> measurements;
+    private final List<SpannableStringBuilder> history;
+    private final List<UnknownQuantity> unknowns;
+    private Boolean designationUsesStix;
+    private Boolean unknownUsesStix;
+    private String logicalDesignation;
+    private Typeface stixTypeface;
+    private KeyboardModeSwitcher keyboardModeSwitcher;
+    private boolean isCurrentConstant;
+    private final StringBuilder operationBuffer;
+    private final StringBuilder valueOperationBuffer;
+    private final Map<String, String> lastUnitForDesignation;
+    private String currentInputField;
+    private String unknownDesignation;
+    private String logicalUnknownDesignation;
 
-    // Модули для поля "Введите обозначение"
-    private InputModule designationExponentModule;      // Степень для обозначения
-    private InputModule designationSubscriptModule;     // Индекс для обозначения
-    // Модуль для поля "Введите неизвестное" (только индекс)
-    private InputModule unknownSubscriptModule;         // Индекс для неизвестного
+    private InputModule designationExponentModule;
+    private InputModule designationSubscriptModule;
+    private InputModule unknownSubscriptModule;
 
-    /** Конструктор */
     public InputController(TextView designationsView, TextView unknownView) {
         this.designationsView = designationsView;
         this.unknownView = unknownView;
@@ -99,17 +94,14 @@ public class InputController {
         updateDisplay();
     }
 
-    /** Установка шрифта STIX */
     public void setStixTypeface(Typeface stixTypeface) {
         this.stixTypeface = stixTypeface;
     }
 
-    /** Установка переключателя режимов клавиатуры */
     public void setKeyboardModeSwitcher(KeyboardModeSwitcher switcher) {
         this.keyboardModeSwitcher = switcher;
     }
 
-    /** Установка текущего поля ввода */
     public void setCurrentInputField(String field) {
         if (!field.equals(currentInputField)) {
             designationExponentModule = null;
@@ -130,22 +122,28 @@ public class InputController {
         Log.d("InputController", "Текущее поле ввода: " + field);
     }
 
-    /** Обработка ввода с клавиатуры */
     public void onKeyInput(String input, String sourceKeyboardMode, boolean keyUsesStix, String logicalId) {
         Log.d("InputController", "Текущее состояние: " + currentState + ", ввод: " + input + ", logicalId: " + logicalId);
 
         if ("designations".equals(currentInputField)) {
-            if (designationExponentModule != null && designationExponentModule.isActive()) {
-                designationExponentModule.apply(input);
-                focusState = FocusState.MODULE;
-                updateDisplay();
-                return;
-            }
-            if (designationSubscriptModule != null && designationSubscriptModule.isActive()) {
-                designationSubscriptModule.apply(input);
-                focusState = FocusState.MODULE;
-                updateDisplay();
-                return;
+            if (focusState == FocusState.MODULE) {
+                if (designationExponentModule != null && designationExponentModule.isActive()) {
+                    if ("Units_of_measurement".equals(sourceKeyboardMode)) {
+                        designationExponentModule.deactivate();
+                        focusState = FocusState.UNIT;
+                        currentState = InputState.ENTERING_UNIT;
+                        handleUnitInput(input, logicalId);
+                        return;
+                    } else {
+                        designationExponentModule.apply(input);
+                        updateDisplay();
+                        return;
+                    }
+                } else if (designationSubscriptModule != null && designationSubscriptModule.isActive()) {
+                    designationSubscriptModule.apply(input);
+                    updateDisplay();
+                    return;
+                }
             }
 
             if (currentState == InputState.ENTERING_DESIGNATION) {
@@ -227,19 +225,11 @@ public class InputController {
                     handleValueInput(input, logicalId);
                 }
             } else if (currentState == InputState.ENTERING_UNIT) {
-                PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(logicalDesignation);
-                if (pq == null) return;
-                int maxAllowedLength = pq.getAllowedUnits().stream().mapToInt(String::length).max().orElse(0);
-                String potentialUnit = unitBuffer.toString() + input;
-                boolean validPrefix = pq.getAllowedUnits().stream().anyMatch(allowed -> allowed.startsWith(potentialUnit));
-                if (validPrefix && potentialUnit.length() <= maxAllowedLength) {
-                    unitBuffer.append(input);
-                }
+                handleUnitInput(input, logicalId);
             }
         } else if ("unknown".equals(currentInputField)) {
-            if (unknownSubscriptModule != null && unknownSubscriptModule.isActive()) {
+            if (focusState == FocusState.MODULE && unknownSubscriptModule != null && unknownSubscriptModule.isActive()) {
                 unknownSubscriptModule.apply(input);
-                focusState = FocusState.MODULE;
                 updateDisplay();
                 return;
             }
@@ -263,7 +253,6 @@ public class InputController {
                     unknownUsesStix = keyUsesStix;
                     focusState = FocusState.DESIGNATION;
                     Log.d("InputController", "Введено неизвестное обозначение: " + input);
-                    // Автоматическое сохранение обозначения
                     saveUnknown();
                 } else {
                     Log.w("InputController", "В 'Введите неизвестное' можно вводить только обозначения из режима 'Designation'");
@@ -277,7 +266,6 @@ public class InputController {
         updateDisplay();
     }
 
-    /** Обработка ввода чисел и операций над числом */
     private void handleValueInput(String input, String logicalId) {
         Log.d("InputController", "Обработка ввода значения: " + input);
         if (input.matches("[0-9]")) {
@@ -312,7 +300,24 @@ public class InputController {
         updateDisplay();
     }
 
-    /** Автоматическое сохранение неизвестного */
+    private void handleUnitInput(String input, String logicalId) {
+        PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(logicalDesignation);
+        if (pq == null) {
+            Log.w("InputController", "Неизвестная физическая величина: " + logicalDesignation);
+            return;
+        }
+        int maxAllowedLength = pq.getAllowedUnits().stream().mapToInt(String::length).max().orElse(0);
+        String potentialUnit = unitBuffer.toString() + input;
+        boolean validPrefix = pq.getAllowedUnits().stream().anyMatch(allowed -> allowed.startsWith(potentialUnit));
+        if (validPrefix && potentialUnit.length() <= maxAllowedLength) {
+            unitBuffer.append(input);
+            Log.d("InputController", "Добавлена единица измерения: " + input);
+        } else {
+            Log.w("InputController", "Недопустимая единица измерения: " + potentialUnit);
+        }
+        updateDisplay();
+    }
+
     private void saveUnknown() {
         if (unknownDesignation != null) {
             if (unknownSubscriptModule != null && unknownSubscriptModule.isActive() && unknownSubscriptModule.isEmpty()) {
@@ -336,7 +341,6 @@ public class InputController {
         }
     }
 
-    /** Удаление последнего символа */
     public void onDeletePressed() {
         if ("designations".equals(currentInputField)) {
             if (focusState == FocusState.MODULE) {
@@ -426,27 +430,28 @@ public class InputController {
         updateDisplay();
     }
 
-    /** Переключение влево */
     public void onLeftArrowPressed() {
         if ("designations".equals(currentInputField)) {
             if (focusState == FocusState.MODULE) {
                 if (designationExponentModule != null && designationExponentModule.isActive()) {
-                    designationExponentModule.deactivate();
-                    focusState = FocusState.VALUE;
-                    Log.d("InputController", "Фокус снят со степени");
+                    handleModuleNavigation(ModuleType.EXPONENT, true);
                 } else if (designationSubscriptModule != null && designationSubscriptModule.isActive()) {
-                    designationSubscriptModule.deactivate();
-                    focusState = FocusState.DESIGNATION;
-                    Log.d("InputController", "Фокус снят с индекса");
+                    handleModuleNavigation(ModuleType.SUBSCRIPT, true);
                 }
             } else if (focusState == FocusState.UNIT) {
                 focusState = FocusState.VALUE;
                 currentState = InputState.ENTERING_VALUE;
                 Log.d("InputController", "Фокус переключен на значение");
             } else if (focusState == FocusState.VALUE && designationBuffer.length() > 0) {
-                focusState = FocusState.DESIGNATION;
-                currentState = InputState.ENTERING_DESIGNATION;
-                Log.d("InputController", "Фокус переключен на обозначение");
+                if (designationSubscriptModule != null) {
+                    designationSubscriptModule.activate();
+                    focusState = FocusState.MODULE;
+                    Log.d("InputController", "Фокус переключен на индекс");
+                } else {
+                    focusState = FocusState.DESIGNATION;
+                    currentState = InputState.ENTERING_DESIGNATION;
+                    Log.d("InputController", "Фокус переключен на обозначение");
+                }
             } else if (focusState == FocusState.DESIGNATION && designationSubscriptModule != null) {
                 designationSubscriptModule.activate();
                 focusState = FocusState.MODULE;
@@ -464,31 +469,30 @@ public class InputController {
         }
     }
 
-    /** Переключение вправо */
     public void onRightArrowPressed() {
         if ("designations".equals(currentInputField)) {
             if (focusState == FocusState.MODULE) {
                 if (designationExponentModule != null && designationExponentModule.isActive()) {
-                    designationExponentModule.deactivate();
-                    focusState = FocusState.UNIT;
-                    currentState = InputState.ENTERING_UNIT;
-                    Log.d("InputController", "Фокус снят со степени");
+                    handleModuleNavigation(ModuleType.EXPONENT, false);
                 } else if (designationSubscriptModule != null && designationSubscriptModule.isActive()) {
-                    designationSubscriptModule.deactivate();
+                    handleModuleNavigation(ModuleType.SUBSCRIPT, false);
+                }
+            } else if (focusState == FocusState.DESIGNATION) {
+                if (designationSubscriptModule != null) {
+                    designationSubscriptModule.activate();
+                    focusState = FocusState.MODULE;
+                    Log.d("InputController", "Фокус переключен на индекс");
+                } else if (designationBuffer.length() > 0) {
                     focusState = FocusState.VALUE;
                     currentState = InputState.ENTERING_VALUE;
-                    Log.d("InputController", "Фокус снят с индекса");
+                    Log.d("InputController", "Фокус переключен на значение");
                 }
-            } else if (focusState == FocusState.DESIGNATION && designationBuffer.length() > 0) {
-                focusState = FocusState.VALUE;
-                currentState = InputState.ENTERING_VALUE;
-                Log.d("InputController", "Фокус переключен на значение");
-            } else if (focusState == FocusState.VALUE && (valueBuffer.length() > 0 || valueOperationBuffer.length() > 0)) {
+            } else if (focusState == FocusState.VALUE) {
                 if (designationExponentModule != null) {
                     designationExponentModule.activate();
                     focusState = FocusState.MODULE;
                     Log.d("InputController", "Фокус переключен на степень");
-                } else {
+                } else if (valueBuffer.length() > 0 || valueOperationBuffer.length() > 0) {
                     focusState = FocusState.UNIT;
                     currentState = InputState.ENTERING_UNIT;
                     Log.d("InputController", "Фокус переключен на единицу измерения");
@@ -514,7 +518,42 @@ public class InputController {
         }
     }
 
-    /** Сохранение измерения */
+    private void handleModuleNavigation(ModuleType moduleType, boolean isLeftArrow) {
+        if (moduleType == ModuleType.EXPONENT) {
+            if (isLeftArrow) {
+                if (designationExponentModule != null && designationExponentModule.isActive()) {
+                    designationExponentModule.deactivate();
+                    focusState = FocusState.VALUE;
+                    Log.d("InputController", "Фокус снят со степени на значение");
+                }
+            } else {
+                if (designationExponentModule != null && designationExponentModule.isActive()) {
+                    designationExponentModule.deactivate();
+                    focusState = FocusState.UNIT;
+                    currentState = InputState.ENTERING_UNIT;
+                    Log.d("InputController", "Фокус снят со степени на единицы измерения");
+                }
+            }
+        } else if (moduleType == ModuleType.SUBSCRIPT) {
+            if (isLeftArrow) {
+                if (designationSubscriptModule != null && designationSubscriptModule.isActive()) {
+                    designationSubscriptModule.deactivate();
+                    focusState = FocusState.DESIGNATION;
+                    Log.d("InputController", "Фокус снят с индекса на обозначение");
+                }
+            } else {
+                if (designationSubscriptModule != null && designationSubscriptModule.isActive()) {
+                    designationSubscriptModule.deactivate();
+                    focusState = FocusState.VALUE;
+                    currentState = InputState.ENTERING_VALUE;
+                    Log.d("InputController", "Фокус снят с индекса на значение");
+                }
+            }
+        }
+        updateKeyboardMode();
+        updateDisplay();
+    }
+
     public void onDownArrowPressed() {
         if ("designations".equals(currentInputField)) {
             if ((designationExponentModule != null && designationExponentModule.isActive() && designationExponentModule.isEmpty()) ||
@@ -555,6 +594,11 @@ public class InputController {
 
             String exponent = (designationExponentModule != null && !designationExponentModule.isEmpty()) ? designationExponentModule.getDisplayText().toString() : "";
             String subscript = (designationSubscriptModule != null && !designationSubscriptModule.isEmpty()) ? designationSubscriptModule.getDisplayText().toString() : "";
+
+            if (!ModuleValidator.isSubscriptUnique(logicalDesignation, subscript, measurements)) {
+                Log.e("InputController", "Ошибка: индекс уже используется для обозначения: " + logicalDesignation);
+                return;
+            }
 
             ConcreteMeasurement measurement = new ConcreteMeasurement(
                     logicalDesignation, value, unit, operationBuffer.toString(), valueOperationBuffer.toString(), exponent, subscript);
@@ -618,7 +662,6 @@ public class InputController {
         }
     }
 
-    /** Обновление режима клавиатуры */
     private void updateKeyboardMode() {
         if (keyboardModeSwitcher != null && "designations".equals(currentInputField)) {
             if (currentState == InputState.ENTERING_DESIGNATION) {
@@ -631,7 +674,6 @@ public class InputController {
         }
     }
 
-    /** Обновление отображения */
     private void updateDisplay() {
         SpannableStringBuilder designationsText = new SpannableStringBuilder();
 
@@ -774,7 +816,6 @@ public class InputController {
         }
     }
 
-    /** Полная очистка */
     public void clearAll() {
         if ("designations".equals(currentInputField)) {
             designationBuffer.setLength(0);
@@ -807,7 +848,6 @@ public class InputController {
         }
     }
 
-    /** Сброс текущего ввода */
     private void resetInput() {
         designationBuffer.setLength(0);
         valueBuffer.setLength(0);
@@ -824,17 +864,14 @@ public class InputController {
         updateDisplay();
     }
 
-    /** Получение списка измерений */
     public List<Measurement> getMeasurements() {
         return new ArrayList<>(measurements);
     }
 
-    /** Получение списка неизвестных */
     public List<UnknownQuantity> getUnknowns() {
         return new ArrayList<>(unknowns);
     }
 
-    /** Логирование всех сохраненных данных */
     public void logAllSavedData() {
         StringBuilder logMessage = new StringBuilder("Все сохраненные данные:\n");
 

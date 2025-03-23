@@ -4,8 +4,8 @@ public abstract class Measurement {
     protected String designation;
     protected double value;
     protected String unit;
-    protected String designationOperations; // Операции над обозначением
-    protected String valueOperations;       // Операции над числом
+    protected String designationOperations;
+    protected String valueOperations;
 
     public Measurement(String designation, double value, String unit, String designationOperations, String valueOperations) {
         this.designation = designation;
@@ -17,6 +17,11 @@ public abstract class Measurement {
 
     public Measurement(String designation, double value, String unit) {
         this(designation, value, unit, "", "");
+    }
+
+    // Добавлен геттер для designation
+    public String getDesignation() {
+        return designation;
     }
 
     public String getDesignationOperations() {

@@ -2,6 +2,14 @@ package com.example.fizmind.modules;
 
 import android.util.Log;
 
+import com.example.fizmind.measurement.ConcreteMeasurement;
+import com.example.fizmind.measurement.Measurement;
+
+import java.util.List;
+
+/**
+ * Класс для валидации модулей (степени и индекса).
+ */
 public class ModuleValidator {
 
     /**
@@ -46,6 +54,29 @@ public class ModuleValidator {
         if (designationBuffer.length() == 0) {
             Log.w("ModuleValidator", "Нельзя начинать ввод с модуля");
             return false;
+        }
+        return true;
+    }
+
+    /**
+     * Проверяет, уникален ли индекс для данного обозначения среди всех измерений.
+     * @param designation Логический идентификатор обозначения
+     * @param subscript Индекс для проверки
+     * @param measurements Список сохраненных измерений
+     * @return true, если индекс уникален, false — если уже используется
+     */
+    public static boolean isSubscriptUnique(String designation, String subscript, List<Measurement> measurements) {
+        if (subscript == null || subscript.isEmpty()) {
+            return true; // Пустой индекс считается уникальным
+        }
+        for (Measurement m : measurements) {
+            if (m instanceof ConcreteMeasurement) {
+                ConcreteMeasurement cm = (ConcreteMeasurement) m;
+                if (cm.getDesignation().equals(designation) && subscript.equals(cm.getSubscript())) {
+                    Log.w("ModuleValidator", "Индекс '" + subscript + "' уже используется для обозначения: " + designation);
+                    return false;
+                }
+            }
         }
         return true;
     }
