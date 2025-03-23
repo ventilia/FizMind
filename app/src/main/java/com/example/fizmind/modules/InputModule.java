@@ -51,13 +51,6 @@ public class InputModule {
     }
 
     /**
-     * Проверяет, активен ли модуль.
-     */
-    public boolean isActive() {
-        return isActive;
-    }
-
-    /**
      * Активирует модуль (установка фокуса).
      */
     public void activate() {
@@ -70,11 +63,28 @@ public class InputModule {
      */
     public void deactivate() {
         isActive = false;
-        Log.d("InputModule", "Модуль " + type.getDescription() + " деактивирован");
+        Log.d("InputModule", "Модуль деактивирован: " + type.getDescription());
+    }
+
+    /**
+     * Проверяет, активен ли модуль.
+     * @return true, если модуль активен, false — если нет.
+     */
+    public boolean isActive() {
+        return isActive;
+    }
+
+    /**
+     * Проверяет, пуст ли модуль.
+     * @return true, если модуль не содержит цифр, false — если содержит.
+     */
+    public boolean isEmpty() {
+        return content.length() == 0;
     }
 
     /**
      * Возвращает текстовое представление модуля для отображения.
+     * @return SpannableStringBuilder с примененными стилями.
      */
     public SpannableStringBuilder getDisplayText() {
         SpannableStringBuilder result = new SpannableStringBuilder();
@@ -95,14 +105,6 @@ public class InputModule {
             result.append(type.getSymbol());  // Показываем символ модуля, если он активен и пуст
         }
         return result;
-    }
-
-    /**
-     * Проверяет, пуст ли модуль.
-     * @return true, если модуль не содержит цифр, false — если содержит.
-     */
-    public boolean isEmpty() {
-        return content.length() == 0;
     }
 
     public ModuleType getType() {

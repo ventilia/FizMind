@@ -247,17 +247,13 @@ public class InputController {
                 return;
             }
             if (unknownDesignation == null) {
-                if ("Designation".equals(sourceKeyboardMode)) {
-                    unknownDesignation = input;
-                    logicalUnknownDesignation = logicalId;
-                    unknownUsesStix = keyUsesStix;
-                    focusState = FocusState.DESIGNATION;
-                    Log.d("InputController", "Введено неизвестное обозначение: " + input);
-                    saveUnknown();
-                } else {
-                    Log.w("InputController", "В 'Введите неизвестное' можно вводить только обозначения из режима 'Designation'");
-                    return;
-                }
+                // Убрана проверка на sourceKeyboardMode, чтобы разрешить ввод с любого режима
+                unknownDesignation = input;
+                logicalUnknownDesignation = logicalId;
+                unknownUsesStix = keyUsesStix;
+                focusState = FocusState.DESIGNATION;
+                Log.d("InputController", "Введено неизвестное обозначение: " + input);
+                saveUnknown();
             } else {
                 Log.w("InputController", "В 'Введите неизвестное' можно ввести только одно обозначение");
                 return;
@@ -412,10 +408,7 @@ public class InputController {
                     focusState = FocusState.DESIGNATION;
                     Log.d("InputController", "Индекс удалён полностью в 'Введите неизвестное'");
                 }
-                updateDisplay();
-                return;
-            }
-            if (unknownDesignation != null) {
+            } else if (unknownDesignation != null) {
                 unknownDesignation = null;
                 logicalUnknownDesignation = null;
                 unknownUsesStix = null;
@@ -773,37 +766,28 @@ public class InputController {
                 unknownText.append(unknownDesignation);
             }
             int end = unknownText.length();
-            if (unknownSubscriptModule != null) {
+            if (unknownSubscriptModule != null && !unknownSubscriptModule.isEmpty()) {
+                int subscriptStart = unknownText.length();
                 unknownText.append(unknownSubscriptModule.getDisplayText());
+                int subscriptEnd = unknownText.length();
+                unknownText.setSpan(new SubscriptSpan(), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                unknownText.setSpan(new RelativeSizeSpan(0.75f), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
             if (unknownUsesStix != null && unknownUsesStix && stixTypeface != null) {
-                unknownText.setSpan(
-                        new CustomTypefaceSpan(stixTypeface),
-                        start,
-                        end,
-                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                );
+                unknownText.setSpan(new CustomTypefaceSpan(stixTypeface), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
             unknownText.append(" = ?");
             if ("unknown".equals(currentInputField) && focusState == FocusState.MODULE && unknownSubscriptModule != null && unknownSubscriptModule.isActive()) {
-                unknownText.setSpan(
-                        new StyleSpan(Typeface.BOLD),
-                        end,
-                        unknownText.length() - 4,
-                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                );
+                int moduleStart = end;
+                int moduleEnd = unknownText.length() - 4; // " = ?"
+                unknownText.setSpan(new StyleSpan(Typeface.BOLD), moduleStart, moduleEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
         } else if (!unknowns.isEmpty()) {
             unknownText.append(unknowns.get(unknowns.size() - 1).getDisplayText(stixTypeface));
         } else {
             unknownText.append("Введите неизвестное");
             int color = "unknown".equals(currentInputField) ? Color.BLACK : Color.GRAY;
-            unknownText.setSpan(
-                    new ForegroundColorSpan(color),
-                    0,
-                    unknownText.length(),
-                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-            );
+            unknownText.setSpan(new ForegroundColorSpan(color), 0, unknownText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         unknownView.setText(unknownText);
 
