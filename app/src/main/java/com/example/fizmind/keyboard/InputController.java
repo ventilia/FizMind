@@ -33,45 +33,50 @@ import java.util.Map;
 public class InputController {
 
     public enum InputState {
-        ENTERING_DESIGNATION,
-        ENTERING_VALUE,
-        ENTERING_UNIT
+        ENTERING_DESIGNATION, // Ввод обозначения
+        ENTERING_VALUE,       // Ввод значения
+        ENTERING_UNIT         // Ввод единицы измерения
     }
 
     public enum FocusState {
-        DESIGNATION,
-        VALUE,
-        UNIT,
-        MODULE
+        DESIGNATION, // Фокус на обозначении
+        VALUE,       // Фокус на значении
+        UNIT,        // Фокус на единице измерения
+        MODULE       // Фокус на модуле (например, степень или индекс)
     }
 
     private InputState currentState;
     private FocusState focusState;
-    private final StringBuilder designationBuffer;
-    private final StringBuilder valueBuffer;
-    private final StringBuilder unitBuffer;
-    private final TextView designationsView;
-    private final TextView unknownView;
-    private final List<Measurement> measurements;
-    private final List<SpannableStringBuilder> history;
-    private final List<UnknownQuantity> unknowns;
-    private Boolean designationUsesStix;
-    private Boolean unknownUsesStix;
-    private String logicalDesignation;
-    private Typeface stixTypeface;
-    private KeyboardModeSwitcher keyboardModeSwitcher;
-    private boolean isCurrentConstant;
-    private final StringBuilder operationBuffer;
-    private final StringBuilder valueOperationBuffer;
-    private final Map<String, String> lastUnitForDesignation;
-    private String currentInputField;
-    private String unknownDesignation;
-    private String logicalUnknownDesignation;
-    private boolean isUnknownInputAllowed = true; // Флаг, разрешающий переключение на "Введите неизвестное"
+    private final StringBuilder designationBuffer;       // Буфер для обозначения
+    private final StringBuilder valueBuffer;             // Буфер для значения
+    private final StringBuilder unitBuffer;              // Буфер для единицы измерения
+    private final TextView designationsView;             // Поле отображения "Введите обозначение"
+    private final TextView unknownView;                  // Поле отображения "Введите неизвестное"
+    private final List<Measurement> measurements;        // Список сохраненных измерений
+    private final List<SpannableStringBuilder> history;  // История отображения измерений
+    private final List<UnknownQuantity> unknowns;        // Список сохраненных неизвестных
+    private Boolean designationUsesStix;                 // Используется ли шрифт STIX для обозначения
+    private Boolean unknownUsesStix;                     // Используется ли шрифт STIX для неизвестного
+    private String logicalDesignation;                   // Логический идентификатор обозначения
+    private Typeface stixTypeface;                       // Шрифт STIX
+    private KeyboardModeSwitcher keyboardModeSwitcher;   // Переключатель режимов клавиатуры
+    private boolean isCurrentConstant;                   // Является ли текущее значение константой
+    private final StringBuilder operationBuffer;         // Буфер для операций с обозначением
+    private final StringBuilder valueOperationBuffer;    // Буфер для операций со значением
+    private final Map<String, String> lastUnitForDesignation; // Последние единицы измерения для обозначений
+    private String currentInputField;                    // Текущее поле ввода ("designations" или "unknown")
+    private String unknownDesignation;                   // Текущее неизвестное обозначение
+    private String logicalUnknownDesignation;            // Логический идентификатор неизвестного
+    private boolean isUnknownInputAllowed = true;        // Флаг разрешения переключения на "Введите неизвестное"
 
-    private InputModule designationExponentModule;
-    private InputModule designationSubscriptModule;
-    private InputModule unknownSubscriptModule;
+    private InputModule designationExponentModule;       // Модуль степени для обозначения
+    private InputModule designationSubscriptModule;      // Модуль индекса для обозначения
+    private InputModule unknownSubscriptModule;          // Модуль индекса для неизвестного
+
+    // Переменные для отслеживания двойного нажатия на "DELETE"
+    private long lastDeleteTime = 0;                     // Время последнего нажатия
+    private int deleteClickCount = 0;                    // Счетчик нажатий
+    private static final long DOUBLE_CLICK_TIME_DELTA = 300; // Максимальный интервал между нажатиями (в миллисекундах)
 
     public InputController(TextView designationsView, TextView unknownView) {
         this.designationsView = designationsView;
@@ -359,7 +364,33 @@ public class InputController {
         }
     }
 
+    /**
+     * Обрабатывает нажатие кнопки "DELETE". Поддерживает удаление последнего символа при одиночном нажатии
+     * и удаление последнего сохраненного поля при двойном нажатии.
+     */
     public void onDeletePressed() {
+        long currentTime = System.currentTimeMillis();
+        // Проверяем, прошло ли достаточно мало времени с последнего нажатия для двойного клика
+        if (currentTime - lastDeleteTime < DOUBLE_CLICK_TIME_DELTA) {
+            deleteClickCount++;
+        } else {
+            deleteClickCount = 1;
+        }
+        lastDeleteTime = currentTime;
+
+        if (deleteClickCount == 2) {
+            deleteLastSavedField(); // Удаляем последнее сохраненное поле при двойном нажатии
+            deleteClickCount = 0;   // Сбрасываем счетчик
+        } else {
+            performSingleDelete();  // Выполняем обычное удаление при одиночном нажатии
+        }
+        updateDisplay();
+    }
+
+    /**
+     * Выполняет удаление последнего символа или очистку текущего ввода.
+     */
+    private void performSingleDelete() {
         if ("designations".equals(currentInputField)) {
             if (focusState == FocusState.MODULE) {
                 if (designationExponentModule != null && designationExponentModule.isActive()) {
@@ -375,7 +406,6 @@ public class InputController {
                         Log.d("InputController", "Индекс удалён полностью");
                     }
                 }
-                updateDisplay();
                 return;
             }
             if (currentState == InputState.ENTERING_UNIT) {
@@ -437,12 +467,30 @@ public class InputController {
                 unknownSubscriptModule = null;
                 focusState = FocusState.DESIGNATION;
                 Log.d("InputController", "Удалено текущее неизвестное обозначение");
-            } else if (!unknowns.isEmpty()) {
-                unknowns.remove(unknowns.size() - 1);
-                Log.d("InputController", "Удалено последнее сохраненное неизвестное");
             }
         }
-        updateDisplay();
+    }
+
+    /**
+     * Удаляет последнее сохраненное поле (измерение или неизвестное) в зависимости от текущего поля ввода.
+     */
+    private void deleteLastSavedField() {
+        if ("designations".equals(currentInputField)) {
+            if (!measurements.isEmpty()) {
+                measurements.remove(measurements.size() - 1);
+                history.remove(history.size() - 1);
+                Log.d("InputController", "Удалено последнее сохраненное измерение");
+            } else {
+                Log.w("InputController", "Нет сохраненных измерений для удаления");
+            }
+        } else if ("unknown".equals(currentInputField)) {
+            if (!unknowns.isEmpty()) {
+                unknowns.remove(unknowns.size() - 1);
+                Log.d("InputController", "Удалено последнее сохраненное неизвестное");
+            } else {
+                Log.w("InputController", "Нет сохраненных неизвестных для удаления");
+            }
+        }
     }
 
     public void onLeftArrowPressed() {

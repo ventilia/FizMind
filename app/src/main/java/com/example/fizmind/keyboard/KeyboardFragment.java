@@ -146,12 +146,12 @@ public class KeyboardFragment extends Fragment {
 
         buttonClear.setOnClickListener(v -> {
             Log.d("KeyboardFragment", "Нажата кнопка DELETE");
-            inputController.onDeletePressed();
+            inputController.onDeletePressed(); // Вызываем метод обработки нажатия DELETE
         });
 
         buttonClear.setOnLongClickListener(v -> {
             Log.d("KeyboardFragment", "Длительное нажатие на DELETE");
-            inputController.clearAll();
+            inputController.clearAll(); // Очистка всех данных при длительном нажатии
             return true;
         });
 
