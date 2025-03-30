@@ -12,6 +12,8 @@ import android.text.style.SuperscriptSpan;
 import android.util.Log;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
+
 import com.example.fizmind.PhysicalQuantity;
 import com.example.fizmind.PhysicalQuantityRegistry;
 import com.example.fizmind.animation.CustomTypefaceSpan;
@@ -27,6 +29,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Контроллер ввода, управляющий данными в полях "Введите обозначение" и "Введите неизвестное".
+ * Поддерживает работу с опциональным полем "Введите неизвестное".
+ */
 public class InputController {
 
     public enum InputState {
@@ -48,7 +54,7 @@ public class InputController {
     private final StringBuilder valueBuffer;
     private final StringBuilder unitBuffer;
     private final TextView designationsView;
-    private final TextView unknownView;
+    private final @Nullable TextView unknownView; // Поле может быть null
     private final List<Measurement> measurements;
     private final List<SpannableStringBuilder> history;
     private final List<UnknownQuantity> unknowns;
@@ -69,7 +75,12 @@ public class InputController {
     private InputModule designationSubscriptModule;
     private InputModule unknownSubscriptModule;
 
-    public InputController(TextView designationsView, TextView unknownView) {
+    /**
+     * Конструктор контроллера ввода.
+     * @param designationsView поле "Введите обозначение"
+     * @param unknownView поле "Введите неизвестное", может быть null
+     */
+    public InputController(TextView designationsView, @Nullable TextView unknownView) {
         this.designationsView = designationsView;
         this.unknownView = unknownView;
         this.currentState = InputState.ENTERING_DESIGNATION;
@@ -102,6 +113,10 @@ public class InputController {
         this.keyboardModeSwitcher = switcher;
     }
 
+    /**
+     * Устанавливает текущее поле ввода.
+     * @param field "designations" или "unknown"
+     */
     public void setCurrentInputField(String field) {
         if (!field.equals(currentInputField)) {
             designationExponentModule = null;
@@ -109,6 +124,10 @@ public class InputController {
             unknownSubscriptModule = null;
             focusState = FocusState.DESIGNATION;
             currentState = InputState.ENTERING_DESIGNATION;
+        }
+        if ("unknown".equals(field) && unknownView == null) {
+            Log.w("InputController", "Попытка переключиться на 'unknown', но блок не отображается");
+            return;
         }
         this.currentInputField = field;
         if ("unknown".equals(field)) {
@@ -122,6 +141,13 @@ public class InputController {
         Log.d("InputController", "Текущее поле ввода: " + field);
     }
 
+    /**
+     * Обрабатывает ввод символа с клавиатуры.
+     * @param input введенный символ
+     * @param sourceKeyboardMode режим клавиатуры
+     * @param keyUsesStix использует ли символ шрифт STIX
+     * @param logicalId логический идентификатор символа
+     */
     public void onKeyInput(String input, String sourceKeyboardMode, boolean keyUsesStix, String logicalId) {
         Log.d("InputController", "Текущее состояние: " + currentState + ", ввод: " + input + ", logicalId: " + logicalId);
 
@@ -231,7 +257,7 @@ public class InputController {
                 }
                 handleUnitInput(input, logicalId);
             }
-        } else if ("unknown".equals(currentInputField)) {
+        } else if ("unknown".equals(currentInputField) && unknownView != null) {
             if (focusState == FocusState.MODULE && unknownSubscriptModule != null && unknownSubscriptModule.isActive()) {
                 unknownSubscriptModule.apply(input);
                 updateDisplay();
@@ -256,7 +282,6 @@ public class InputController {
                 unknownUsesStix = keyUsesStix;
                 focusState = FocusState.DESIGNATION;
                 Log.d("InputController", "Введено неизвестное обозначение: " + input);
-                // saveUnknown() убрано, чтобы обозначение не сбрасывалось автоматически
             } else {
                 Log.w("InputController", "В 'Введите неизвестное' можно ввести только одно обозначение");
                 return;
@@ -318,26 +343,25 @@ public class InputController {
     }
 
     private void saveUnknown() {
-        if (unknownDesignation != null) {
-            if (unknownSubscriptModule != null && unknownSubscriptModule.isActive() && unknownSubscriptModule.isEmpty()) {
-                Log.w("InputController", "Нельзя сохранить с пустым активным индексом");
-                return;
-            }
-            String subscript = (unknownSubscriptModule != null && !unknownSubscriptModule.isEmpty()) ? unknownSubscriptModule.getDisplayText().toString() : "";
-            UnknownQuantity unknown = new UnknownQuantity(unknownDesignation, subscript, unknownUsesStix != null && unknownUsesStix);
-            if (!unknown.validate()) {
-                Log.e("InputController", "Ошибка валидации неизвестного: " + unknown.toString());
-                return;
-            }
-            unknowns.add(unknown);
-            Log.d("InputController", "Сохранено неизвестное: " + unknown.toString());
-            unknownDesignation = null;
-            logicalUnknownDesignation = null;
-            unknownUsesStix = null;
-            unknownSubscriptModule = null;
-            focusState = FocusState.DESIGNATION;
-            updateDisplay();
+        if (unknownView == null || unknownDesignation == null) return;
+        if (unknownSubscriptModule != null && unknownSubscriptModule.isActive() && unknownSubscriptModule.isEmpty()) {
+            Log.w("InputController", "Нельзя сохранить с пустым активным индексом");
+            return;
         }
+        String subscript = (unknownSubscriptModule != null && !unknownSubscriptModule.isEmpty()) ? unknownSubscriptModule.getDisplayText().toString() : "";
+        UnknownQuantity unknown = new UnknownQuantity(unknownDesignation, subscript, unknownUsesStix != null && unknownUsesStix);
+        if (!unknown.validate()) {
+            Log.e("InputController", "Ошибка валидации неизвестного: " + unknown.toString());
+            return;
+        }
+        unknowns.add(unknown);
+        Log.d("InputController", "Сохранено неизвестное: " + unknown.toString());
+        unknownDesignation = null;
+        logicalUnknownDesignation = null;
+        unknownUsesStix = null;
+        unknownSubscriptModule = null;
+        focusState = FocusState.DESIGNATION;
+        updateDisplay();
     }
 
     public void onDeletePressed() {
@@ -404,7 +428,7 @@ public class InputController {
                     Log.d("InputController", "Удалено обозначение, все буферы очищены");
                 }
             }
-        } else if ("unknown".equals(currentInputField)) {
+        } else if ("unknown".equals(currentInputField) && unknownView != null) {
             if (focusState == FocusState.MODULE && unknownSubscriptModule != null && unknownSubscriptModule.isActive()) {
                 if (unknownSubscriptModule.delete()) {
                     unknownSubscriptModule = null;
@@ -455,7 +479,7 @@ public class InputController {
             }
             updateKeyboardMode();
             updateDisplay();
-        } else if ("unknown".equals(currentInputField)) {
+        } else if ("unknown".equals(currentInputField) && unknownView != null) {
             if (focusState == FocusState.MODULE && unknownSubscriptModule != null && unknownSubscriptModule.isActive()) {
                 unknownSubscriptModule.deactivate();
                 focusState = FocusState.DESIGNATION;
@@ -500,7 +524,7 @@ public class InputController {
             }
             updateKeyboardMode();
             updateDisplay();
-        } else if ("unknown".equals(currentInputField)) {
+        } else if ("unknown".equals(currentInputField) && unknownView != null) {
             if (focusState == FocusState.MODULE && unknownSubscriptModule != null && unknownSubscriptModule.isActive()) {
                 unknownSubscriptModule.deactivate();
                 focusState = FocusState.DESIGNATION;
@@ -653,7 +677,7 @@ public class InputController {
                 keyboardModeSwitcher.switchToDesignation();
             }
             logAllSavedData();
-        } else if ("unknown".equals(currentInputField)) {
+        } else if ("unknown".equals(currentInputField) && unknownView != null) {
             saveUnknown();
         }
     }
@@ -762,39 +786,45 @@ public class InputController {
         }
         designationsView.setText(designationsText);
 
-        SpannableStringBuilder unknownText = new SpannableStringBuilder();
-        if (unknownDesignation != null) {
-            int start = unknownText.length();
-            unknownText.append(unknownDesignation);
-            int end = unknownText.length();
-            if (unknownUsesStix != null && unknownUsesStix && stixTypeface != null) {
-                unknownText.setSpan(new CustomTypefaceSpan(stixTypeface), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        // Обновляем unknownView только если оно существует
+        if (unknownView != null) {
+            SpannableStringBuilder unknownText = new SpannableStringBuilder();
+            if (unknownDesignation != null) {
+                int start = unknownText.length();
+                unknownText.append(unknownDesignation);
+                int end = unknownText.length();
+                if (unknownUsesStix != null && unknownUsesStix && stixTypeface != null) {
+                    unknownText.setSpan(new CustomTypefaceSpan(stixTypeface), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+                if (unknownSubscriptModule != null) {
+                    SpannableStringBuilder subscriptText = unknownSubscriptModule.getDisplayText();
+                    unknownText.append(subscriptText);
+                }
+                unknownText.append(" = ?");
+                if ("unknown".equals(currentInputField) && focusState == FocusState.MODULE && unknownSubscriptModule != null && unknownSubscriptModule.isActive()) {
+                    int moduleStart = end;
+                    int moduleEnd = unknownText.length() - 4; // " = ?"
+                    unknownText.setSpan(new StyleSpan(Typeface.BOLD), moduleStart, moduleEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+            } else if (!unknowns.isEmpty()) {
+                unknownText.append(unknowns.get(unknowns.size() - 1).getDisplayText(stixTypeface));
+            } else {
+                unknownText.append("Введите неизвестное");
+                int color = "unknown".equals(currentInputField) ? Color.BLACK : Color.GRAY;
+                unknownText.setSpan(new ForegroundColorSpan(color), 0, unknownText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
-            if (unknownSubscriptModule != null) {
-                SpannableStringBuilder subscriptText = unknownSubscriptModule.getDisplayText();
-                unknownText.append(subscriptText);
-            }
-            unknownText.append(" = ?");
-            if ("unknown".equals(currentInputField) && focusState == FocusState.MODULE && unknownSubscriptModule != null && unknownSubscriptModule.isActive()) {
-                int moduleStart = end;
-                int moduleEnd = unknownText.length() - 4; // " = ?"
-                unknownText.setSpan(new StyleSpan(Typeface.BOLD), moduleStart, moduleEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            }
-        } else if (!unknowns.isEmpty()) {
-            unknownText.append(unknowns.get(unknowns.size() - 1).getDisplayText(stixTypeface));
-        } else {
-            unknownText.append("Введите неизвестное");
-            int color = "unknown".equals(currentInputField) ? Color.BLACK : Color.GRAY;
-            unknownText.setSpan(new ForegroundColorSpan(color), 0, unknownText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        }
-        unknownView.setText(unknownText);
+            unknownView.setText(unknownText);
 
-        if ("designations".equals(currentInputField)) {
+            if ("designations".equals(currentInputField)) {
+                designationsView.setTextColor(Color.BLACK);
+                unknownView.setTextColor(Color.parseColor("#A0A0A0"));
+            } else if ("unknown".equals(currentInputField)) {
+                designationsView.setTextColor(Color.parseColor("#A0A0A0"));
+                unknownView.setTextColor(Color.BLACK);
+            }
+        } else {
+            // Если unknownView отсутствует, устанавливаем цвет только для designationsView
             designationsView.setTextColor(Color.BLACK);
-            unknownView.setTextColor(Color.parseColor("#A0A0A0"));
-        } else if ("unknown".equals(currentInputField)) {
-            designationsView.setTextColor(Color.parseColor("#A0A0A0"));
-            unknownView.setTextColor(Color.BLACK);
         }
     }
 
@@ -815,7 +845,7 @@ public class InputController {
             history.clear();
             measurements.clear();
             Log.d("InputController", "Очищены все данные для 'Введите обозначение'");
-        } else if ("unknown".equals(currentInputField)) {
+        } else if ("unknown".equals(currentInputField) && unknownView != null) {
             unknownDesignation = null;
             logicalUnknownDesignation = null;
             unknownUsesStix = null;
@@ -867,7 +897,9 @@ public class InputController {
         }
 
         logMessage.append("Неизвестные ('Введите неизвестное'):\n");
-        if (unknowns.isEmpty()) {
+        if (unknownView == null) {
+            logMessage.append("  Блок 'Введите неизвестное' не отображается\n");
+        } else if (unknowns.isEmpty()) {
             logMessage.append("  Нет сохраненных неизвестных\n");
         } else {
             for (UnknownQuantity u : unknowns) {

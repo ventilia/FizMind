@@ -13,6 +13,7 @@ import com.example.fizmind.keyboard.KeyboardFragment;
 
 /**
  * Активность физического калькулятора с использованием фрагмента клавиатуры.
+ * Отображает полный вариант клавиатуры с блоком "Введите неизвестное".
  */
 public class PhysicsCalculatorActivity extends AppCompatActivity {
 
@@ -30,8 +31,8 @@ public class PhysicsCalculatorActivity extends AppCompatActivity {
             finish();
         });
 
-        // Добавление фрагмента клавиатуры
-        KeyboardFragment keyboardFragment = new KeyboardFragment();
+        // Добавление фрагмента клавиатуры с блоком "Введите неизвестное"
+        KeyboardFragment keyboardFragment = KeyboardFragment.newInstance(true);
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.replace(R.id.keyboard_container, keyboardFragment);
         transaction.commit();

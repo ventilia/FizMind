@@ -13,14 +13,15 @@ import com.example.fizmind.keyboard.KeyboardFragment;
 
 /**
  * Активность для конвертации единиц СИ с использованием фрагмента клавиатуры.
+ * Отображает урезанный вариант клавиатуры без блока "Введите неизвестное".
  */
 public class SIConversionActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_si_conversion);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        setContentView(R.layout.activity_si_conversion);
 
         // Кнопка "Назад"
         ImageView backButton = findViewById(R.id.backButton);
@@ -30,8 +31,8 @@ public class SIConversionActivity extends AppCompatActivity {
             finish();
         });
 
-        // Добавление фрагмента клавиатуры
-        KeyboardFragment keyboardFragment = new KeyboardFragment();
+        // Добавление фрагмента клавиатуры без блока "Введите неизвестное"
+        KeyboardFragment keyboardFragment = KeyboardFragment.newInstance(false);
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.replace(R.id.keyboard_container, keyboardFragment);
         transaction.commit();
