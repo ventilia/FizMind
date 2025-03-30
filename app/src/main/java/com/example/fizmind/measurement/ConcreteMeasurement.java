@@ -4,10 +4,24 @@ import android.util.Log;
 import com.example.fizmind.PhysicalQuantity;
 import com.example.fizmind.PhysicalQuantityRegistry;
 
+/**
+ * Класс, представляющий конкретное измерение с обозначением, значением и единицей измерения.
+ */
 public class ConcreteMeasurement extends Measurement {
-    private String exponent;
-    private String subscript;
+    private String exponent;    // Степень значения
+    private String subscript;   // Нижний индекс обозначения
 
+    /**
+     * Конструктор для измерения с полным набором параметров.
+     *
+     * @param designation          Логический идентификатор обозначения
+     * @param value                Числовое значение
+     * @param unit                 Единица измерения
+     * @param designationOperations Операции над обозначением
+     * @param valueOperations      Операции над значением
+     * @param exponent             Степень значения
+     * @param subscript            Нижний индекс обозначения
+     */
     public ConcreteMeasurement(String designation, double value, String unit, String designationOperations,
                                String valueOperations, String exponent, String subscript) {
         super(designation, value, unit, designationOperations, valueOperations);
@@ -15,15 +29,41 @@ public class ConcreteMeasurement extends Measurement {
         this.subscript = subscript;
     }
 
+    /**
+     * Упрощенный конструктор для измерения без операций и модулей.
+     *
+     * @param designation Логический идентификатор обозначения
+     * @param value       Числовое значение
+     * @param unit        Единица измерения
+     */
     public ConcreteMeasurement(String designation, double value, String unit) {
         this(designation, value, unit, "", "", "", "");
     }
 
-    // Добавлен геттер для subscript
+    /**
+     * Возвращает нижний индекс обозначения.
+     *
+     * @return Нижний индекс или пустая строка, если его нет
+     */
     public String getSubscript() {
-        return subscript;
+        return subscript != null ? subscript : "";
     }
 
+    /**
+     * Проверяет, является ли измерение константой.
+     *
+     * @return true, если измерение связано с константой, false — если нет
+     */
+    public boolean isConstant() {
+        PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(designation);
+        return pq != null && pq.isConstant();
+    }
+
+    /**
+     * Валидирует измерение на корректность данных.
+     *
+     * @return true, если измерение валидно, false — если есть ошибки
+     */
     @Override
     public boolean validate() {
         if (designation == null || designation.isEmpty()) {
@@ -48,6 +88,11 @@ public class ConcreteMeasurement extends Measurement {
         return true;
     }
 
+    /**
+     * Возвращает строковое представление измерения.
+     *
+     * @return Форматированная строка вида "обозначение = значение единица"
+     */
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

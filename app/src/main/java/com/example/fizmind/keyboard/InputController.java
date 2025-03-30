@@ -78,6 +78,12 @@ public class InputController {
     private int deleteClickCount = 0;                    // Счетчик нажатий
     private static final long DOUBLE_CLICK_TIME_DELTA = 300; // Максимальный интервал между нажатиями (в миллисекундах)
 
+    /**
+     * Конструктор контроллера ввода.
+     *
+     * @param designationsView Поле отображения "Введите обозначение"
+     * @param unknownView      Поле отображения "Введите неизвестное"
+     */
     public InputController(TextView designationsView, TextView unknownView) {
         this.designationsView = designationsView;
         this.unknownView = unknownView;
@@ -105,22 +111,34 @@ public class InputController {
 
     /**
      * Устанавливает, разрешено ли переключение на поле "Введите неизвестное".
+     *
      * @param allowed true, если разрешено; false, если запрещено
      */
     public void setUnknownInputAllowed(boolean allowed) {
         this.isUnknownInputAllowed = allowed;
     }
 
+    /**
+     * Устанавливает шрифт STIX для использования в отображении.
+     *
+     * @param stixTypeface Шрифт STIX
+     */
     public void setStixTypeface(Typeface stixTypeface) {
         this.stixTypeface = stixTypeface;
     }
 
+    /**
+     * Устанавливает переключатель режимов клавиатуры.
+     *
+     * @param switcher Объект переключателя режимов
+     */
     public void setKeyboardModeSwitcher(KeyboardModeSwitcher switcher) {
         this.keyboardModeSwitcher = switcher;
     }
 
     /**
      * Устанавливает текущее поле ввода с учетом ограничений на переключение.
+     *
      * @param field "designations" или "unknown"
      */
     public void setCurrentInputField(String field) {
@@ -147,6 +165,14 @@ public class InputController {
         Log.d("InputController", "Текущее поле ввода: " + field);
     }
 
+    /**
+     * Обрабатывает ввод символа с клавиатуры.
+     *
+     * @param input           Введенный символ
+     * @param sourceKeyboardMode Режим клавиатуры
+     * @param keyUsesStix     Используется ли шрифт STIX
+     * @param logicalId       Логический идентификатор символа
+     */
     public void onKeyInput(String input, String sourceKeyboardMode, boolean keyUsesStix, String logicalId) {
         Log.d("InputController", "Текущее состояние: " + currentState + ", ввод: " + input + ", logicalId: " + logicalId);
 
@@ -289,6 +315,12 @@ public class InputController {
         updateDisplay();
     }
 
+    /**
+     * Обрабатывает ввод значения.
+     *
+     * @param input     Введенный символ
+     * @param logicalId Логический идентификатор
+     */
     private void handleValueInput(String input, String logicalId) {
         Log.d("InputController", "Обработка ввода значения: " + input);
         if (input.matches("[0-9]")) {
@@ -323,6 +355,12 @@ public class InputController {
         updateDisplay();
     }
 
+    /**
+     * Обрабатывает ввод единицы измерения.
+     *
+     * @param input     Введенный символ
+     * @param logicalId Логический идентификатор
+     */
     private void handleUnitInput(String input, String logicalId) {
         PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(logicalDesignation);
         if (pq == null) {
@@ -341,6 +379,9 @@ public class InputController {
         updateDisplay();
     }
 
+    /**
+     * Сохраняет неизвестное значение.
+     */
     private void saveUnknown() {
         if (unknownDesignation != null) {
             if (unknownSubscriptModule != null && unknownSubscriptModule.isActive() && unknownSubscriptModule.isEmpty()) {
@@ -365,12 +406,28 @@ public class InputController {
     }
 
     /**
-     * Обрабатывает нажатие кнопки "DELETE". Поддерживает удаление последнего символа при одиночном нажатии
-     * и удаление последнего сохраненного поля при двойном нажатии.
+     * Проверяет, пустое ли текущее поле ввода.
+     *
+     * @return true, если поле ввода пустое, false — если содержит данные
+     */
+    private boolean isInputEmpty() {
+        if ("designations".equals(currentInputField)) {
+            return designationBuffer.length() == 0 && valueBuffer.length() == 0 && unitBuffer.length() == 0 &&
+                    operationBuffer.length() == 0 && valueOperationBuffer.length() == 0 &&
+                    designationExponentModule == null && designationSubscriptModule == null;
+        } else if ("unknown".equals(currentInputField)) {
+            return unknownDesignation == null && unknownSubscriptModule == null;
+        }
+        return true;
+    }
+
+    /**
+     * Обрабатывает нажатие кнопки "DELETE".
+     * - Одиночное нажатие: удаляет последний символ или константу, если поле ввода пустое.
+     * - Двойное нажатие: удаляет последнее сохраненное поле.
      */
     public void onDeletePressed() {
         long currentTime = System.currentTimeMillis();
-        // Проверяем, прошло ли достаточно мало времени с последнего нажатия для двойного клика
         if (currentTime - lastDeleteTime < DOUBLE_CLICK_TIME_DELTA) {
             deleteClickCount++;
         } else {
@@ -379,16 +436,25 @@ public class InputController {
         lastDeleteTime = currentTime;
 
         if (deleteClickCount == 2) {
-            deleteLastSavedField(); // Удаляем последнее сохраненное поле при двойном нажатии
-            deleteClickCount = 0;   // Сбрасываем счетчик
+            deleteLastSavedField();
+            deleteClickCount = 0;
         } else {
-            performSingleDelete();  // Выполняем обычное удаление при одиночном нажатии
+            if (isInputEmpty() && !measurements.isEmpty() && measurements.get(measurements.size() - 1) instanceof ConcreteMeasurement) {
+                ConcreteMeasurement lastMeasurement = (ConcreteMeasurement) measurements.get(measurements.size() - 1);
+                if (lastMeasurement.isConstant()) {
+                    deleteLastSavedField();
+                } else {
+                    performSingleDelete();
+                }
+            } else {
+                performSingleDelete();
+            }
         }
         updateDisplay();
     }
 
     /**
-     * Выполняет удаление последнего символа или очистку текущего ввода.
+     * Выполняет удаление последнего символа или очистку текущего ввода при одиночном нажатии.
      */
     private void performSingleDelete() {
         if ("designations".equals(currentInputField)) {
@@ -472,7 +538,7 @@ public class InputController {
     }
 
     /**
-     * Удаляет последнее сохраненное поле (измерение или неизвестное) в зависимости от текущего поля ввода.
+     * Удаляет последнее сохраненное поле (измерение или неизвестное).
      */
     private void deleteLastSavedField() {
         if ("designations".equals(currentInputField)) {
@@ -493,6 +559,9 @@ public class InputController {
         }
     }
 
+    /**
+     * Обрабатывает нажатие стрелки влево.
+     */
     public void onLeftArrowPressed() {
         if ("designations".equals(currentInputField)) {
             if (focusState == FocusState.MODULE) {
@@ -532,6 +601,9 @@ public class InputController {
         }
     }
 
+    /**
+     * Обрабатывает нажатие стрелки вправо.
+     */
     public void onRightArrowPressed() {
         if ("designations".equals(currentInputField)) {
             if (focusState == FocusState.MODULE) {
@@ -581,6 +653,12 @@ public class InputController {
         }
     }
 
+    /**
+     * Обрабатывает навигацию в модулях при нажатии стрелок.
+     *
+     * @param moduleType Тип модуля
+     * @param isLeftArrow Направление (true — влево, false — вправо)
+     */
     private void handleModuleNavigation(ModuleType moduleType, boolean isLeftArrow) {
         if (moduleType == ModuleType.EXPONENT) {
             if (isLeftArrow) {
@@ -617,6 +695,9 @@ public class InputController {
         updateDisplay();
     }
 
+    /**
+     * Обрабатывает нажатие кнопки "Вниз" для сохранения ввода.
+     */
     public void onDownArrowPressed() {
         if ("designations".equals(currentInputField)) {
             if ((designationExponentModule != null && designationExponentModule.isActive() && designationExponentModule.isEmpty()) ||
@@ -725,6 +806,9 @@ public class InputController {
         }
     }
 
+    /**
+     * Обновляет режим клавиатуры в зависимости от текущего состояния.
+     */
     private void updateKeyboardMode() {
         if (keyboardModeSwitcher != null && "designations".equals(currentInputField)) {
             if (currentState == InputState.ENTERING_DESIGNATION) {
@@ -737,6 +821,9 @@ public class InputController {
         }
     }
 
+    /**
+     * Обновляет отображение полей ввода.
+     */
     private void updateDisplay() {
         SpannableStringBuilder designationsText = new SpannableStringBuilder();
 
@@ -865,6 +952,9 @@ public class InputController {
         }
     }
 
+    /**
+     * Очищает все данные текущего поля ввода.
+     */
     public void clearAll() {
         if ("designations".equals(currentInputField)) {
             designationBuffer.setLength(0);
@@ -897,6 +987,9 @@ public class InputController {
         }
     }
 
+    /**
+     * Сбрасывает текущий ввод.
+     */
     private void resetInput() {
         designationBuffer.setLength(0);
         valueBuffer.setLength(0);
@@ -913,14 +1006,27 @@ public class InputController {
         updateDisplay();
     }
 
+    /**
+     * Возвращает список сохраненных измерений.
+     *
+     * @return Копия списка измерений
+     */
     public List<Measurement> getMeasurements() {
         return new ArrayList<>(measurements);
     }
 
+    /**
+     * Возвращает список сохраненных неизвестных.
+     *
+     * @return Копия списка неизвестных
+     */
     public List<UnknownQuantity> getUnknowns() {
         return new ArrayList<>(unknowns);
     }
 
+    /**
+     * Логирует все сохраненные данные.
+     */
     public void logAllSavedData() {
         StringBuilder logMessage = new StringBuilder("Все сохраненные данные:\n");
 
