@@ -12,6 +12,7 @@ import android.widget.TextView;
 
 import com.example.fizmind.R;
 import com.example.fizmind.animation.KeyboardAnimation;
+import com.example.fizmind.ConversionService;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -28,7 +29,10 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
     private final ImageButton prevPageButton;
     private final ImageButton nextPageButton;
     private final ImageButton buttonScrollDown;
-    private final TextView displayView;
+    // Вместо одного displayView теперь два отдельных поля для разных целей:
+    private final TextView designationView; // Для поля "Введите обозначение"
+    private final TextView unknownView;     // Для поля "Введите неизвестное"
+
     private InputController inputController;
     private boolean useStixFont;
     private String currentMode = "Designation";
@@ -38,6 +42,23 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
     private final ImageButton leftArrowButton;
     private final ImageButton rightArrowButton;
 
+    /**
+     * Конструктор KeyboardLogic.
+     *
+     * @param context           Контекст приложения.
+     * @param keyboardCells     Список TextView для клавиш.
+     * @param pageNumberView    TextView для отображения номера страницы.
+     * @param designationButton Кнопка для режима обозначения.
+     * @param unitsButton       Кнопка для режима единиц измерения.
+     * @param numbersButton     Кнопка для режима чисел и операций.
+     * @param prevPageButton    Кнопка для перехода на предыдущую страницу.
+     * @param nextPageButton    Кнопка для перехода на следующую страницу.
+     * @param buttonScrollDown  Кнопка для прокрутки вниз.
+     * @param designationView   TextView для отображения поля "Введите обозначение".
+     * @param unknownView       TextView для отображения поля "Введите неизвестное".
+     * @param leftArrowButton   Кнопка навигации влево.
+     * @param rightArrowButton  Кнопка навигации вправо.
+     */
     public KeyboardLogic(
             Context context,
             List<TextView> keyboardCells,
@@ -48,7 +69,8 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
             ImageButton prevPageButton,
             ImageButton nextPageButton,
             ImageButton buttonScrollDown,
-            TextView displayView,
+            TextView designationView,
+            TextView unknownView,
             ImageButton leftArrowButton,
             ImageButton rightArrowButton
     ) {
@@ -61,7 +83,9 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         this.prevPageButton = prevPageButton;
         this.nextPageButton = nextPageButton;
         this.buttonScrollDown = buttonScrollDown;
-        this.displayView = displayView;
+        // Инициализируем два поля отдельно
+        this.designationView = designationView;
+        this.unknownView = unknownView;
         this.leftArrowButton = leftArrowButton;
         this.rightArrowButton = rightArrowButton;
 
@@ -77,8 +101,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
 
         keyboardData = new HashMap<>();
 
-        // Пример заполнения keyboardData.
-        // Если необходимо, добавьте параметр color=true для нужных клавиш.
+        // Пример заполнения keyboardData для режима "Designation"
         keyboardData.put("Designation", Arrays.asList(
                 Arrays.asList(
                         new SymbolKey("a_latin", "a", true),
@@ -182,8 +205,8 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         updateModeButtonStyles();
         updateKeyboard();
 
-        // Инициализация InputController с передачей stixTypeface
-        inputController = new InputController(displayView, displayView);
+        // Исправлено: создаем InputController, передавая два разных TextView: designationView и unknownView
+        inputController = new InputController(designationView, unknownView, new ConversionService());
         inputController.setStixTypeface(stixTypeface);
         inputController.setKeyboardModeSwitcher(this);
     }
@@ -244,7 +267,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
             scrollToBottom();
         });
 
-        displayView.addTextChangedListener(new TextWatcher() {
+        designationView.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
@@ -257,14 +280,14 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
             }
         });
 
-        displayView.getViewTreeObserver().addOnScrollChangedListener(this::updateScrollButtonVisibility);
+        designationView.getViewTreeObserver().addOnScrollChangedListener(this::updateScrollButtonVisibility);
     }
 
     private void scrollToBottom() {
-        displayView.post(() -> {
-            int scrollY = displayView.getLayout().getHeight() - displayView.getHeight();
+        designationView.post(() -> {
+            int scrollY = designationView.getLayout().getHeight() - designationView.getHeight();
             if (scrollY > 0) {
-                displayView.scrollTo(0, scrollY);
+                designationView.scrollTo(0, scrollY);
                 Log.d("KeyboardLogic", "Прокручено к низу, scrollY = " + scrollY);
             } else {
                 Log.d("KeyboardLogic", "Прокрутка не требуется, scrollY = " + scrollY);
@@ -273,12 +296,12 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
     }
 
     private void updateScrollButtonVisibility() {
-        if (displayView.getLayout() == null) {
+        if (designationView.getLayout() == null) {
             buttonScrollDown.setVisibility(View.GONE);
             Log.d("KeyboardLogic", "Layout не готов, кнопка скрыта");
             return;
         }
-        int scrollRange = displayView.getLayout().getHeight() - displayView.getHeight();
+        int scrollRange = designationView.getLayout().getHeight() - designationView.getHeight();
         if (scrollRange > 0) {
             buttonScrollDown.setVisibility(View.VISIBLE);
             Log.d("KeyboardLogic", "Кнопка прокрутки видна, scrollRange = " + scrollRange);
@@ -324,7 +347,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                     keyView.setTypeface(Typeface.DEFAULT);
                 }
 
-                //
                 if (symbolKey.isColor()) {
                     keyView.setTextColor(Color.WHITE);
                 } else {

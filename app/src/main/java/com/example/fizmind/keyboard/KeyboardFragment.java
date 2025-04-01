@@ -1,6 +1,7 @@
 package com.example.fizmind.keyboard;
 
 import android.os.Bundle;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,33 +13,38 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.example.fizmind.ConversionService;
 import com.example.fizmind.R;
 
 import java.util.Arrays;
 import java.util.List;
 
 /**
- * Фрагмент, содержащий клавиатуру и логику ввода для использования в разных активностях.
+ * Фрагмент клавиатуры для ввода данных в разных режимах.
  */
 public class KeyboardFragment extends Fragment {
 
-    private KeyboardLogic keyboardLogic;
-    private InputController inputController;
-    private TextView editTextDesignations;
-    private TextView editTextUnknown;
-    private boolean isUnknownInputAllowed = true; // По умолчанию разрешено переключение
+    private KeyboardLogic keyboardLogic;          // Логика клавиатуры
+    private InputController inputController;      // Контроллер ввода
+    private TextView editTextDesignations;        // Поле "Введите обозначение"
+    private TextView editTextUnknown;             // Поле "Введите неизвестное"
+    private boolean isUnknownInputAllowed = true; // Разрешено ли переключение на "Введите неизвестное"
+    private boolean isConversionMode = false;     // Режим конвертации (true) или калькулятора (false)
 
-    // Пустой конструктор, требуемый для фрагментов
-    public KeyboardFragment() {}
+    public KeyboardFragment() {
+    }
 
     /**
-     * Создает новый экземпляр фрагмента с указанием, разрешено ли переключение на "Введите неизвестное".
-     * @param isUnknownInputAllowed true, если разрешено; false, если запрещено
-     * @return новый экземпляр KeyboardFragment
+     * Создает экземпляр фрагмента с параметрами.
+     *
+     * @param isConversionMode      true для SIConversionActivity, false для PhysicsCalculatorActivity
+     * @param isUnknownInputAllowed true, если разрешено переключение на "Введите неизвестное"
+     * @return новый экземпляр фрагмента
      */
-    public static KeyboardFragment newInstance(boolean isUnknownInputAllowed) {
+    public static KeyboardFragment newInstance(boolean isConversionMode, boolean isUnknownInputAllowed) {
         KeyboardFragment fragment = new KeyboardFragment();
         Bundle args = new Bundle();
+        args.putBoolean("isConversionMode", isConversionMode);
         args.putBoolean("isUnknownInputAllowed", isUnknownInputAllowed);
         fragment.setArguments(args);
         return fragment;
@@ -48,13 +54,14 @@ public class KeyboardFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
+            isConversionMode = getArguments().getBoolean("isConversionMode", false);
             isUnknownInputAllowed = getArguments().getBoolean("isUnknownInputAllowed", true);
         }
+        Log.d("KeyboardFragment", "Создан фрагмент, режим: " + (isConversionMode ? "конвертация" : "калькулятор"));
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        // Загружаем разметку фрагмента
         return inflater.inflate(R.layout.fragment_keyboard, container, false);
     }
 
@@ -62,29 +69,15 @@ public class KeyboardFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Инициализация всех View-компонентов
+        // Инициализация компонентов клавиатуры
         List<TextView> keyboardCells = Arrays.asList(
-                view.findViewById(R.id.key_1),
-                view.findViewById(R.id.key_2),
-                view.findViewById(R.id.key_3),
-                view.findViewById(R.id.key_4),
-                view.findViewById(R.id.key_5),
-                view.findViewById(R.id.key_6),
-                view.findViewById(R.id.key_7),
-                view.findViewById(R.id.key_8),
-                view.findViewById(R.id.key_9),
-                view.findViewById(R.id.key_10),
-                view.findViewById(R.id.key_11),
-                view.findViewById(R.id.key_12),
-                view.findViewById(R.id.key_13),
-                view.findViewById(R.id.key_14),
-                view.findViewById(R.id.key_15),
-                view.findViewById(R.id.key_16),
-                view.findViewById(R.id.key_17),
-                view.findViewById(R.id.key_18),
-                view.findViewById(R.id.key_19),
-                view.findViewById(R.id.key_20),
-                view.findViewById(R.id.key_21)
+                view.findViewById(R.id.key_1), view.findViewById(R.id.key_2), view.findViewById(R.id.key_3),
+                view.findViewById(R.id.key_4), view.findViewById(R.id.key_5), view.findViewById(R.id.key_6),
+                view.findViewById(R.id.key_7), view.findViewById(R.id.key_8), view.findViewById(R.id.key_9),
+                view.findViewById(R.id.key_10), view.findViewById(R.id.key_11), view.findViewById(R.id.key_12),
+                view.findViewById(R.id.key_13), view.findViewById(R.id.key_14), view.findViewById(R.id.key_15),
+                view.findViewById(R.id.key_16), view.findViewById(R.id.key_17), view.findViewById(R.id.key_18),
+                view.findViewById(R.id.key_19), view.findViewById(R.id.key_20), view.findViewById(R.id.key_21)
         );
 
         TextView pageNumberView = view.findViewById(R.id.page_number);
@@ -94,35 +87,31 @@ public class KeyboardFragment extends Fragment {
         ImageButton prevPageButton = view.findViewById(R.id.button_prev_page);
         ImageButton nextPageButton = view.findViewById(R.id.button_next_page);
         ImageButton buttonScrollDown = view.findViewById(R.id.button_scroll_down);
+        // Два отдельных поля для двух разных TextView
         editTextDesignations = view.findViewById(R.id.editText_designations);
         editTextUnknown = view.findViewById(R.id.editText_unknown);
         ImageButton buttonLeft = view.findViewById(R.id.button_left);
         ImageButton buttonRight = view.findViewById(R.id.button_right);
 
-        // Настройка прокрутки для поля "Введите обозначение"
         editTextDesignations.setMovementMethod(new android.text.method.ScrollingMovementMethod());
 
-        // Инициализация KeyboardLogic
+        // Инициализация логики клавиатуры с передачей обоих TextView:
         keyboardLogic = new KeyboardLogic(
-                requireContext(),
-                keyboardCells,
-                pageNumberView,
-                designationButton,
-                unitsButton,
-                numbersButton,
-                prevPageButton,
-                nextPageButton,
-                buttonScrollDown,
-                editTextDesignations,
+                requireContext(), keyboardCells, pageNumberView, designationButton, unitsButton, numbersButton,
+                prevPageButton, nextPageButton, buttonScrollDown,
+                editTextDesignations, // designationView
+                editTextUnknown,      // unknownView – добавлено!
                 buttonLeft,
                 buttonRight
         );
         keyboardLogic.setUseStixFont(true);
 
-        // Инициализация InputController
-        inputController = new InputController(editTextDesignations, editTextUnknown);
+        // Инициализация контроллера ввода
+        inputController = new InputController(editTextDesignations, editTextUnknown, new ConversionService());
+        inputController.setConversionMode(isConversionMode);
+        inputController.setUnknownInputAllowed(isUnknownInputAllowed);
         inputController.setStixTypeface(keyboardLogic.getStixTypeface());
-        inputController.setUnknownInputAllowed(isUnknownInputAllowed); // Устанавливаем флаг
+        inputController.setKeyboardModeSwitcher(keyboardLogic);
         keyboardLogic.setInputController(inputController);
 
         // Обработчики кнопок
@@ -146,32 +135,24 @@ public class KeyboardFragment extends Fragment {
 
         buttonClear.setOnClickListener(v -> {
             Log.d("KeyboardFragment", "Нажата кнопка DELETE");
-            inputController.onDeletePressed(); // Вызываем метод обработки нажатия DELETE
+            inputController.onDeletePressed();
         });
 
         buttonClear.setOnLongClickListener(v -> {
             Log.d("KeyboardFragment", "Длительное нажатие на DELETE");
-            inputController.clearAll(); // Очистка всех данных при длительном нажатии
+            inputController.clearAll();
             return true;
         });
 
-        // Переключение фокуса между полями ввода
+        // Переключение фокуса
         editTextDesignations.setOnClickListener(v -> {
             inputController.setCurrentInputField("designations");
-            Log.d("KeyboardFragment", "Фокус переключен на 'Введите обозначение'");
+            Log.d("KeyboardFragment", "Фокус на 'Введите обозначение'");
         });
 
         editTextUnknown.setOnClickListener(v -> {
             inputController.setCurrentInputField("unknown");
-            Log.d("KeyboardFragment", "Попытка переключения на 'Введите неизвестное'");
+            Log.d("KeyboardFragment", "Фокус на 'Введите неизвестное'");
         });
-    }
-
-    /**
-     * Получение экземпляра InputController для доступа к данным ввода.
-     * @return текущий InputController
-     */
-    public InputController getInputController() {
-        return inputController;
     }
 }
