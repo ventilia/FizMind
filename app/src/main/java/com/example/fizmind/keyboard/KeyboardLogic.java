@@ -29,10 +29,8 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
     private final ImageButton prevPageButton;
     private final ImageButton nextPageButton;
     private final ImageButton buttonScrollDown;
-    // Вместо одного displayView теперь два отдельных поля для разных целей:
     private final TextView designationView; // Для поля "Введите обозначение"
     private final TextView unknownView;     // Для поля "Введите неизвестное"
-
     private InputController inputController;
     private boolean useStixFont;
     private String currentMode = "Designation";
@@ -42,23 +40,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
     private final ImageButton leftArrowButton;
     private final ImageButton rightArrowButton;
 
-    /**
-     * Конструктор KeyboardLogic.
-     *
-     * @param context           Контекст приложения.
-     * @param keyboardCells     Список TextView для клавиш.
-     * @param pageNumberView    TextView для отображения номера страницы.
-     * @param designationButton Кнопка для режима обозначения.
-     * @param unitsButton       Кнопка для режима единиц измерения.
-     * @param numbersButton     Кнопка для режима чисел и операций.
-     * @param prevPageButton    Кнопка для перехода на предыдущую страницу.
-     * @param nextPageButton    Кнопка для перехода на следующую страницу.
-     * @param buttonScrollDown  Кнопка для прокрутки вниз.
-     * @param designationView   TextView для отображения поля "Введите обозначение".
-     * @param unknownView       TextView для отображения поля "Введите неизвестное".
-     * @param leftArrowButton   Кнопка навигации влево.
-     * @param rightArrowButton  Кнопка навигации вправо.
-     */
     public KeyboardLogic(
             Context context,
             List<TextView> keyboardCells,
@@ -83,7 +64,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         this.prevPageButton = prevPageButton;
         this.nextPageButton = nextPageButton;
         this.buttonScrollDown = buttonScrollDown;
-        // Инициализируем два поля отдельно
         this.designationView = designationView;
         this.unknownView = unknownView;
         this.leftArrowButton = leftArrowButton;
@@ -101,7 +81,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
 
         keyboardData = new HashMap<>();
 
-        // Пример заполнения keyboardData для режима "Designation"
+        // Режим "Designation" (без изменений)
         keyboardData.put("Designation", Arrays.asList(
                 Arrays.asList(
                         new SymbolKey("a_latin", "a", true),
@@ -137,42 +117,77 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                 )
         ));
 
+        // Режим "Units_of_measurement" с разделением на страницы
         keyboardData.put("Units_of_measurement", Arrays.asList(
-                Arrays.asList(
+                Arrays.asList( // Страница 1
                         new SymbolKey("unit_m/s", "m/s", false),
                         new SymbolKey("unit_km/h", "km/h", false),
-                        new SymbolKey("unit_mi/h", "mi/h", false),
+                        new SymbolKey("unit_cm/s", "cm/s", false),
                         new SymbolKey("unit_m/s²", "m/s²", false),
+                        new SymbolKey("unit_cm/s²", "cm/s²", false),
+                        new SymbolKey("unit_km/h²", "km/h²", false),
                         new SymbolKey("unit_m", "m", false),
-                        new SymbolKey("unit_kg", "kg", false),
-                        new SymbolKey("unit_g", "g", false),
-                        new SymbolKey("unit_mg", "mg", false),
+                        new SymbolKey("unit_km", "km", false),
+                        new SymbolKey("unit_cm", "cm", false),
                         new SymbolKey("unit_s", "s", false),
                         new SymbolKey("unit_min", "min", false),
-                        new SymbolKey("unit_h", "h", false)
-                ),
-                Arrays.asList(
+                        new SymbolKey("unit_h", "h", false),
+                        new SymbolKey("unit_kg", "kg", false),
+                        new SymbolKey("unit_g", "g", false),
+                        new SymbolKey("unit_t", "t", false),
                         new SymbolKey("unit_N", "N", false),
+                        new SymbolKey("unit_kN", "kN", false),
+                        new SymbolKey("unit_dyne", "dyne", false),
                         new SymbolKey("unit_Pa", "Pa", false),
                         new SymbolKey("unit_kPa", "kPa", false),
-                        new SymbolKey("unit_atm", "atm", false),
+                        new SymbolKey("unit_atm", "atm", false)
+                ),
+                Arrays.asList( // Страница 2
                         new SymbolKey("unit_J", "J", false),
                         new SymbolKey("unit_kJ", "kJ", false),
+                        new SymbolKey("unit_cal", "cal", false),
                         new SymbolKey("unit_W", "W", false),
+                        new SymbolKey("unit_kW", "kW", false),
+                        new SymbolKey("unit_hp", "hp", false),
                         new SymbolKey("unit_kg/m³", "kg/m³", false),
+                        new SymbolKey("unit_g/cm³", "g/cm³", false),
+                        new SymbolKey("unit_g/mL", "g/mL", false),
+                        new SymbolKey("unit_m²", "m²", false),
+                        new SymbolKey("unit_cm²", "cm²", false),
+                        new SymbolKey("unit_km²", "km²", false),
                         new SymbolKey("unit_A", "A", false),
+                        new SymbolKey("unit_mA", "mA", false),
+                        new SymbolKey("unit_kA", "kA", false),
                         new SymbolKey("unit_V", "V", false),
+                        new SymbolKey("unit_kV", "kV", false),
+                        new SymbolKey("unit_mV", "mV", false),
                         new SymbolKey("unit_Ω", "Ω", false),
+                        new SymbolKey("unit_kΩ", "kΩ", false),
+                        new SymbolKey("unit_MΩ", "MΩ", false)
+                ),
+                Arrays.asList( // Страница 3
                         new SymbolKey("unit_F", "F", false),
+                        new SymbolKey("unit_μF", "μF", false),
+                        new SymbolKey("unit_nF", "nF", false),
                         new SymbolKey("unit_H", "H", false),
+                        new SymbolKey("unit_mH", "mH", false),
+                        new SymbolKey("unit_μH", "μH", false),
                         new SymbolKey("unit_Wb", "Wb", false),
+                        new SymbolKey("unit_Mx", "Mx", false),
+                        new SymbolKey("unit_T·m²", "T·m²", false),
                         new SymbolKey("unit_T", "T", false),
+                        new SymbolKey("unit_mT", "mT", false),
+                        new SymbolKey("unit_G", "G", false),
                         new SymbolKey("unit_m³", "m³", false),
+                        new SymbolKey("unit_L", "L", false),
+                        new SymbolKey("unit_cm³", "cm³", false),
                         new SymbolKey("unit_K", "K", false),
-                        new SymbolKey("unit_°C", "°C", false)
+                        new SymbolKey("unit_°C", "°C", false),
+                        new SymbolKey("unit_°F", "°F", false)
                 )
         ));
 
+        // Режим "Numbers_and_operations" (без изменений)
         keyboardData.put("Numbers_and_operations", Arrays.asList(
                 Arrays.asList(
                         new SymbolKey("num_1", "1", false),
@@ -186,7 +201,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                         new SymbolKey("num_5", "5", false),
                         new SymbolKey("num_6", "6", false),
                         new SymbolKey(" ", "", false),
-                        new SymbolKey("op_exponent", "^", false),  // Кнопка степени
+                        new SymbolKey("op_exponent", "^", false),
                         new SymbolKey(" ", " ", false),
                         new SymbolKey(" ", " ", false),
                         new SymbolKey("num_7", "7", false),
@@ -205,7 +220,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         updateModeButtonStyles();
         updateKeyboard();
 
-        // Исправлено: создаем InputController, передавая два разных TextView: designationView и unknownView
         inputController = new InputController(designationView, unknownView, new ConversionService());
         inputController.setStixTypeface(stixTypeface);
         inputController.setKeyboardModeSwitcher(this);
