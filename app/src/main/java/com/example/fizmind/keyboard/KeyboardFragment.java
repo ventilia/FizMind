@@ -8,14 +8,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-
 import com.example.fizmind.ConversionService;
 import com.example.fizmind.R;
-
 import java.util.Arrays;
 import java.util.List;
 
@@ -24,23 +21,16 @@ import java.util.List;
  */
 public class KeyboardFragment extends Fragment {
 
-    private KeyboardLogic keyboardLogic;          // Логика клавиатуры
-    private InputController inputController;      // Контроллер ввода
-    private TextView editTextDesignations;        // Поле "Введите обозначение"
-    private TextView editTextUnknown;             // Поле "Введите неизвестное"
-    private boolean isUnknownInputAllowed = true; // Разрешено ли переключение на "Введите неизвестное"
-    private boolean isConversionMode = false;     // Режим конвертации (true) или калькулятора (false)
+    private KeyboardLogic keyboardLogic;
+    private InputController inputController;
+    private TextView editTextDesignations;
+    private TextView editTextUnknown;
+    private boolean isUnknownInputAllowed = true;
+    private boolean isConversionMode = false;
 
     public KeyboardFragment() {
     }
 
-    /**
-     * Создает экземпляр фрагмента с параметрами.
-     *
-     * @param isConversionMode      true для SIConversionActivity, false для PhysicsCalculatorActivity
-     * @param isUnknownInputAllowed true, если разрешено переключение на "Введите неизвестное"
-     * @return новый экземпляр фрагмента
-     */
     public static KeyboardFragment newInstance(boolean isConversionMode, boolean isUnknownInputAllowed) {
         KeyboardFragment fragment = new KeyboardFragment();
         Bundle args = new Bundle();
@@ -69,7 +59,6 @@ public class KeyboardFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Инициализация компонентов клавиатуры
         List<TextView> keyboardCells = Arrays.asList(
                 view.findViewById(R.id.key_1), view.findViewById(R.id.key_2), view.findViewById(R.id.key_3),
                 view.findViewById(R.id.key_4), view.findViewById(R.id.key_5), view.findViewById(R.id.key_6),
@@ -87,26 +76,23 @@ public class KeyboardFragment extends Fragment {
         ImageButton prevPageButton = view.findViewById(R.id.button_prev_page);
         ImageButton nextPageButton = view.findViewById(R.id.button_next_page);
         ImageButton buttonScrollDown = view.findViewById(R.id.button_scroll_down);
-        // Два отдельных поля для двух разных TextView
         editTextDesignations = view.findViewById(R.id.editText_designations);
         editTextUnknown = view.findViewById(R.id.editText_unknown);
         ImageButton buttonLeft = view.findViewById(R.id.button_left);
         ImageButton buttonRight = view.findViewById(R.id.button_right);
 
-        editTextDesignations.setMovementMethod(new android.text.method.ScrollingMovementMethod());
+        editTextDesignations.setMovementMethod(new ScrollingMovementMethod());
 
-        // Инициализация логики клавиатуры с передачей обоих TextView:
         keyboardLogic = new KeyboardLogic(
                 requireContext(), keyboardCells, pageNumberView, designationButton, unitsButton, numbersButton,
                 prevPageButton, nextPageButton, buttonScrollDown,
-                editTextDesignations, // designationView
-                editTextUnknown,      // unknownView – добавлено!
+                editTextDesignations,
+                editTextUnknown,
                 buttonLeft,
                 buttonRight
         );
         keyboardLogic.setUseStixFont(true);
 
-        // Инициализация контроллера ввода
         inputController = new InputController(editTextDesignations, editTextUnknown, new ConversionService());
         inputController.setConversionMode(isConversionMode);
         inputController.setUnknownInputAllowed(isUnknownInputAllowed);
@@ -114,7 +100,6 @@ public class KeyboardFragment extends Fragment {
         inputController.setKeyboardModeSwitcher(keyboardLogic);
         keyboardLogic.setInputController(inputController);
 
-        // Обработчики кнопок
         ImageButton buttonSave = view.findViewById(R.id.button_save);
         ImageButton buttonClear = view.findViewById(R.id.button_clear);
 
@@ -144,7 +129,6 @@ public class KeyboardFragment extends Fragment {
             return true;
         });
 
-        // Переключение фокуса
         editTextDesignations.setOnClickListener(v -> {
             inputController.setCurrentInputField("designations");
             Log.d("KeyboardFragment", "Фокус на 'Введите обозначение'");
