@@ -16,9 +16,7 @@ import com.example.fizmind.R;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Фрагмент клавиатуры для ввода данных в разных режимах.
- */
+// фрагмент клавиатуры для ввода данных
 public class KeyboardFragment extends Fragment {
 
     private KeyboardLogic keyboardLogic;

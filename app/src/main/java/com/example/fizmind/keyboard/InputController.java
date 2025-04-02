@@ -25,27 +25,24 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Контроллер ввода для управления логикой ввода в поля "Введите обозначение" и "Введите неизвестное".
- * Поддерживает перевод в СИ и работу с модулями (степень, индекс).
- */
+// контроллер ввода для полей "Введите обозначение" и "Введите неизвестное"
 public class InputController {
 
-    // Перечисления для состояний ввода и фокуса
+    // состояния ввода и фокуса
     public enum InputState {
-        ENTERING_DESIGNATION, // Ввод обозначения
-        ENTERING_VALUE,       // Ввод значения
-        ENTERING_UNIT         // Ввод единицы измерения
+        ENTERING_DESIGNATION, // ввод обозначения
+        ENTERING_VALUE,       // ввод значения
+        ENTERING_UNIT         // ввод единицы измерения
     }
 
     public enum FocusState {
-        DESIGNATION, // Фокус на обозначении
-        VALUE,       // Фокус на значении
-        UNIT,        // Фокус на единице измерения
-        MODULE       // Фокус на модуле (степень или индекс)
+        DESIGNATION, // фокус на обозначении
+        VALUE,       // фокус на значении
+        UNIT,        // фокус на единице измерения
+        MODULE       // фокус на модуле (степень или индекс)
     }
 
-    // Поля класса
+    // поля
     private InputState currentState;
     private FocusState focusState;
     private final StringBuilder designationBuffer;
@@ -78,13 +75,7 @@ public class InputController {
     private final ConversionService conversionService;
     private boolean isConversionMode = false;
 
-    /**
-     * Конструктор контроллера ввода.
-     *
-     * @param designationsView  Поле для отображения "Введите обозначение"
-     * @param unknownView       Поле для отображения "Введите неизвестное"
-     * @param conversionService Сервис для перевода в СИ
-     */
+    // конструктор
     public InputController(TextView designationsView, TextView unknownView, ConversionService conversionService) {
         this.designationsView = designationsView;
         this.unknownView = unknownView;
@@ -112,7 +103,7 @@ public class InputController {
         Log.d("InputController", "Контроллер ввода инициализирован");
     }
 
-    // Сеттеры
+    // сеттеры
     public void setUnknownInputAllowed(boolean allowed) {
         this.isUnknownInputAllowed = allowed;
         Log.d("InputController", "Установлено разрешение ввода неизвестного: " + allowed);
@@ -158,12 +149,12 @@ public class InputController {
         Log.d("InputController", "Текущее поле ввода установлено: " + field);
     }
 
-    // **Добавленный метод для получения текущего обозначения**
+    // возвращает текущее обозначение
     public String getCurrentDesignation() {
         return logicalDesignation;
     }
 
-    // Обработка ввода
+    // обработка ввода
     public void onKeyInput(String input, String sourceKeyboardMode, boolean keyUsesStix, String logicalId) {
         Log.d("InputController", "Обработка ввода: состояние=" + currentState + ", ввод='" + input + "', logicalId=" + logicalId);
 
@@ -395,7 +386,7 @@ public class InputController {
         return true;
     }
 
-    // Обработка удаления
+    // обработка удаления
     public void onDeletePressed() {
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastDeleteTime < DOUBLE_CLICK_TIME_DELTA) {
@@ -496,7 +487,7 @@ public class InputController {
         }
     }
 
-    // Навигация стрелками
+    // навигация стрелками
     public void onLeftArrowPressed() {
         if ("designations".equals(currentInputField)) {
             if (focusState == FocusState.MODULE) {
@@ -589,7 +580,7 @@ public class InputController {
         }
     }
 
-    // Сохранение ввода
+    // сохранение ввода
     public void onDownArrowPressed() {
         if ("designations".equals(currentInputField)) {
             if ((designationExponentModule != null && designationExponentModule.isActive() && designationExponentModule.isEmpty()) ||
@@ -731,7 +722,7 @@ public class InputController {
         }
     }
 
-    // Обновление интерфейса и состояния
+    // обновление интерфейса и состояния
     private void updateKeyboardMode() {
         if (keyboardModeSwitcher != null && "designations".equals(currentInputField)) {
             if (focusState == FocusState.MODULE) {
@@ -931,7 +922,7 @@ public class InputController {
         Log.d("InputController", "Сброшены все буферы ввода");
     }
 
-    // Геттеры
+    // геттеры
     public List<ConcreteMeasurement> getMeasurements() {
         return new ArrayList<>(measurements);
     }
@@ -940,7 +931,7 @@ public class InputController {
         return new ArrayList<>(unknowns);
     }
 
-    // Логирование сохраненных данных
+    // логирование сохраненных данных
     public void logAllSavedData() {
         StringBuilder logMessage = new StringBuilder("Все сохраненные данные:\n");
 
@@ -965,7 +956,7 @@ public class InputController {
         Log.d("InputController", logMessage.toString());
     }
 
-    // Вспомогательные методы
+    // проверка, целое ли число
     private boolean isIntegerValue(double value) {
         return value == (int) value;
     }

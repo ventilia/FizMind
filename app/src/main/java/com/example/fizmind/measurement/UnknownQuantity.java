@@ -9,10 +9,11 @@ import android.util.Log;
 import com.example.fizmind.animation.CustomTypefaceSpan;
 
 public class UnknownQuantity {
-    private final String displayDesignation; // Отображаемый текст обозначения (например, "F")
-    private final String subscript; // Индекс для обозначения
-    private final boolean usesStix; // Используется ли шрифт STIX
+    private final String displayDesignation; // отображаемый текст
+    private final String subscript; // индекс
+    private final boolean usesStix; // флаг шрифта STIX
 
+    // конструктор
     public UnknownQuantity(String displayDesignation, String subscript, boolean usesStix) {
         this.displayDesignation = displayDesignation;
         this.subscript = subscript;

@@ -31,8 +31,8 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
     private final ImageButton prevPageButton;
     private final ImageButton nextPageButton;
     private final ImageButton buttonScrollDown;
-    private final TextView designationView; // Для поля "Введите обозначение"
-    private final TextView unknownView;     // Для поля "Введите неизвестное"
+    private final TextView designationView; // поле "Введите обозначение"
+    private final TextView unknownView;     // поле "Введите неизвестное"
     private InputController inputController;
     private boolean useStixFont;
     private String currentMode = "Designation";
@@ -41,7 +41,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
     private Typeface stixTypeface;
     private final ImageButton leftArrowButton;
     private final ImageButton rightArrowButton;
-    // Маппинг логических ID кнопок единиц измерения на их отображаемый текст
+    // маппинг ID кнопок единиц на их текст
     private final Map<String, String> unitIdToUnitMap;
 
     public KeyboardLogic(
@@ -86,7 +86,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         keyboardData = new HashMap<>();
         unitIdToUnitMap = new HashMap<>();
 
-        // Режим "Designation" (без изменений)
+        // режим "Designation"
         keyboardData.put("Designation", Arrays.asList(
                 Arrays.asList(
                         new SymbolKey("a_latin", "a", true),
@@ -122,9 +122,9 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                 )
         ));
 
-        // Режим "Units_of_measurement" с разделением на страницы
+        // режим "Units_of_measurement" с разбивкой на страницы
         List<List<SymbolKey>> unitsPages = Arrays.asList(
-                Arrays.asList( // Страница 1
+                Arrays.asList( // страница 1
                         new SymbolKey("unit_m/s", "m/s", false),
                         new SymbolKey("unit_km/h", "km/h", false),
                         new SymbolKey("unit_cm/s", "cm/s", false),
@@ -147,7 +147,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                         new SymbolKey("unit_kPa", "kPa", false),
                         new SymbolKey("unit_atm", "atm", false)
                 ),
-                Arrays.asList( // Страница 2
+                Arrays.asList( // страница 2
                         new SymbolKey("unit_J", "J", false),
                         new SymbolKey("unit_kJ", "kJ", false),
                         new SymbolKey("unit_cal", "cal", false),
@@ -170,7 +170,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                         new SymbolKey("unit_kΩ", "kΩ", false),
                         new SymbolKey("unit_MΩ", "MΩ", false)
                 ),
-                Arrays.asList( // Страница 3
+                Arrays.asList( // страница 3
                         new SymbolKey("unit_F", "F", false),
                         new SymbolKey("unit_μF", "μF", false),
                         new SymbolKey("unit_nF", "nF", false),
@@ -193,14 +193,14 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         );
         keyboardData.put("Units_of_measurement", unitsPages);
 
-        // Инициализация маппинга для единиц измерения
+        // заполняем маппинг единиц
         for (List<SymbolKey> page : unitsPages) {
             for (SymbolKey key : page) {
                 unitIdToUnitMap.put(key.getLogicalId(), key.getDisplayText());
             }
         }
 
-        // Режим "Numbers_and_operations" (без изменений)
+        // режим "Numbers_and_operations"
         keyboardData.put("Numbers_and_operations", Arrays.asList(
                 Arrays.asList(
                         new SymbolKey("num_1", "1", false),
@@ -362,7 +362,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
 
         List<SymbolKey> currentKeys = pages.get(currentPage);
 
-        // Получаем текущее обозначение и список допустимых единиц измерения
+        // получаем текущее обозначение и допустимые единицы
         String currentDesignation = inputController != null ? inputController.getCurrentDesignation() : null;
         List<String> allowedUnits = null;
         if ("Units_of_measurement".equals(currentMode) && currentDesignation != null) {
@@ -379,14 +379,14 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                 SymbolKey symbolKey = currentKeys.get(i);
                 keyView.setText(symbolKey.getDisplayText());
 
-                // Установка шрифта
+                // установка шрифта
                 if (symbolKey.shouldUseStixFont()) {
                     keyView.setTypeface(stixTypeface);
                 } else {
                     keyView.setTypeface(Typeface.DEFAULT);
                 }
 
-                // Применение стилей в режиме "Units_of_measurement"
+                // стили для режима единиц
                 if ("Units_of_measurement".equals(currentMode) && allowedUnits != null) {
                     String unit = unitIdToUnitMap.get(symbolKey.getLogicalId());
                     if (unit != null && allowedUnits.contains(unit)) {
@@ -397,7 +397,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                         keyView.setTypeface(Typeface.DEFAULT);
                     }
                 } else {
-                    // Обычные стили для других режимов или если нет обозначения
+                    // обычные стили для других режимов
                     if (symbolKey.isColor()) {
                         keyView.setTextColor(Color.WHITE);
                     } else {

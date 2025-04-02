@@ -2,30 +2,16 @@ package com.example.fizmind.measurement;
 
 import android.util.Log;
 
-/**
- * Класс, представляющий конкретное измерение с переведенными в СИ значениями.
- * Наследуется от абстрактного класса Measurement.
- */
+// класс для измерений с переведенными в СИ значениями
 public class ConcreteMeasurement extends Measurement {
 
-    // Дополнительные поля для отображения степени и индекса
+    // поля для степени и индекса
     private final String exponent;
     private final String subscript;
-    // Флаг, указывающий, является ли измерение константой
+    // флаг константы
     private final boolean constant;
 
-    /**
-     * Конструктор ConcreteMeasurement.
-     *
-     * @param designation           Обозначение измерения.
-     * @param value                 Значение измерения.
-     * @param unit                  Единица измерения.
-     * @param designationOperations Операции над обозначением.
-     * @param valueOperations       Операции над значением.
-     * @param exponent              Степень (если есть).
-     * @param subscript             Индекс (если есть).
-     * @param constant              Флаг, указывающий, является ли измерение константой.
-     */
+    // конструктор
     public ConcreteMeasurement(String designation, double value, String unit,
                                String designationOperations, String valueOperations,
                                String exponent, String subscript, boolean constant) {
@@ -35,11 +21,7 @@ public class ConcreteMeasurement extends Measurement {
         this.constant = constant;
     }
 
-    /**
-     * Проверяет корректность измерения.
-     *
-     * @return true, если значение корректно и единица измерения задана, иначе false.
-     */
+    // проверяет корректность измерения
     @Override
     public boolean validate() {
         if (Double.isNaN(value) || Double.isInfinite(value)) {
@@ -53,11 +35,7 @@ public class ConcreteMeasurement extends Measurement {
         return true;
     }
 
-    /**
-     * Возвращает строковое представление измерения.
-     *
-     * @return Строка в формате "designation[subscript][^exponent] = value unit".
-     */
+    // строковое представление
     @Override
     public String toString() {
         return String.format("%s%s%s = %.2f %s",
@@ -68,20 +46,12 @@ public class ConcreteMeasurement extends Measurement {
                 unit);
     }
 
-    /**
-     * Возвращает флаг, указывающий, является ли измерение константой.
-     *
-     * @return true, если измерение константное; false иначе.
-     */
+    // является ли константой
     public boolean isConstant() {
         return constant;
     }
 
-    /**
-     * Возвращает индекс (subscript) измерения.
-     *
-     * @return строку с индексом, либо пустую строку, если индекс не задан.
-     */
+    // возвращает индекс
     public String getSubscript() {
         return subscript != null ? subscript : "";
     }

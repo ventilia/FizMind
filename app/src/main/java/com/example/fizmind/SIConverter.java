@@ -4,30 +4,28 @@ import android.util.Log;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Класс для перевода значений в систему СИ и генерации шагов перевода.
- */
+// класс для конвертации значений в СИ и создания шагов конвертации
 public class SIConverter {
 
     private static final Map<String, Double> CONVERSION_FACTORS = new HashMap<>();
 
     static {
-        // Длина
+        // длина
         CONVERSION_FACTORS.put("m", 1.0);
         CONVERSION_FACTORS.put("km", 1000.0);
         CONVERSION_FACTORS.put("cm", 0.01);
 
-        // Время
+        // время
         CONVERSION_FACTORS.put("s", 1.0);
         CONVERSION_FACTORS.put("min", 60.0);
         CONVERSION_FACTORS.put("h", 3600.0);
 
-        // Масса
+        // масса
         CONVERSION_FACTORS.put("kg", 1.0);
         CONVERSION_FACTORS.put("g", 0.001);
         CONVERSION_FACTORS.put("t", 1000.0);
 
-        // Скорость
+        // скорость
         CONVERSION_FACTORS.put("m/s", 1.0);
         CONVERSION_FACTORS.put("km/h", 0.277778); // 1000 / 3600
         CONVERSION_FACTORS.put("cm/s", 0.01);
@@ -35,90 +33,83 @@ public class SIConverter {
         CONVERSION_FACTORS.put("км/ч", 0.277778);
         CONVERSION_FACTORS.put("см/с", 0.01);
 
-        // Ускорение
+        // ускорение
         CONVERSION_FACTORS.put("m/s²", 1.0);
         CONVERSION_FACTORS.put("cm/s²", 0.01);
         CONVERSION_FACTORS.put("km/h²", 0.00007716049); // (1000 / 3600²)
 
-        // Сила
+        // сила
         CONVERSION_FACTORS.put("N", 1.0);
         CONVERSION_FACTORS.put("kN", 1000.0);
         CONVERSION_FACTORS.put("dyne", 0.00001);
 
-        // Давление
+        // давление
         CONVERSION_FACTORS.put("Pa", 1.0);
         CONVERSION_FACTORS.put("kPa", 1000.0);
         CONVERSION_FACTORS.put("atm", 101325.0);
 
-        // Энергия
+        // энергия
         CONVERSION_FACTORS.put("J", 1.0);
         CONVERSION_FACTORS.put("kJ", 1000.0);
         CONVERSION_FACTORS.put("cal", 4.184);
 
-        // Мощность
+        // мощность
         CONVERSION_FACTORS.put("W", 1.0);
         CONVERSION_FACTORS.put("kW", 1000.0);
         CONVERSION_FACTORS.put("hp", 745.7);
 
-        // Плотность
+        // плотность
         CONVERSION_FACTORS.put("kg/m³", 1.0);
         CONVERSION_FACTORS.put("g/cm³", 1000.0);
         CONVERSION_FACTORS.put("g/mL", 1000.0);
 
-        // Площадь
+        // площадь
         CONVERSION_FACTORS.put("m²", 1.0);
         CONVERSION_FACTORS.put("cm²", 0.0001);
         CONVERSION_FACTORS.put("km²", 1000000.0);
 
-        // Электрический ток
+        // электрический ток
         CONVERSION_FACTORS.put("A", 1.0);
         CONVERSION_FACTORS.put("mA", 0.001);
         CONVERSION_FACTORS.put("kA", 1000.0);
 
-        // Напряжение
+        // напряжение
         CONVERSION_FACTORS.put("V", 1.0);
         CONVERSION_FACTORS.put("kV", 1000.0);
         CONVERSION_FACTORS.put("mV", 0.001);
 
-        // Сопротивление
+        // сопротивление
         CONVERSION_FACTORS.put("Ω", 1.0);
         CONVERSION_FACTORS.put("kΩ", 1000.0);
         CONVERSION_FACTORS.put("MΩ", 1000000.0);
 
-        // Емкость
+        // емкость
         CONVERSION_FACTORS.put("F", 1.0);
         CONVERSION_FACTORS.put("μF", 0.000001);
         CONVERSION_FACTORS.put("nF", 0.000000001);
 
-        // Индуктивность
+        // индуктивность
         CONVERSION_FACTORS.put("H", 1.0);
         CONVERSION_FACTORS.put("mH", 0.001);
         CONVERSION_FACTORS.put("μH", 0.000001);
 
-        // Магнитный поток
+        // магнитный поток
         CONVERSION_FACTORS.put("Wb", 1.0);
         CONVERSION_FACTORS.put("Mx", 0.00000001);
         CONVERSION_FACTORS.put("T·m²", 1.0);
 
-        // Магнитная индукция
+        // магнитная индукция
         CONVERSION_FACTORS.put("T", 1.0);
         CONVERSION_FACTORS.put("mT", 0.001);
         CONVERSION_FACTORS.put("G", 0.0001);
 
-        // Объём
+        // объём
         CONVERSION_FACTORS.put("m³", 1.0);
         CONVERSION_FACTORS.put("L", 0.001);
         CONVERSION_FACTORS.put("cm³", 0.000001);
     }
 
-    /**
-     * Переводит значение в систему СИ.
-     *
-     * @param pq    Физическая величина
-     * @param value Значение
-     * @param unit  Единица измерения
-     * @return Массив [переведенное значение, SI-единица] или null при ошибке
-     */
+    // переводит значение в СИ. возвращает [значение, единица] или null при ошибке
     public static Object[] convertToSI(PhysicalQuantity pq, double value, String unit) {
         if (pq.isConstant()) {
             Log.d("SIConverter", "Константа " + pq.getDesignation() + ", перевод не требуется");
@@ -130,7 +121,7 @@ public class SIConverter {
             return null;
         }
 
-        // Специальная обработка температуры
+        // обработка температуры
         if (pq.getDesignation().equals("designation_T")) {
             if (unit.equals("K")) {
                 return new Object[]{value, "K"};
@@ -155,14 +146,7 @@ public class SIConverter {
         return new Object[]{siValue, pq.getSiUnit()};
     }
 
-    /**
-     * Генерирует шаги перевода в СИ.
-     *
-     * @param pq    Физическая величина
-     * @param value Значение
-     * @param unit  Единица измерения
-     * @return Строка с шагами перевода
-     */
+    // создает шаги для перевода в СИ
     public static String getConversionSteps(PhysicalQuantity pq, double value, String unit) {
         if (pq.isConstant()) {
             return String.format("%s = %.2f %s (константа)",
@@ -173,7 +157,7 @@ public class SIConverter {
             return "Ошибка: недопустимая единица измерения " + unit + " для " + pq.getDesignation();
         }
 
-        // Специальная обработка температуры
+        // обработка температуры
         if (pq.getDesignation().equals("designation_T")) {
             if (unit.equals("K")) {
                 return String.format("%s = %.2f K = %.2f K",
