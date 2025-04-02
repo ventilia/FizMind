@@ -158,6 +158,11 @@ public class InputController {
         Log.d("InputController", "Текущее поле ввода установлено: " + field);
     }
 
+    // **Добавленный метод для получения текущего обозначения**
+    public String getCurrentDesignation() {
+        return logicalDesignation;
+    }
+
     // Обработка ввода
     public void onKeyInput(String input, String sourceKeyboardMode, boolean keyUsesStix, String logicalId) {
         Log.d("InputController", "Обработка ввода: состояние=" + currentState + ", ввод='" + input + "', logicalId=" + logicalId);
@@ -639,6 +644,8 @@ public class InputController {
 
             double siValue = value;
             String siUnit = unit;
+            SpannableStringBuilder historyEntry;
+
             if (isConversionMode) {
                 Object[] siData = conversionService.convert(pq, value, unit);
                 if (siData == null) {
@@ -647,22 +654,6 @@ public class InputController {
                 }
                 siValue = (double) siData[0];
                 siUnit = (String) siData[1];
-            }
-
-            ConcreteMeasurement measurement = new ConcreteMeasurement(
-                    logicalDesignation, siValue, siUnit,
-                    operationBuffer.toString(), valueOperationBuffer.toString(),
-                    exponent, subscript, isCurrentConstant);
-            if (!measurement.validate()) {
-                Log.e("InputController", "Ошибка валидации измерения: " + measurement.toString());
-                return;
-            }
-
-            measurements.add(measurement);
-            Log.d("InputController", "Сохранено измерение: " + measurement.toString());
-
-            SpannableStringBuilder historyEntry;
-            if (isConversionMode) {
                 String steps = conversionService.getSteps(pq, value, unit);
                 historyEntry = new SpannableStringBuilder(steps);
                 int equalIndex = steps.lastIndexOf("=");
@@ -710,6 +701,19 @@ public class InputController {
                     historyEntry.append(" ").append(unit);
                 }
             }
+
+            ConcreteMeasurement measurement = new ConcreteMeasurement(
+                    logicalDesignation, siValue, siUnit,
+                    operationBuffer.toString(), valueOperationBuffer.toString(),
+                    exponent, subscript, isCurrentConstant);
+            if (!measurement.validate()) {
+                Log.e("InputController", "Ошибка валидации измерения: " + measurement.toString());
+                return;
+            }
+
+            measurements.add(measurement);
+            Log.d("InputController", "Сохранено измерение: " + measurement.toString());
+
             history.add(historyEntry);
 
             if (!unit.isEmpty()) {

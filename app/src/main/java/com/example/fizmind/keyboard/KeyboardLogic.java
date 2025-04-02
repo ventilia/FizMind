@@ -10,6 +10,8 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import com.example.fizmind.PhysicalQuantity;
+import com.example.fizmind.PhysicalQuantityRegistry;
 import com.example.fizmind.R;
 import com.example.fizmind.animation.KeyboardAnimation;
 import com.example.fizmind.ConversionService;
@@ -39,6 +41,8 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
     private Typeface stixTypeface;
     private final ImageButton leftArrowButton;
     private final ImageButton rightArrowButton;
+    // Маппинг логических ID кнопок единиц измерения на их отображаемый текст
+    private final Map<String, String> unitIdToUnitMap;
 
     public KeyboardLogic(
             Context context,
@@ -80,6 +84,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         numbersButton.setTag("MODE_BUTTON");
 
         keyboardData = new HashMap<>();
+        unitIdToUnitMap = new HashMap<>();
 
         // Режим "Designation" (без изменений)
         keyboardData.put("Designation", Arrays.asList(
@@ -118,7 +123,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         ));
 
         // Режим "Units_of_measurement" с разделением на страницы
-        keyboardData.put("Units_of_measurement", Arrays.asList(
+        List<List<SymbolKey>> unitsPages = Arrays.asList(
                 Arrays.asList( // Страница 1
                         new SymbolKey("unit_m/s", "m/s", false),
                         new SymbolKey("unit_km/h", "km/h", false),
@@ -185,7 +190,15 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                         new SymbolKey("unit_°C", "°C", false),
                         new SymbolKey("unit_°F", "°F", false)
                 )
-        ));
+        );
+        keyboardData.put("Units_of_measurement", unitsPages);
+
+        // Инициализация маппинга для единиц измерения
+        for (List<SymbolKey> page : unitsPages) {
+            for (SymbolKey key : page) {
+                unitIdToUnitMap.put(key.getLogicalId(), key.getDisplayText());
+            }
+        }
 
         // Режим "Numbers_and_operations" (без изменений)
         keyboardData.put("Numbers_and_operations", Arrays.asList(
@@ -349,22 +362,48 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
 
         List<SymbolKey> currentKeys = pages.get(currentPage);
 
+        // Получаем текущее обозначение и список допустимых единиц измерения
+        String currentDesignation = inputController != null ? inputController.getCurrentDesignation() : null;
+        List<String> allowedUnits = null;
+        if ("Units_of_measurement".equals(currentMode) && currentDesignation != null) {
+            PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(currentDesignation);
+            if (pq != null) {
+                allowedUnits = pq.getAllowedUnits();
+                Log.d("KeyboardLogic", "Допустимые единицы для " + currentDesignation + ": " + allowedUnits);
+            }
+        }
+
         for (int i = 0; i < keyboardCells.size(); i++) {
             TextView keyView = keyboardCells.get(i);
             if (i < currentKeys.size()) {
                 SymbolKey symbolKey = currentKeys.get(i);
                 keyView.setText(symbolKey.getDisplayText());
 
+                // Установка шрифта
                 if (symbolKey.shouldUseStixFont()) {
                     keyView.setTypeface(stixTypeface);
                 } else {
                     keyView.setTypeface(Typeface.DEFAULT);
                 }
 
-                if (symbolKey.isColor()) {
-                    keyView.setTextColor(Color.WHITE);
+                // Применение стилей в режиме "Units_of_measurement"
+                if ("Units_of_measurement".equals(currentMode) && allowedUnits != null) {
+                    String unit = unitIdToUnitMap.get(symbolKey.getLogicalId());
+                    if (unit != null && allowedUnits.contains(unit)) {
+                        keyView.setTextColor(Color.BLACK);
+                        keyView.setTypeface(Typeface.DEFAULT_BOLD);
+                    } else {
+                        keyView.setTextColor(Color.GRAY);
+                        keyView.setTypeface(Typeface.DEFAULT);
+                    }
                 } else {
-                    keyView.setTextColor(Color.BLACK);
+                    // Обычные стили для других режимов или если нет обозначения
+                    if (symbolKey.isColor()) {
+                        keyView.setTextColor(Color.WHITE);
+                    } else {
+                        keyView.setTextColor(Color.BLACK);
+                    }
+                    keyView.setTypeface(Typeface.DEFAULT);
                 }
 
                 keyView.setOnClickListener(view -> {
