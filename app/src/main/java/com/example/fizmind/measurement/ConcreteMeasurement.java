@@ -1,5 +1,6 @@
 package com.example.fizmind.measurement;
 
+import android.text.SpannableStringBuilder;
 import android.util.Log;
 
 // класс для измерений с переведенными в СИ значениями
@@ -10,26 +11,31 @@ public class ConcreteMeasurement extends Measurement {
     private final String subscript;
     // флаг константы
     private final boolean constant;
+    // оригинальное форматированное представление
+    private final SpannableStringBuilder originalDisplay;
 
-    // конструктор
+    // конструктор с оригинальным представлением
     public ConcreteMeasurement(String designation, double value, String unit,
                                String designationOperations, String valueOperations,
-                               String exponent, String subscript, boolean constant) {
+                               String exponent, String subscript, boolean constant,
+                               SpannableStringBuilder originalDisplay) {
         super(designation, value, unit, designationOperations, valueOperations);
         this.exponent = exponent;
         this.subscript = subscript;
         this.constant = constant;
+        this.originalDisplay = originalDisplay;
+        Log.d("ConcreteMeasurement", "создано измерение с оригинальным представлением: " + toString());
     }
 
     // проверяет корректность измерения
     @Override
     public boolean validate() {
         if (Double.isNaN(value) || Double.isInfinite(value)) {
-            Log.e("ConcreteMeasurement", "Недопустимое значение: " + value);
+            Log.e("ConcreteMeasurement", "недопустимое значение: " + value);
             return false;
         }
         if (unit == null || unit.isEmpty()) {
-            Log.e("ConcreteMeasurement", "Единица измерения не указана для " + designation);
+            Log.e("ConcreteMeasurement", "единица измерения не указана для " + designation);
             return false;
         }
         return true;
@@ -54,5 +60,10 @@ public class ConcreteMeasurement extends Measurement {
     // возвращает индекс
     public String getSubscript() {
         return subscript != null ? subscript : "";
+    }
+
+    // возвращает оригинальное форматированное представление
+    public SpannableStringBuilder getOriginalDisplay() {
+        return originalDisplay;
     }
 }
