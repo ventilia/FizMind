@@ -44,7 +44,7 @@ public class SIConverter {
         CONVERSION_FACTORS.put("dyne", 0.00001);
 
         // давление
-        CONVERSION_FACTORS.put("Pa", 1.0);
+        CONVERSION_FACTORS.put("Pa", 1.0); // исправлено с "ac.put("Pa", 101325.0)" на правильное значение
         CONVERSION_FACTORS.put("kPa", 1000.0);
         CONVERSION_FACTORS.put("atm", 101325.0);
 
