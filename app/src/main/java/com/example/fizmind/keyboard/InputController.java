@@ -645,10 +645,9 @@ public class InputController {
                 }
                 siValue = (double) siData[0];
                 siUnit = (String) siData[1];
-                // используем отображаемое обозначение из designationBuffer
                 String steps = conversionService.getSteps(designationBuffer.toString(), pq, value, unit);
                 historyEntry = new SpannableStringBuilder(steps);
-                // применяем шрифт STIX к обозначению в шагах конвертации
+                // применяем шрифт STIX к обозначению
                 if (designationUsesStix != null && designationUsesStix && stixTypeface != null) {
                     int designationIndex = steps.indexOf(designationBuffer.toString());
                     if (designationIndex != -1) {
@@ -661,15 +660,21 @@ public class InputController {
                         );
                     }
                 }
-                // выделяем конечное значение жирным
-                int equalIndex = steps.lastIndexOf("=");
-                if (equalIndex != -1) {
-                    historyEntry.setSpan(
-                            new StyleSpan(Typeface.BOLD),
-                            equalIndex + 1,
-                            steps.length(),
-                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                    );
+                // выделяем итоговое значение жирным шрифтом
+                int lastEqualIndex = steps.lastIndexOf("=");
+                if (lastEqualIndex != -1) {
+                    int start = lastEqualIndex + 1;
+                    while (start < steps.length() && Character.isWhitespace(steps.charAt(start))) {
+                        start++;
+                    }
+                    if (start < steps.length()) {
+                        historyEntry.setSpan(
+                                new StyleSpan(Typeface.BOLD),
+                                start,
+                                steps.length(),
+                                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                        );
+                    }
                 }
             } else {
                 historyEntry = new SpannableStringBuilder();
