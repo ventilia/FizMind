@@ -26,7 +26,8 @@ public class ConversionService {
     // возвращает шаги перевода в СИ с использованием отображаемого обозначения
     public String getSteps(String displayDesignation, PhysicalQuantity pq, double value, String unit) {
         if (isSiUnit(pq, unit)) {
-            return String.format("%s = %.2f %s (уже в СИ)", displayDesignation, value, unit);
+            // для единиц в СИ не показываем шаги, возвращаем пустую строку
+            return "";
         }
         return SIConverter.getConversionSteps(displayDesignation, pq, value, unit);
     }

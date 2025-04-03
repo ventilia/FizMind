@@ -14,6 +14,7 @@ import android.widget.TextView;
 import com.example.fizmind.ConversionService;
 import com.example.fizmind.PhysicalQuantity;
 import com.example.fizmind.PhysicalQuantityRegistry;
+import com.example.fizmind.SIConverter;
 import com.example.fizmind.animation.CustomTypefaceSpan;
 import com.example.fizmind.measurement.ConcreteMeasurement;
 import com.example.fizmind.measurement.UnknownQuantity;
@@ -646,37 +647,85 @@ public class InputController {
                 siValue = (double) siData[0];
                 siUnit = (String) siData[1];
                 String steps = conversionService.getSteps(designationBuffer.toString(), pq, value, unit);
-                historyEntry = new SpannableStringBuilder(steps);
-                // применяем шрифт STIX к обозначению
-                if (designationUsesStix != null && designationUsesStix && stixTypeface != null) {
-                    int designationIndex = steps.indexOf(designationBuffer.toString());
-                    if (designationIndex != -1) {
-                        int designationEnd = designationIndex + designationBuffer.length();
-                        historyEntry.setSpan(
-                                new CustomTypefaceSpan(stixTypeface),
-                                designationIndex,
-                                designationEnd,
-                                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                        );
+                if (!steps.isEmpty()) {
+                    // шаги перевода есть, используем их
+                    historyEntry = new SpannableStringBuilder(steps);
+                    // применяем шрифт STIX к обозначению
+                    if (designationUsesStix != null && designationUsesStix && stixTypeface != null) {
+                        int designationIndex = steps.indexOf(designationBuffer.toString());
+                        if (designationIndex != -1) {
+                            int designationEnd = designationIndex + designationBuffer.length();
+                            historyEntry.setSpan(
+                                    new CustomTypefaceSpan(stixTypeface),
+                                    designationIndex,
+                                    designationEnd,
+                                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                            );
+                        }
                     }
-                }
-                // выделяем итоговое значение жирным шрифтом
-                int lastEqualIndex = steps.lastIndexOf("=");
-                if (lastEqualIndex != -1) {
-                    int start = lastEqualIndex + 1;
-                    while (start < steps.length() && Character.isWhitespace(steps.charAt(start))) {
-                        start++;
+                    // выделяем итоговое значение жирным шрифтом
+                    int lastEqualIndex = steps.lastIndexOf("=");
+                    if (lastEqualIndex != -1) {
+                        int start = lastEqualIndex + 1;
+                        while (start < steps.length() && Character.isWhitespace(steps.charAt(start))) {
+                            start++;
+                        }
+                        if (start < steps.length()) {
+                            historyEntry.setSpan(
+                                    new StyleSpan(Typeface.BOLD),
+                                    start,
+                                    steps.length(),
+                                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                            );
+                        }
                     }
-                    if (start < steps.length()) {
+                } else {
+                    // единица уже в СИ, отображаем только значение без шагов
+                    historyEntry = new SpannableStringBuilder();
+                    int start = historyEntry.length();
+                    if (operationBuffer.length() > 0) {
+                        historyEntry.append(operationBuffer).append("(").append(designationBuffer).append(")");
+                    } else {
+                        historyEntry.append(designationBuffer);
+                    }
+                    int designationEnd = historyEntry.length();
+                    if (subscript != null && !subscript.isEmpty()) {
+                        int subscriptStart = historyEntry.length();
+                        historyEntry.append(subscript);
+                        int subscriptEnd = historyEntry.length();
+                        historyEntry.setSpan(new SubscriptSpan(), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        historyEntry.setSpan(new RelativeSizeSpan(0.75f), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    }
+                    if (designationUsesStix != null && designationUsesStix && stixTypeface != null) {
+                        historyEntry.setSpan(new CustomTypefaceSpan(stixTypeface), start, designationEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    }
+                    historyEntry.append(" = ");
+                    String valueStr = SIConverter.formatValue(value);
+                    if (valueOperationBuffer.length() > 0) {
+                        historyEntry.append(valueOperationBuffer);
+                    } else {
+                        historyEntry.append(valueStr);
+                    }
+                    if (!unit.isEmpty()) {
+                        historyEntry.append(" ").append(unit);
+                    }
+                    // выделяем итоговое значение жирным шрифтом
+                    int equalIndex = historyEntry.toString().indexOf("=");
+                    if (equalIndex != -1) {
+                        int startBold = equalIndex + 1;
+                        while (startBold < historyEntry.length() && Character.isWhitespace(historyEntry.charAt(startBold))) {
+                            startBold++;
+                        }
                         historyEntry.setSpan(
                                 new StyleSpan(Typeface.BOLD),
-                                start,
-                                steps.length(),
+                                startBold,
+                                historyEntry.length(),
                                 Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
                         );
                     }
                 }
             } else {
+                // режим калькулятора, без перевода в СИ
                 historyEntry = new SpannableStringBuilder();
                 int start = historyEntry.length();
                 if (operationBuffer.length() > 0) {
@@ -696,20 +745,11 @@ public class InputController {
                     historyEntry.setSpan(new CustomTypefaceSpan(stixTypeface), start, designationEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                 }
                 historyEntry.append(" = ");
-                int valueStart = historyEntry.length();
-                String valueStr = isIntegerValue(value) ? String.valueOf((int) value) : String.valueOf(value);
+                String valueStr = SIConverter.formatValue(value);
                 if (valueOperationBuffer.length() > 0) {
                     historyEntry.append(valueOperationBuffer);
                 } else {
                     historyEntry.append(valueStr);
-                }
-                int valueEnd = historyEntry.length();
-                if (exponent != null && !exponent.isEmpty()) {
-                    int exponentStart = historyEntry.length();
-                    historyEntry.append(exponent);
-                    int exponentEnd = historyEntry.length();
-                    historyEntry.setSpan(new SuperscriptSpan(), exponentStart, exponentEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                    historyEntry.setSpan(new RelativeSizeSpan(0.75f), exponentStart, exponentEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                 }
                 if (!unit.isEmpty()) {
                     historyEntry.append(" ").append(unit);
@@ -983,10 +1023,5 @@ public class InputController {
         }
 
         Log.d("InputController", logMessage.toString());
-    }
-
-    // проверка, целое ли число
-    private boolean isIntegerValue(double value) {
-        return value == (int) value;
     }
 }

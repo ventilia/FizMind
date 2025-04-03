@@ -1,3 +1,4 @@
+
 package com.example.fizmind;
 
 import android.util.Log;
@@ -44,7 +45,7 @@ public class SIConverter {
         CONVERSION_FACTORS.put("dyne", 0.00001);
 
         // давление
-        CONVERSION_FACTORS.put("Pa", 1.0); // исправлено с "ac.put("Pa", 101325.0)" на правильное значение
+        CONVERSION_FACTORS.put("Pa", 1.0);
         CONVERSION_FACTORS.put("kPa", 1000.0);
         CONVERSION_FACTORS.put("atm", 101325.0);
 
@@ -147,7 +148,7 @@ public class SIConverter {
     }
 
     // вспомогательный метод для форматирования чисел
-    private static String formatValue(double value) {
+    public static String formatValue(double value) {
         if (value == (int) value) {
             return String.valueOf((int) value); // целое число без десятичных знаков
         } else {
