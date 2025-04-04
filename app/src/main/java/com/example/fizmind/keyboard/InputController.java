@@ -157,7 +157,7 @@ public class InputController {
 
     // обработка ввода
     public void onKeyInput(String input, String sourceKeyboardMode, boolean keyUsesStix, String logicalId) {
-        Log.d("InputController", "обработка ввода: состояние=" + currentState + ", ввод='" + input + "', logicalId=" + logicalId);
+        Log.d("InputController", "обработка ввода: состояние=" + currentState + ", фокус=" + focusState + ", ввод='" + input + "', logicalId=" + logicalId + ", режим=" + (isConversionMode ? "СИ" : "калькулятор"));
 
         if ("designations".equals(currentInputField)) {
             if (focusState == FocusState.MODULE) {
@@ -636,9 +636,12 @@ public class InputController {
 
             double siValue = value;
             String siUnit = unit;
-            SpannableStringBuilder historyEntry;
+            String steps = "";
+            boolean isSIUnit = conversionService.isSiUnit(pq, unit);
+            SpannableStringBuilder historyEntry = new SpannableStringBuilder();
 
             if (isConversionMode) {
+                // режим конвертации СИ
                 Object[] siData = conversionService.convert(pq, value, unit);
                 if (siData == null) {
                     Log.e("InputController", "ошибка конвертации для " + logicalDesignation + " с единицей " + unit);
@@ -646,87 +649,56 @@ public class InputController {
                 }
                 siValue = (double) siData[0];
                 siUnit = (String) siData[1];
-                String steps = conversionService.getSteps(designationBuffer.toString(), pq, value, unit);
-                if (!steps.isEmpty()) {
-                    // шаги перевода есть, используем их
-                    historyEntry = new SpannableStringBuilder(steps);
-                    // применяем шрифт STIX к обозначению
-                    if (designationUsesStix != null && designationUsesStix && stixTypeface != null) {
-                        int designationIndex = steps.indexOf(designationBuffer.toString());
-                        if (designationIndex != -1) {
-                            int designationEnd = designationIndex + designationBuffer.length();
-                            historyEntry.setSpan(
-                                    new CustomTypefaceSpan(stixTypeface),
-                                    designationIndex,
-                                    designationEnd,
-                                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                            );
-                        }
+                steps = conversionService.getSteps(designationBuffer.toString(), pq, value, unit);
+
+                // формируем historyEntry для вывода в формате (исходные данные - шаги - результат)
+                int start = historyEntry.length();
+                historyEntry.append(designationBuffer);
+                int designationEnd = historyEntry.length();
+                if (subscript != null && !subscript.isEmpty()) {
+                    int subscriptStart = historyEntry.length();
+                    historyEntry.append(subscript);
+                    int subscriptEnd = historyEntry.length();
+                    historyEntry.setSpan(new SubscriptSpan(), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    historyEntry.setSpan(new RelativeSizeSpan(0.75f), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+                historyEntry.append(" = ").append(SIConverter.formatValue(value)).append(" ").append(unit);
+                if (designationUsesStix != null && designationUsesStix && stixTypeface != null) {
+                    historyEntry.setSpan(new CustomTypefaceSpan(stixTypeface), start, designationEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+
+                if (isSIUnit) {
+                    historyEntry.append(" - уже в СИ");
+                } else if (!steps.isEmpty()) {
+                    historyEntry.append(" - ").append(steps);
+                }
+
+                int resultStart = historyEntry.length();
+                historyEntry.append(" - ").append(designationBuffer);
+                int resultDesignationEnd = historyEntry.length();
+                if (subscript != null && !subscript.isEmpty()) {
+                    int subscriptStart = historyEntry.length();
+                    historyEntry.append(subscript);
+                    int subscriptEnd = historyEntry.length();
+                    historyEntry.setSpan(new SubscriptSpan(), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    historyEntry.setSpan(new RelativeSizeSpan(0.75f), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+                historyEntry.append(" = ").append(SIConverter.formatValue(siValue)).append(" ").append(siUnit);
+                if (designationUsesStix != null && designationUsesStix && stixTypeface != null) {
+                    historyEntry.setSpan(new CustomTypefaceSpan(stixTypeface), resultStart + 2, resultDesignationEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+
+                // выделяем итоговый результат жирным шрифтом
+                int lastDashIndex = historyEntry.toString().lastIndexOf("-");
+                if (lastDashIndex != -1) {
+                    int startBold = lastDashIndex + 1;
+                    while (startBold < historyEntry.length() && Character.isWhitespace(historyEntry.charAt(startBold))) {
+                        startBold++;
                     }
-                    // выделяем итоговое значение жирным шрифтом
-                    int lastEqualIndex = steps.lastIndexOf("=");
-                    if (lastEqualIndex != -1) {
-                        int start = lastEqualIndex + 1;
-                        while (start < steps.length() && Character.isWhitespace(steps.charAt(start))) {
-                            start++;
-                        }
-                        if (start < steps.length()) {
-                            historyEntry.setSpan(
-                                    new StyleSpan(Typeface.BOLD),
-                                    start,
-                                    steps.length(),
-                                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                            );
-                        }
-                    }
-                } else {
-                    // единица уже в СИ, отображаем только значение без шагов
-                    historyEntry = new SpannableStringBuilder();
-                    int start = historyEntry.length();
-                    if (operationBuffer.length() > 0) {
-                        historyEntry.append(operationBuffer).append("(").append(designationBuffer).append(")");
-                    } else {
-                        historyEntry.append(designationBuffer);
-                    }
-                    int designationEnd = historyEntry.length();
-                    if (subscript != null && !subscript.isEmpty()) {
-                        int subscriptStart = historyEntry.length();
-                        historyEntry.append(subscript);
-                        int subscriptEnd = historyEntry.length();
-                        historyEntry.setSpan(new SubscriptSpan(), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                        historyEntry.setSpan(new RelativeSizeSpan(0.75f), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                    }
-                    if (designationUsesStix != null && designationUsesStix && stixTypeface != null) {
-                        historyEntry.setSpan(new CustomTypefaceSpan(stixTypeface), start, designationEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                    }
-                    historyEntry.append(" = ");
-                    String valueStr = SIConverter.formatValue(value);
-                    if (valueOperationBuffer.length() > 0) {
-                        historyEntry.append(valueOperationBuffer);
-                    } else {
-                        historyEntry.append(valueStr);
-                    }
-                    if (!unit.isEmpty()) {
-                        historyEntry.append(" ").append(unit);
-                    }
-                    // выделяем итоговое значение жирным шрифтом
-                    int equalIndex = historyEntry.toString().indexOf("=");
-                    if (equalIndex != -1) {
-                        int startBold = equalIndex + 1;
-                        while (startBold < historyEntry.length() && Character.isWhitespace(historyEntry.charAt(startBold))) {
-                            startBold++;
-                        }
-                        historyEntry.setSpan(
-                                new StyleSpan(Typeface.BOLD),
-                                startBold,
-                                historyEntry.length(),
-                                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                        );
-                    }
+                    historyEntry.setSpan(new StyleSpan(Typeface.BOLD), startBold, historyEntry.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                 }
             } else {
                 // режим калькулятора, без перевода в СИ
-                historyEntry = new SpannableStringBuilder();
                 int start = historyEntry.length();
                 if (operationBuffer.length() > 0) {
                     historyEntry.append(operationBuffer).append("(").append(designationBuffer).append(")");
@@ -759,7 +731,8 @@ public class InputController {
             ConcreteMeasurement measurement = new ConcreteMeasurement(
                     logicalDesignation, siValue, siUnit,
                     operationBuffer.toString(), valueOperationBuffer.toString(),
-                    exponent, subscript, isCurrentConstant, historyEntry);
+                    exponent, subscript, isCurrentConstant, historyEntry,
+                    value, unit, steps, isSIUnit);
             if (!measurement.validate()) {
                 Log.e("InputController", "ошибка валидации измерения: " + measurement.toString());
                 return;
@@ -767,7 +740,7 @@ public class InputController {
 
             measurements.add(measurement);
             history.add(historyEntry);
-            Log.d("InputController", "сохранено измерение: " + measurement.toString());
+            Log.d("InputController", "сохранено измерение в режиме " + (isConversionMode ? "СИ" : "калькулятор") + ": " + measurement.toString());
 
             if (!unit.isEmpty()) {
                 lastUnitForDesignation.put(logicalDesignation, unit);
