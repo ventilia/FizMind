@@ -2,7 +2,6 @@ package com.example.fizmind.measurement;
 
 import android.text.SpannableStringBuilder;
 import android.util.Log;
-
 import com.example.fizmind.SIConverter;
 
 public class ConcreteMeasurement extends Measurement {
@@ -14,8 +13,9 @@ public class ConcreteMeasurement extends Measurement {
     private final double originalValue;         // исходное значение
     private final String originalUnit;          // исходная единица
     private final String conversionSteps;       // шаги конвертации
-    private final boolean isSIUnit;             // флаг, указывающий, была ли единица уже в СИ
-    private final boolean isConversionMode;     // режим: true — СИ, false — калькулятор
+    private final String moduleSteps;           // шаги применения модуля
+    private final boolean isSIUnit;             // флаг, указывающий, была ли единица уже в си
+    private final boolean isConversionMode;     // режим: true — си, false — калькулятор
 
     // конструктор
     public ConcreteMeasurement(String designation, double value, String unit,
@@ -23,7 +23,8 @@ public class ConcreteMeasurement extends Measurement {
                                String exponent, String subscript, boolean constant,
                                SpannableStringBuilder originalDisplay,
                                double originalValue, String originalUnit,
-                               String conversionSteps, boolean isSIUnit, boolean isConversionMode) {
+                               String conversionSteps, String moduleSteps,
+                               boolean isSIUnit, boolean isConversionMode) {
         super(designation, value, unit, designationOperations, valueOperations);
         this.exponent = exponent;
         this.subscript = subscript;
@@ -32,6 +33,7 @@ public class ConcreteMeasurement extends Measurement {
         this.originalValue = originalValue;
         this.originalUnit = originalUnit;
         this.conversionSteps = conversionSteps != null ? conversionSteps : "";
+        this.moduleSteps = moduleSteps != null ? moduleSteps : "";
         this.isSIUnit = isSIUnit;
         this.isConversionMode = isConversionMode;
         Log.d("ConcreteMeasurement", "создано измерение: " + toString());
@@ -76,13 +78,18 @@ public class ConcreteMeasurement extends Measurement {
         } else {
             sb.append(SIConverter.formatValue(isConversionMode ? originalValue : value));
         }
-        if (!unit.isEmpty()) {
+        if (!originalUnit.isEmpty()) {
             sb.append(" ").append(isConversionMode ? originalUnit : unit);
         }
 
-        // в режиме СИ добавляем шаги конвертации
+        // в режиме си добавляем шаги конвертации
         if (isConversionMode && !isSIUnit && !conversionSteps.isEmpty()) {
             sb.append(" = ").append(conversionSteps);
+        }
+
+        // добавляем шаги применения модуля
+        if (isConversionMode && !moduleSteps.isEmpty()) {
+            sb.append(" = ").append(moduleSteps);
         }
 
         return sb.toString();
@@ -95,5 +102,6 @@ public class ConcreteMeasurement extends Measurement {
     public double getOriginalValue() { return originalValue; }
     public String getOriginalUnit() { return originalUnit; }
     public String getConversionSteps() { return conversionSteps; }
+    public String getModuleSteps() { return moduleSteps; }
     public boolean isSIUnit() { return isSIUnit; }
 }

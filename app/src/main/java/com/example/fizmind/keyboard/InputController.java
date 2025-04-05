@@ -19,6 +19,7 @@ import com.example.fizmind.animation.CustomTypefaceSpan;
 import com.example.fizmind.measurement.ConcreteMeasurement;
 import com.example.fizmind.measurement.UnknownQuantity;
 import com.example.fizmind.modules.InputModule;
+import com.example.fizmind.modules.ModuleLogic;
 import com.example.fizmind.modules.ModuleType;
 import com.example.fizmind.modules.ModuleValidator;
 
@@ -580,7 +581,6 @@ public class InputController {
     }
 
     // сохранение ввода
-    // сохранение ввода
     public void onDownArrowPressed() {
         if ("designations".equals(currentInputField)) {
             if ((designationExponentModule != null && designationExponentModule.isActive() && designationExponentModule.isEmpty()) ||
@@ -636,6 +636,7 @@ public class InputController {
             double siValue = value;
             String siUnit = unit;
             String steps = "";
+            String moduleSteps = "";
             boolean isSIUnit = conversionService.isSiUnit(pq, unit);
             SpannableStringBuilder historyEntry = new SpannableStringBuilder();
 
@@ -671,17 +672,26 @@ public class InputController {
                 steps = conversionService.getSteps(pq, value, unit);
 
                 if (!isSIUnit && !steps.isEmpty()) {
-                    // добавляем шаги конвертации без дублирования
-                    int stepsStart = historyEntry.length();
+                    // добавляем шаги конвертации
                     historyEntry.append(" = ").append(steps);
-                    int lastEqualIndex = historyEntry.toString().lastIndexOf("= ");
-                    if (lastEqualIndex != -1) {
-                        int resultStart = lastEqualIndex + 2;
-                        int resultEnd = historyEntry.length();
-                        historyEntry.setSpan(new StyleSpan(Typeface.BOLD), resultStart, resultEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                    } else {
-                        Log.w("InputController", "не найдено '= ' в шагах конвертации");
+                }
+
+                // применяем модуль (степень)
+                if (!exponent.isEmpty() && !pq.isConstant()) {
+                    Object[] moduleData = ModuleLogic.applyExponent(siValue, exponent, siUnit);
+                    if (moduleData != null) {
+                        siValue = (double) moduleData[0];
+                        siUnit = (String) moduleData[1];
+                        moduleSteps = (String) moduleData[2];
+                        historyEntry.append(" = ").append(moduleSteps);
                     }
+                } else if (pq.isConstant() && !exponent.isEmpty()) {
+                    Log.w("InputController", "модули не применяются к константам");
+                }
+            } else {
+                // режим калькулятор: модули пока не поддерживаются
+                if (!exponent.isEmpty()) {
+                    Log.w("InputController", "модули поддерживаются только в режиме си");
                 }
             }
 
@@ -689,11 +699,19 @@ public class InputController {
                 historyEntry.append(" (константа)");
             }
 
+            // выделяем итоговый ответ жирным
+            int lastEqualIndex = historyEntry.toString().lastIndexOf("= ");
+            if (lastEqualIndex != -1) {
+                int resultStart = lastEqualIndex + 2;
+                int resultEnd = historyEntry.length();
+                historyEntry.setSpan(new StyleSpan(Typeface.BOLD), resultStart, resultEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+
             ConcreteMeasurement measurement = new ConcreteMeasurement(
                     logicalDesignation, siValue, siUnit,
                     operationBuffer.toString(), valueOperationBuffer.toString(),
                     exponent, subscript, isCurrentConstant, historyEntry,
-                    value, unit, steps, isSIUnit, isConversionMode);
+                    value, unit, steps, moduleSteps, isSIUnit, isConversionMode);
             if (!measurement.validate()) {
                 Log.e("InputController", "ошибка валидации измерения: " + measurement.toString());
                 return;
@@ -701,7 +719,7 @@ public class InputController {
 
             measurements.add(measurement);
             history.add(historyEntry);
-            Log.d("InputController", "сохранено измерение в режиме " + (isConversionMode ? "СИ" : "калькулятор") + ": " + measurement.toString());
+            Log.d("InputController", "сохранено измерение в режиме " + (isConversionMode ? "си" : "калькулятор") + ": " + measurement.toString());
 
             if (!unit.isEmpty()) {
                 lastUnitForDesignation.put(logicalDesignation, unit);
@@ -717,6 +735,7 @@ public class InputController {
             saveUnknown();
         }
     }
+
 
     // обновление интерфейса и состояния
     private void updateKeyboardMode() {
