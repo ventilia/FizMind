@@ -5,31 +5,25 @@ import android.util.Log;
 
 import com.example.fizmind.SIConverter;
 
-// класс для измерений с переведенными в СИ значениями
 public class ConcreteMeasurement extends Measurement {
 
-    // поля для степени и индекса
-    private final String exponent;
-    private final String subscript;
-    // флаг константы
-    private final boolean constant;
-    // оригинальное форматированное представление
-    private final SpannableStringBuilder originalDisplay;
-    // исходные данные
-    private final double originalValue;
-    private final String originalUnit;
-    // шаги конвертации
-    private final String conversionSteps;
-    // флаг, указывающий, была ли исходная единица уже в СИ
-    private final boolean isSIUnit;
+    private final String exponent;              // степень
+    private final String subscript;             // индекс
+    private final boolean constant;             // флаг константы
+    private final SpannableStringBuilder originalDisplay; // оригинальное представление для вывода
+    private final double originalValue;         // исходное значение
+    private final String originalUnit;          // исходная единица
+    private final String conversionSteps;       // шаги конвертации
+    private final boolean isSIUnit;             // флаг, указывающий, была ли единица уже в СИ
+    private final boolean isConversionMode;     // режим: true — СИ, false — калькулятор
 
-    // конструктор с полной информацией
+    // конструктор
     public ConcreteMeasurement(String designation, double value, String unit,
                                String designationOperations, String valueOperations,
                                String exponent, String subscript, boolean constant,
                                SpannableStringBuilder originalDisplay,
                                double originalValue, String originalUnit,
-                               String conversionSteps, boolean isSIUnit) {
+                               String conversionSteps, boolean isSIUnit, boolean isConversionMode) {
         super(designation, value, unit, designationOperations, valueOperations);
         this.exponent = exponent;
         this.subscript = subscript;
@@ -39,10 +33,11 @@ public class ConcreteMeasurement extends Measurement {
         this.originalUnit = originalUnit;
         this.conversionSteps = conversionSteps != null ? conversionSteps : "";
         this.isSIUnit = isSIUnit;
+        this.isConversionMode = isConversionMode;
         Log.d("ConcreteMeasurement", "создано измерение: " + toString());
     }
 
-    // проверяет корректность измерения
+    // проверка корректности
     @Override
     public boolean validate() {
         if (Double.isNaN(value) || Double.isInfinite(value)) {
@@ -56,12 +51,12 @@ public class ConcreteMeasurement extends Measurement {
         return true;
     }
 
-    // строковое представление с учетом режима и состояния единицы
+    // строковое представление "под капотом"
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
 
-        // добавляем обозначение с учетом операций, индекса и степени
+        // формируем обозначение
         if (!designationOperations.isEmpty()) {
             sb.append(designationOperations).append("(").append(designation).append(")");
         } else {
@@ -74,77 +69,43 @@ public class ConcreteMeasurement extends Measurement {
             sb.append("^").append(exponent);
         }
 
-        // формируем результат в зависимости от контекста
+        // добавляем значение и единицу
         sb.append(" = ");
         if (!valueOperations.isEmpty()) {
             sb.append(valueOperations);
         } else {
-            sb.append(SIConverter.formatValue(value));
+            sb.append(SIConverter.formatValue(isConversionMode ? originalValue : value));
         }
         if (!unit.isEmpty()) {
-            sb.append(" ").append(unit);
+            sb.append(" ").append(isConversionMode ? originalUnit : unit);
         }
 
-        // для режима конвертации СИ добавляем цепочку
-        String baseString = sb.toString();
-        if (!conversionSteps.isEmpty() || isSIUnit) {
-            sb.setLength(0); // очищаем для построения цепочки
-            // исходные данные
-            sb.append(designation);
-            if (subscript != null && !subscript.isEmpty()) {
-                sb.append("_").append(subscript);
-            }
-            if (exponent != null && !exponent.isEmpty()) {
-                sb.append("^").append(exponent);
-            }
-            sb.append(" = ").append(SIConverter.formatValue(originalValue)).append(" ").append(originalUnit);
-
-            // шаги конвертации или указание, что единица уже в СИ
+        // в режиме СИ добавляем специфику
+        if (isConversionMode) {
             if (isSIUnit) {
-                sb.append(" - уже в СИ");
+                sb.append(" (SI)");
             } else if (!conversionSteps.isEmpty()) {
-                sb.append(" - ").append(conversionSteps);
+                sb.append(" - ").append(conversionSteps).append(" - ")
+                        .append(designation);
+                if (subscript != null && !subscript.isEmpty()) {
+                    sb.append("_").append(subscript);
+                }
+                if (exponent != null && !exponent.isEmpty()) {
+                    sb.append("^").append(exponent);
+                }
+                sb.append(" = ").append(SIConverter.formatValue(value)).append(" ").append(unit);
             }
-
-            // итоговый результат
-            sb.append(" - ").append(baseString);
         }
 
         return sb.toString();
     }
 
-    // является ли константой
-    public boolean isConstant() {
-        return constant;
-    }
-
-    // возвращает индекс
-    public String getSubscript() {
-        return subscript != null ? subscript : "";
-    }
-
-    // возвращает оригинальное форматированное представление
-    public SpannableStringBuilder getOriginalDisplay() {
-        return originalDisplay;
-    }
-
-    // возвращает исходное значение
-    public double getOriginalValue() {
-        return originalValue;
-    }
-
-    // возвращает исходную единицу
-    public String getOriginalUnit() {
-        return originalUnit;
-    }
-
-    // возвращает шаги конвертации
-    public String getConversionSteps() {
-        return conversionSteps;
-    }
-
-    // возвращает флаг единицы СИ
-    public boolean isSIUnit() {
-        return isSIUnit;
-    }
+    // геттеры
+    public boolean isConstant() { return constant; }
+    public String getSubscript() { return subscript != null ? subscript : ""; }
+    public SpannableStringBuilder getOriginalDisplay() { return originalDisplay; }
+    public double getOriginalValue() { return originalValue; }
+    public String getOriginalUnit() { return originalUnit; }
+    public String getConversionSteps() { return conversionSteps; }
+    public boolean isSIUnit() { return isSIUnit; }
 }
