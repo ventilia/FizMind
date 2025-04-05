@@ -1,11 +1,9 @@
-
 package com.example.fizmind;
 
 import android.util.Log;
 import java.util.HashMap;
 import java.util.Map;
 
-// класс для конвертации значений в СИ и создания шагов конвертации
 public class SIConverter {
 
     private static final Map<String, Double> CONVERSION_FACTORS = new HashMap<>();
@@ -104,7 +102,7 @@ public class SIConverter {
         CONVERSION_FACTORS.put("mT", 0.001);
         CONVERSION_FACTORS.put("G", 0.0001);
 
-        // объём
+        // объем
         CONVERSION_FACTORS.put("m³", 1.0);
         CONVERSION_FACTORS.put("L", 0.001);
         CONVERSION_FACTORS.put("cm³", 0.000001);
@@ -171,8 +169,7 @@ public class SIConverter {
         // обработка температуры
         if (pq.getDesignation().equals("designation_T")) {
             if (unit.equals("K")) {
-                return String.format("%s = %s K = %s K",
-                        displayDesignation, formatValue(value), formatValue(value));
+                return String.format("%s = %s K", displayDesignation, formatValue(value));
             } else if (unit.equals("°C")) {
                 double kelvin = value + 273.15;
                 return String.format("%s = %s °C = %s + 273.15 = %s K",
@@ -191,8 +188,8 @@ public class SIConverter {
         }
 
         double siValue = value * factor;
-        String steps = String.format("%s = %s %s = %s × %s = %s %s",
-                displayDesignation, formatValue(value), unit, formatValue(value), formatValue(factor), formatValue(siValue), pq.getSiUnit());
+        String steps = String.format("%s %s = %s × %s = %s %s",
+                formatValue(value), unit, formatValue(value), formatValue(factor), formatValue(siValue), pq.getSiUnit());
         Log.d("SIConverter", "сгенерированы шаги перевода: " + steps);
         return steps;
     }

@@ -80,21 +80,9 @@ public class ConcreteMeasurement extends Measurement {
             sb.append(" ").append(isConversionMode ? originalUnit : unit);
         }
 
-        // в режиме СИ добавляем специфику
-        if (isConversionMode) {
-            if (isSIUnit) {
-                sb.append(" (SI)");
-            } else if (!conversionSteps.isEmpty()) {
-                sb.append(" - ").append(conversionSteps).append(" - ")
-                        .append(designation);
-                if (subscript != null && !subscript.isEmpty()) {
-                    sb.append("_").append(subscript);
-                }
-                if (exponent != null && !exponent.isEmpty()) {
-                    sb.append("^").append(exponent);
-                }
-                sb.append(" = ").append(SIConverter.formatValue(value)).append(" ").append(unit);
-            }
+        // в режиме СИ добавляем шаги конвертации
+        if (isConversionMode && !isSIUnit && !conversionSteps.isEmpty()) {
+            sb.append(" = ").append(conversionSteps);
         }
 
         return sb.toString();

@@ -638,7 +638,7 @@ public class InputController {
             boolean isSIUnit = conversionService.isSiUnit(pq, unit);
             SpannableStringBuilder historyEntry = new SpannableStringBuilder();
 
-            // формируем базовую строку для вывода
+            // формируем базовую строку для вывода с сохранением стилей
             int start = historyEntry.length();
             if (operationBuffer.length() > 0) {
                 historyEntry.append(operationBuffer).append("(").append(designationBuffer).append(")");
@@ -653,10 +653,10 @@ public class InputController {
                 historyEntry.setSpan(new SubscriptSpan(), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                 historyEntry.setSpan(new RelativeSizeSpan(0.75f), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
-            historyEntry.append(" = ").append(SIConverter.formatValue(value)).append(" ").append(unit);
             if (designationUsesStix != null && designationUsesStix && stixTypeface != null) {
                 historyEntry.setSpan(new CustomTypefaceSpan(stixTypeface), start, designationEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
+            historyEntry.append(" = ").append(SIConverter.formatValue(value)).append(" ").append(unit);
 
             if (isConversionMode) {
                 // режим СИ
@@ -669,18 +669,18 @@ public class InputController {
                 siUnit = (String) siData[1];
                 steps = conversionService.getSteps(designationBuffer.toString(), pq, value, unit);
 
-                if (isSIUnit) {
-                    historyEntry.append(" (SI)");
-                } else if (!steps.isEmpty()) {
-                    historyEntry.append(" - ").append(steps).append(" - ")
-                            .append(designationBuffer);
-                    if (subscript != null && !subscript.isEmpty()) {
-                        int subStart = historyEntry.length();
-                        historyEntry.append(subscript);
-                        historyEntry.setSpan(new SubscriptSpan(), subStart, historyEntry.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                        historyEntry.setSpan(new RelativeSizeSpan(0.75f), subStart, historyEntry.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                if (!isSIUnit && !steps.isEmpty()) {
+                    // добавляем шаги конвертации без STIX, с жирным итогом
+                    int stepsStart = historyEntry.length();
+                    historyEntry.append(" = ").append(steps);
+                    int lastEqualIndex = historyEntry.toString().lastIndexOf("= ");
+                    if (lastEqualIndex != -1) {
+                        int resultStart = lastEqualIndex + 2;
+                        int resultEnd = historyEntry.length();
+                        historyEntry.setSpan(new StyleSpan(Typeface.BOLD), resultStart, resultEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    } else {
+                        Log.w("InputController", "не найдено '= ' в шагах конвертации");
                     }
-                    historyEntry.append(" = ").append(SIConverter.formatValue(siValue)).append(" ").append(siUnit);
                 }
             }
 
