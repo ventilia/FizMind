@@ -3,88 +3,90 @@ package com.example.fizmind.modules;
 import android.text.SpannableStringBuilder;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.SubscriptSpan;
-import android.text.style.SuperscriptSpan;
 import android.util.Log;
 
 /**
- * Класс, представляющий модуль (степень, нижний индекс и т.д.).
+ * Класс, представляющий модуль (нижний индекс).
  * Поддерживает ввод, удаление и отображение с учетом типа модуля.
  */
 public class InputModule {
-    private final ModuleType type;  // Тип модуля (степень или нижний индекс)
-    private final StringBuilder content;  // Содержимое модуля (числа)
-    private boolean isActive;  // Активен ли модуль (фокус на нем)
+    private final ModuleType type;  // тип модуля (только SUBSCRIPT)
+    private final StringBuilder content;  // содержимое модуля (числа)
+    private boolean isActive;  // активен ли модуль (фокус на нем)
 
     public InputModule(ModuleType type) {
+        if (type != ModuleType.SUBSCRIPT) {
+            throw new IllegalArgumentException("поддерживается только тип SUBSCRIPT");
+        }
         this.type = type;
         this.content = new StringBuilder();
         this.isActive = true;
-        Log.d("InputModule", "Создан модуль: " + type.getDescription());
+        Log.d("InputModule", "создан модуль: " + type.getDescription());
     }
 
     /**
-     * Применяет ввод к модулю.
-     * @param input Введенный символ.
-     * @return true, если ввод успешен, false — если символ недопустим.
+     * применяет ввод к модулю
+     * @param input введенный символ
+     * @return true, если ввод успешен, false — если символ недопустим
      */
     public boolean apply(String input) {
         if (!input.matches("[0-9]")) {
-            Log.w("InputModule", "Недопустимый символ для " + type.getDescription() + ": " + input);
+            Log.w("InputModule", "недопустимый символ для " + type.getDescription() + ": " + input);
             return false;
         }
         content.append(input);
-        Log.d("InputModule", "Добавлено в " + type.getDescription() + ": " + input);
+        Log.d("InputModule", "добавлено в " + type.getDescription() + ": " + input);
         return true;
     }
 
     /**
-     * Удаляет последний символ из модуля.
-     * @return true, если модуль стал пустым после удаления, false — если еще есть содержимое.
+     * удаляет последний символ из модуля
+     * @return true, если модуль стал пустым после удаления, false — если еще есть содержимое
      */
     public boolean delete() {
         if (content.length() > 0) {
             content.deleteCharAt(content.length() - 1);
-            Log.d("InputModule", "Удалён символ из " + type.getDescription() + ", осталось: " + content);
+            Log.d("InputModule", "удалён символ из " + type.getDescription() + ", осталось: " + content);
             return content.length() == 0;
         }
-        return true;  // Если уже пусто
+        return true;  // если уже пусто
     }
 
     /**
-     * Активирует модуль (установка фокуса).
+     * активирует модуль (установка фокуса)
      */
     public void activate() {
         isActive = true;
-        Log.d("InputModule", "Модуль активирован: " + type.getDescription());
+        Log.d("InputModule", "модуль активирован: " + type.getDescription());
     }
 
     /**
-     * Деактивирует модуль (снятие фокуса).
+     * деактивирует модуль (снятие фокуса)
      */
     public void deactivate() {
         isActive = false;
-        Log.d("InputModule", "Модуль деактивирован: " + type.getDescription());
+        Log.d("InputModule", "модуль деактивирован: " + type.getDescription());
     }
 
     /**
-     * Проверяет, активен ли модуль.
-     * @return true, если модуль активен, false — если нет.
+     * проверяет, активен ли модуль
+     * @return true, если модуль активен, false — если нет
      */
     public boolean isActive() {
         return isActive;
     }
 
     /**
-     * Проверяет, пуст ли модуль.
-     * @return true, если модуль не содержит цифр, false — если содержит.
+     * проверяет, пуст ли модуль
+     * @return true, если модуль не содержит цифр, false — если содержит
      */
     public boolean isEmpty() {
         return content.length() == 0;
     }
 
     /**
-     * Возвращает текстовое представление модуля для отображения.
-     * @return SpannableStringBuilder с примененными стилями.
+     * возвращает текстовое представление модуля для отображения
+     * @return SpannableStringBuilder с примененными стилями
      */
     public SpannableStringBuilder getDisplayText() {
         SpannableStringBuilder result = new SpannableStringBuilder();
@@ -92,17 +94,10 @@ public class InputModule {
             int start = result.length();
             result.append(content.toString());
             int end = result.length();
-
-            // Применяем стили в зависимости от типа модуля
-            if (type == ModuleType.EXPONENT) {
-                result.setSpan(new SuperscriptSpan(), start, end, SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
-                result.setSpan(new RelativeSizeSpan(0.75f), start, end, SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
-            } else if (type == ModuleType.SUBSCRIPT) {
-                result.setSpan(new SubscriptSpan(), start, end, SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
-                result.setSpan(new RelativeSizeSpan(0.75f), start, end, SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
-            }
+            result.setSpan(new SubscriptSpan(), start, end, SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
+            result.setSpan(new RelativeSizeSpan(0.75f), start, end, SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
         } else if (isActive) {
-            result.append(type.getSymbol());  // Показываем символ модуля, если он активен и пуст
+            result.append(type.getSymbol());  // показываем символ модуля, если он активен и пуст
         }
         return result;
     }

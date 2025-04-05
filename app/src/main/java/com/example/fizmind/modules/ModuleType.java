@@ -1,15 +1,14 @@
 package com.example.fizmind.modules;
 
 /**
- * Типы модулей, которые могут быть применены к числу или обозначению.
+ * Типы модулей, которые могут быть применены к обозначению.
  */
 public enum ModuleType {
-    EXPONENT("степень", "^", true),  // Применимо к числу
-    SUBSCRIPT("нижний индекс", "_", false);  // Применимо к обозначению
+    SUBSCRIPT("нижний индекс", "_", false);  // применимо к обозначению
 
     private final String description;
     private final String symbol;
-    private final boolean appliesToValue;  // true, если модуль для чисел, false — для обозначений
+    private final boolean appliesToValue;  // false — для обозначений
 
     ModuleType(String description, String symbol, boolean appliesToValue) {
         this.description = description;

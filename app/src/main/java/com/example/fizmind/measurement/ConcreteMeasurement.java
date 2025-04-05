@@ -7,7 +7,6 @@ import com.example.fizmind.SIConverter;
 
 public class ConcreteMeasurement extends Measurement {
 
-    private final String exponent;              // степень
     private final String subscript;             // индекс
     private final boolean constant;             // флаг константы
     private final SpannableStringBuilder originalDisplay; // оригинальное представление для вывода
@@ -20,12 +19,11 @@ public class ConcreteMeasurement extends Measurement {
     // конструктор
     public ConcreteMeasurement(String designation, double value, String unit,
                                String designationOperations, String valueOperations,
-                               String exponent, String subscript, boolean constant,
+                               String subscript, boolean constant,
                                SpannableStringBuilder originalDisplay,
                                double originalValue, String originalUnit,
                                String conversionSteps, boolean isSIUnit, boolean isConversionMode) {
         super(designation, value, unit, designationOperations, valueOperations);
-        this.exponent = exponent;
         this.subscript = subscript;
         this.constant = constant;
         this.originalDisplay = originalDisplay;
@@ -64,9 +62,6 @@ public class ConcreteMeasurement extends Measurement {
         }
         if (subscript != null && !subscript.isEmpty()) {
             sb.append("_").append(subscript);
-        }
-        if (exponent != null && !exponent.isEmpty()) {
-            sb.append("^").append(exponent);
         }
 
         // добавляем значение и единицу

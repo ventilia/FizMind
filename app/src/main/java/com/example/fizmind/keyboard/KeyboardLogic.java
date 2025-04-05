@@ -76,7 +76,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         try {
             stixTypeface = Typeface.createFromAsset(context.getAssets(), "fonts/stix_two_text_italic.ttf");
         } catch (Exception e) {
-            Log.e("KeyboardLogic", "Ошибка загрузки шрифта", e);
+            Log.e("KeyboardLogic", "ошибка загрузки шрифта", e);
             stixTypeface = Typeface.DEFAULT;
         }
         designationButton.setTag("MODE_BUTTON");
@@ -213,15 +213,15 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                         new SymbolKey("num_4", "4", false),
                         new SymbolKey("num_5", "5", false),
                         new SymbolKey("num_6", "6", false),
-                        new SymbolKey(" ", "", false),
-                        new SymbolKey("op_exponent", "^", false),
+                        new SymbolKey(" ", " ", false),
+                        new SymbolKey("op_subscript", "_", false),
                         new SymbolKey(" ", " ", false),
                         new SymbolKey(" ", " ", false),
                         new SymbolKey("num_7", "7", false),
                         new SymbolKey("num_8", "8", false),
                         new SymbolKey("num_9", "9", false),
                         new SymbolKey(" ", " ", false),
-                        new SymbolKey("op_subscript", "_", false)
+                        new SymbolKey(" ", " ", false)
                 )
         ));
 
@@ -290,7 +290,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
 
     private void setupScrollButton() {
         buttonScrollDown.setOnClickListener(v -> {
-            Log.d("KeyboardLogic", "Нажата кнопка прокрутки вниз");
+            Log.d("KeyboardLogic", "нажата кнопка прокрутки вниз");
             scrollToBottom();
         });
 
@@ -315,9 +315,9 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
             int scrollY = designationView.getLayout().getHeight() - designationView.getHeight();
             if (scrollY > 0) {
                 designationView.scrollTo(0, scrollY);
-                Log.d("KeyboardLogic", "Прокручено к низу, scrollY = " + scrollY);
+                Log.d("KeyboardLogic", "прокручено к низу, scrollY = " + scrollY);
             } else {
-                Log.d("KeyboardLogic", "Прокрутка не требуется, scrollY = " + scrollY);
+                Log.d("KeyboardLogic", "прокрутка не требуется, scrollY = " + scrollY);
             }
         });
     }
@@ -325,16 +325,16 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
     private void updateScrollButtonVisibility() {
         if (designationView.getLayout() == null) {
             buttonScrollDown.setVisibility(View.GONE);
-            Log.d("KeyboardLogic", "Layout не готов, кнопка скрыта");
+            Log.d("KeyboardLogic", "layout не готов, кнопка скрыта");
             return;
         }
         int scrollRange = designationView.getLayout().getHeight() - designationView.getHeight();
         if (scrollRange > 0) {
             buttonScrollDown.setVisibility(View.VISIBLE);
-            Log.d("KeyboardLogic", "Кнопка прокрутки видна, scrollRange = " + scrollRange);
+            Log.d("KeyboardLogic", "кнопка прокрутки видна, scrollRange = " + scrollRange);
         } else {
             buttonScrollDown.setVisibility(View.GONE);
-            Log.d("KeyboardLogic", "Кнопка прокрутки скрыта, scrollRange = " + scrollRange);
+            Log.d("KeyboardLogic", "кнопка прокрутки скрыта, scrollRange = " + scrollRange);
         }
     }
 
@@ -369,7 +369,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
             PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(currentDesignation);
             if (pq != null) {
                 allowedUnits = pq.getAllowedUnits();
-                Log.d("KeyboardLogic", "Допустимые единицы для " + currentDesignation + ": " + allowedUnits);
+                Log.d("KeyboardLogic", "допустимые единицы для " + currentDesignation + ": " + allowedUnits);
             }
         }
 
@@ -409,7 +409,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                 keyView.setOnClickListener(view -> {
                     String displayText = symbolKey.getDisplayText();
                     String logicalId = symbolKey.getLogicalId();
-                    Log.d("KeyboardLogic", "Кнопка нажата: " + logicalId);
+                    Log.d("KeyboardLogic", "кнопка нажата: " + logicalId);
                     if (inputController != null) {
                         boolean keyUsesStix = symbolKey.shouldUseStixFont();
                         inputController.onKeyInput(displayText, currentMode, keyUsesStix, logicalId);
