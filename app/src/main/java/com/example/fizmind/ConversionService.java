@@ -1,6 +1,6 @@
 package com.example.fizmind;
 
-// сервис для конвертации величин в СИ
+// сервис для конвертации величин в си
 public class ConversionService {
 
     private final SIConverter converter;
@@ -9,12 +9,12 @@ public class ConversionService {
         this.converter = new SIConverter();
     }
 
-    // проверяет, является ли единица SI-единицей для величины
+    // проверяет, является ли единица si-единицей для величины
     public boolean isSiUnit(PhysicalQuantity pq, String unit) {
         return pq.getSiUnit().equals(unit);
     }
 
-    // переводит значение в СИ
+    // переводит значение в си
     public Object[] convert(PhysicalQuantity pq, double value, String unit) {
         if (isSiUnit(pq, unit)) {
             android.util.Log.d("ConversionService", "единица измерения уже является СИ: " + unit);
@@ -23,12 +23,12 @@ public class ConversionService {
         return SIConverter.convertToSI(pq, value, unit);
     }
 
-    // возвращает шаги перевода в СИ с использованием отображаемого обозначения
-    public String getSteps(String displayDesignation, PhysicalQuantity pq, double value, String unit) {
+    // возвращает шаги перевода в си
+    public String getSteps(PhysicalQuantity pq, double value, String unit) {
         if (isSiUnit(pq, unit)) {
-            // для единиц в СИ не показываем шаги, возвращаем пустую строку
+            // для единиц в си не показываем шаги, возвращаем пустую строку
             return "";
         }
-        return SIConverter.getConversionSteps(displayDesignation, pq, value, unit);
+        return SIConverter.getConversionSteps(pq, value, unit);
     }
 }

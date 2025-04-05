@@ -580,6 +580,7 @@ public class InputController {
     }
 
     // сохранение ввода
+    // сохранение ввода
     public void onDownArrowPressed() {
         if ("designations".equals(currentInputField)) {
             if ((designationExponentModule != null && designationExponentModule.isActive() && designationExponentModule.isEmpty()) ||
@@ -659,7 +660,7 @@ public class InputController {
             historyEntry.append(" = ").append(SIConverter.formatValue(value)).append(" ").append(unit);
 
             if (isConversionMode) {
-                // режим СИ
+                // режим си
                 Object[] siData = conversionService.convert(pq, value, unit);
                 if (siData == null) {
                     Log.e("InputController", "ошибка конвертации для " + logicalDesignation + " с единицей " + unit);
@@ -667,10 +668,10 @@ public class InputController {
                 }
                 siValue = (double) siData[0];
                 siUnit = (String) siData[1];
-                steps = conversionService.getSteps(designationBuffer.toString(), pq, value, unit);
+                steps = conversionService.getSteps(pq, value, unit);
 
                 if (!isSIUnit && !steps.isEmpty()) {
-                    // добавляем шаги конвертации без STIX, с жирным итогом
+                    // добавляем шаги конвертации без дублирования
                     int stepsStart = historyEntry.length();
                     historyEntry.append(" = ").append(steps);
                     int lastEqualIndex = historyEntry.toString().lastIndexOf("= ");
@@ -682,6 +683,10 @@ public class InputController {
                         Log.w("InputController", "не найдено '= ' в шагах конвертации");
                     }
                 }
+            }
+
+            if (isCurrentConstant) {
+                historyEntry.append(" (константа)");
             }
 
             ConcreteMeasurement measurement = new ConcreteMeasurement(

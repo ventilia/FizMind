@@ -92,7 +92,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                         new SymbolKey("a_latin", "a", true),
                         new SymbolKey("v_latin", "v", true),
                         new SymbolKey("s_latin", "s", true),
-                        new SymbolKey("t_latin", "t", true),
+                        new SymbolKey("designation_t", "t", true),
                         new SymbolKey("m_latin", "m", true),
                         new SymbolKey("F_latin", "F", true),
                         new SymbolKey("designation_g", "g", false),

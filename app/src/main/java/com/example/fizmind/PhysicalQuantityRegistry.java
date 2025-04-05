@@ -23,7 +23,7 @@ public class PhysicalQuantityRegistry {
                 Arrays.asList("m", "km", "cm")));
 
         // время: t
-        registry.put("t_latin", new PhysicalQuantity("t_latin", "s",
+        registry.put("designation_t", new PhysicalQuantity("designation_t", "s",
                 Arrays.asList("s", "min", "h")));
 
         // масса: m

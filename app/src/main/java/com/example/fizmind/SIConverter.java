@@ -108,7 +108,7 @@ public class SIConverter {
         CONVERSION_FACTORS.put("cm³", 0.000001);
     }
 
-    // переводит значение в СИ. возвращает [значение, единица] или null при ошибке
+    // переводит значение в си. возвращает [значение, единица] или null при ошибке
     public static Object[] convertToSI(PhysicalQuantity pq, double value, String unit) {
         if (pq.isConstant()) {
             Log.d("SIConverter", "константа " + pq.getDesignation() + ", перевод не требуется");
@@ -155,41 +155,39 @@ public class SIConverter {
         }
     }
 
-    // создает шаги для перевода в СИ, используя отображаемое обозначение
-    public static String getConversionSteps(String displayDesignation, PhysicalQuantity pq, double value, String unit) {
+    // создает шаги для перевода в си без повторения исходных данных
+    public static String getConversionSteps(PhysicalQuantity pq, double value, String unit) {
         if (pq.isConstant()) {
-            return String.format("%s = %s %s (константа)",
-                    displayDesignation, formatValue(pq.getConstantValue()), pq.getSiUnit());
+            // для констант шаги не нужны
+            return "";
         }
 
         if (!pq.getAllowedUnits().contains(unit)) {
-            return "Ошибка: недопустимая единица измерения " + unit + " для " + displayDesignation;
+            return "ошибка: недопустимая единица измерения " + unit;
         }
 
         // обработка температуры
         if (pq.getDesignation().equals("designation_T")) {
             if (unit.equals("K")) {
-                return String.format("%s = %s K", displayDesignation, formatValue(value));
+                return formatValue(value) + " K";
             } else if (unit.equals("°C")) {
                 double kelvin = value + 273.15;
-                return String.format("%s = %s °C = %s + 273.15 = %s K",
-                        displayDesignation, formatValue(value), formatValue(value), formatValue(kelvin));
+                return formatValue(value) + " + 273.15 = " + formatValue(kelvin) + " K";
             } else if (unit.equals("°F")) {
                 double celsius = (value - 32) * 5 / 9;
                 double kelvin = celsius + 273.15;
-                return String.format("%s = %s °F = (%s - 32) × 5/9 + 273.15 = %s K",
-                        displayDesignation, formatValue(value), formatValue(value), formatValue(kelvin));
+                return "(" + formatValue(value) + " - 32) × 5/9 + 273.15 = " + formatValue(kelvin) + " K";
             }
         }
 
         Double factor = CONVERSION_FACTORS.get(unit);
         if (factor == null) {
-            return "Ошибка: коэффициент пересчета не найден для " + unit;
+            return "ошибка: коэффициент пересчета не найден для " + unit;
         }
 
         double siValue = value * factor;
-        String steps = String.format("%s %s = %s × %s = %s %s",
-                formatValue(value), unit, formatValue(value), formatValue(factor), formatValue(siValue), pq.getSiUnit());
+        String steps = String.format("%s × %s = %s %s",
+                formatValue(value), formatValue(factor), formatValue(siValue), pq.getSiUnit());
         Log.d("SIConverter", "сгенерированы шаги перевода: " + steps);
         return steps;
     }
