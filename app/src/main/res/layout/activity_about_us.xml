@@ -6,8 +6,6 @@
     android:background="#F5E7FF">
 
     <!-- Хеадер -->
-
-    <!-- Контент -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -31,173 +29,203 @@
             android:textSize="20sp" />
     </RelativeLayout>
 
-    <LinearLayout
+    <!-- Scrollable Content -->
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="5dp">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
-        <!-- Первый блок -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/about_us_back1"
             android:orientation="vertical"
-            android:padding="12dp"
-            android:layout_marginTop="5dp">
+            android:padding="5dp">
 
-            <TextView
+            <!-- Первый блок -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:fontFamily="@font/montserrat_alternates"
-                android:gravity="center"
-                android:text="@string/optimization_title"
-                android:textColor="#000000"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:includeFontPadding="false"
-                android:layout_marginTop="5dp"/>
+                android:background="@drawable/about_us_back1"
+                android:orientation="vertical"
+                android:padding="12dp"
+                android:layout_marginTop="5dp">
 
-            <TextView
-                android:layout_marginTop="5dp"
-                android:layout_marginStart="5dp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/optimization_body"
-                android:textSize="18sp"
-                android:fontFamily="@font/montserrat_alternates"
-                android:textColor="#000000"
-                android:includeFontPadding="false"
-                android:lineSpacingExtra="4dp" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/montserrat_alternates"
+                    android:gravity="center"
+                    android:text="@string/optimization_title"
+                    android:textColor="#000000"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:includeFontPadding="false"
+                    android:layout_marginTop="5dp"/>
 
-        </LinearLayout>
-
-        <!-- Второй блок -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/about_us_back2"
-            android:orientation="vertical"
-            android:padding="10dp"
-            android:layout_marginTop="0dp"
-            android:gravity="center">
-
-            <TextView
-                android:textStyle="bold"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/physics_easy"
-                android:textSize="18sp"
-                android:fontFamily="@font/montserrat_alternates"
-                android:textColor="#000000"
-                android:gravity="center" />
-
-            <ImageView
-                android:layout_width="120dp"
-                android:layout_height="80dp"
-                android:src="@drawable/full_logo_about_us"
-                android:layout_gravity="center"
-                android:layout_marginTop="10dp"
-                android:contentDescription="Логотип" />
-        </LinearLayout>
-
-        <!-- Блок "Над проектом работали" -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/about_us_back3"
-            android:orientation="vertical"
-            android:padding="12dp"
-            android:layout_marginTop="5dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/contributors"
-                android:textSize="18sp"
-                android:fontFamily="@font/montserrat_alternates"
-                android:textColor="#000000"
-                android:textStyle="bold"
-                android:layout_marginBottom="8dp"
-                android:layout_gravity="center"
-                />
-
-            <TextView
-                android:textStyle="bold"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="ученики МБОУ СОШ 'МОЗАИКА'"
-                android:textSize="16sp"
-                android:fontFamily="@font/montserrat_alternates"
-                android:textColor="#000000"
-                android:layout_marginBottom="8dp"
-                android:layout_marginStart="30dp"
-                />
-
-            <TextView
-                android:textStyle="bold"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="М.К Алиханов"
-                android:textSize="16sp"
-                android:fontFamily="@font/montserrat_alternates"
-                android:textColor="#000000"
-                android:layout_marginBottom="8dp"
-                android:layout_marginStart="30dp" />
-
-            <TextView
-                android:textStyle="bold"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="А.А Мкоян"
-                android:textSize="16sp"
-                android:fontFamily="@font/montserrat_alternates"
-                android:textColor="#000000"
-                android:layout_marginBottom="8dp"
-                android:layout_marginStart="30dp" />
-
-
-        </LinearLayout>
-
-        <!-- Аккордион -->
-        <LinearLayout
-            android:id="@+id/accordion_header"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/accordion_header_background"
-            android:orientation="horizontal"
-            android:padding="12dp">
-
-            <Space
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/accordion_header"
-                android:textSize="20sp"
-                android:fontFamily="@font/montserrat_alternates"
-                android:textColor="#000000" />
-
-            <ImageView
-                android:id="@+id/accordion_toggle"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_accordion_down"
-
-                android:layout_marginStart="10dp" />
-
-            <Space
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
-        </LinearLayout>
-
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
+                    android:layout_marginTop="5dp"
+                    android:fontFamily="@font/montserrat_alternates"
+                    android:includeFontPadding="false"
+                    android:lineSpacingExtra="4dp"
+                    android:text="@string/optimization_body"
+                    android:textColor="#000000"
+                    android:textSize="18sp" />
             </LinearLayout>
 
+            <!-- Второй блок -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/about_us_back2"
+                android:orientation="vertical"
+                android:padding="10dp"
+                android:layout_marginTop="0dp"
+                android:gravity="center">
 
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/montserrat_alternates"
+                    android:gravity="center"
+                    android:text="@string/physics_easy"
+                    android:textColor="#000000"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <ImageView
+                    android:layout_width="120dp"
+                    android:layout_height="80dp"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="10dp"
+                    android:contentDescription="Логотип"
+                    android:src="@drawable/full_logo_about_us" />
+            </LinearLayout>
+
+            <!-- Блок "Над проектом работали" -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/about_us_back3"
+                android:orientation="vertical"
+                android:padding="12dp"
+                android:layout_marginTop="5dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginBottom="8dp"
+                    android:fontFamily="@font/montserrat_alternates"
+                    android:text="@string/contributors"
+                    android:textColor="#000000"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="30dp"
+                    android:layout_marginBottom="8dp"
+                    android:fontFamily="@font/montserrat_alternates"
+                    android:text="ученики МБОУ СОШ 'МОЗАИКА'"
+                    android:textColor="#000000"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="30dp"
+                    android:layout_marginBottom="8dp"
+                    android:fontFamily="@font/montserrat_alternates"
+                    android:text="М.К Алиханов"
+                    android:textColor="#000000"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="30dp"
+                    android:layout_marginBottom="8dp"
+                    android:fontFamily="@font/montserrat_alternates"
+                    android:text="А.А Мкоян"
+                    android:textColor="#000000"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Новый блок "Особые благодарности" -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/special_thanks_background"
+                android:orientation="vertical"
+                android:padding="12dp"
+                android:layout_marginTop="5dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:fontFamily="@font/montserrat_alternates"
+                    android:gravity="center"
+                    android:text="Особые благодарности"
+                    android:textColor="#000000"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="30dp"
+                    android:layout_marginBottom="8dp"
+                    android:fontFamily="@font/montserrat_alternates"
+                    android:text="фамилия"
+                    android:textColor="#000000"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="30dp"
+                    android:layout_marginBottom="8dp"
+                    android:fontFamily="@font/montserrat_alternates"
+                    android:text="фамилия"
+                    android:textColor="#000000"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="30dp"
+                    android:layout_marginBottom="8dp"
+                    android:fontFamily="@font/montserrat_alternates"
+                    android:text="фамилия"
+                    android:textColor="#000000"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="30dp"
+                    android:layout_marginBottom="8dp"
+                    android:fontFamily="@font/montserrat_alternates"
+                    android:text="фамилия"
+                    android:textColor="#000000"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <!-- Можно добавить больше элементов для тестирования прокрутки -->
+            </LinearLayout>
+
+            <!-- Accordion Content (unchanged) -->
             <LinearLayout
                 android:id="@+id/accordion_content"
                 android:layout_width="match_parent"
@@ -210,9 +238,11 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/accordion_content"
-                    android:textSize="18sp"
                     android:fontFamily="@font/montserrat_alternates"
-                    android:textColor="#000000" />
+                    android:text="@string/accordion_content"
+                    android:textColor="#000000"
+                    android:textSize="18sp" />
             </LinearLayout>
         </LinearLayout>
+    </ScrollView>
+</LinearLayout>
