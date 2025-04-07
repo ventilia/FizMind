@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <SwitchPreferenceCompat
-        android:key="use_approx_g"
-        android:title="Использовать приближенное значение g (10 м/с²)"
-        android:summary="По умолчанию используется точное значение 9.81 м/с²"
+        android:key="gravity_value"
+        android:title="Значение g"
+        android:summaryOn="g = 10 м/с²"
+        android:summaryOff="g = 9.8 м/с²"
         android:defaultValue="false" />
 </PreferenceScreen>

@@ -5,12 +5,9 @@ import android.widget.ImageView;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.fizmind.R;
 import com.example.fizmind.keyboard.KeyboardFragment;
+import com.example.fizmind.PhysicalQuantityRegistry;
 import com.example.fizmind.utils.LogUtils;
 
-/**
- * активность для перевода физических величин в систему СИ.
- * переключение на поле "Введите неизвестное" запрещено.
- */
 public class SIConversionActivity extends AppCompatActivity {
 
     private static final String TAG = "SIConversionActivity";
@@ -21,14 +18,17 @@ public class SIConversionActivity extends AppCompatActivity {
         setContentView(R.layout.activity_si_conversion);
         LogUtils.logActivityStarted(TAG, "Активность перевода в СИ");
 
-        // настройка кнопки "Назад"
+        // Обновляем значение g при запуске
+        PhysicalQuantityRegistry.updateGravityValue(this);
+
+        // Настройка кнопки "Назад"
         ImageView backButton = findViewById(R.id.backButton);
         backButton.setOnClickListener(v -> {
             LogUtils.logButtonPressed(TAG, "Назад");
             finish();
         });
 
-        // инициализация фрагмента клавиатуры
+        // Инициализация фрагмента клавиатуры
         KeyboardFragment keyboardFragment = KeyboardFragment.newInstance(true, false);
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.keyboard_container, keyboardFragment)

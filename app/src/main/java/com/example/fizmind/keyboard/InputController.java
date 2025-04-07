@@ -653,9 +653,7 @@ public class InputController {
                 }
             }
 
-            if (isCurrentConstant) {
-                historyEntry.append(" (константа)");
-            }
+
 
             ConcreteMeasurement measurement = new ConcreteMeasurement(
                     logicalDesignation, siValue, siUnit,

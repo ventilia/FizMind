@@ -29,4 +29,10 @@
             android:textSize="20sp" />
     </RelativeLayout>
 
+    <!-- Контейнер для фрагмента настроек -->
+    <FrameLayout
+        android:id="@+id/settings_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
 </LinearLayout>

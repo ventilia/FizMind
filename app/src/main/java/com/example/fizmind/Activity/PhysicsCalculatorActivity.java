@@ -6,12 +6,9 @@ import android.widget.ImageView;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.fizmind.R;
 import com.example.fizmind.keyboard.KeyboardFragment;
+import com.example.fizmind.PhysicalQuantityRegistry;
 import com.example.fizmind.utils.LogUtils;
 
-/**
- * активность физического калькулятора.
- * переключение на поле "Введите неизвестное" разрешено.
- */
 public class PhysicsCalculatorActivity extends AppCompatActivity {
 
     private static final String TAG = "PhysicsCalculatorActivity";
@@ -23,14 +20,17 @@ public class PhysicsCalculatorActivity extends AppCompatActivity {
         setContentView(R.layout.activity_physics_calculator);
         LogUtils.logActivityStarted(TAG, "Активность физического калькулятора");
 
-        // настройка кнопки "Назад"
+        // Обновляем значение g при запуске
+        PhysicalQuantityRegistry.updateGravityValue(this);
+
+        // Настройка кнопки "Назад"
         ImageView backButton = findViewById(R.id.backButton);
         backButton.setOnClickListener(v -> {
             LogUtils.logButtonPressed(TAG, "Назад");
             finish();
         });
 
-        // инициализация фрагмента клавиатуры
+        // Инициализация фрагмента клавиатуры
         KeyboardFragment keyboardFragment = KeyboardFragment.newInstance(false, true);
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.keyboard_container, keyboardFragment)
