@@ -25,6 +25,11 @@
     <string name="accordion_content">...</string>
     <string name="contributors_names">Ученики МБОУ СОШ “МОЗАИКА”</string>
 
+    <string name="seting">Настройки</string>
+
+
+
+
     <string name="right_page">Right Page</string>
     <string name="page_number">%d  %d</string>
 </resources>
