@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <SwitchPreferenceCompat
+
         android:key="gravity_value"
         android:title="Значение g"
         android:summaryOn="g = 10 м/с²"
