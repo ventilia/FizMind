@@ -8,6 +8,7 @@ import android.text.style.ForegroundColorSpan;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
 import android.text.style.SubscriptSpan;
+import android.view.View;
 import android.widget.TextView;
 import com.example.fizmind.ConversionService;
 import com.example.fizmind.PhysicalQuantity;
@@ -25,55 +26,70 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Контроллер ввода данных для управления обозначениями и неизвестными
+ */
 public class InputController {
 
+    /** Перечисления для состояния ввода */
     public enum InputState {
-        ENTERING_DESIGNATION,
-        ENTERING_VALUE,
-        ENTERING_UNIT
+        ENTERING_DESIGNATION,  // Ввод обозначения
+        ENTERING_VALUE,        // Ввод значения
+        ENTERING_UNIT          // Ввод единицы измерения
     }
 
+    /** Перечисления для состояния фокуса */
     public enum FocusState {
-        DESIGNATION,
-        VALUE,
-        UNIT,
-        MODULE
+        DESIGNATION,  // Фокус на обозначении
+        VALUE,        // Фокус на значении
+        UNIT,         // Фокус на единице измерения
+        MODULE        // Фокус на модуле (индексе)
     }
 
-    private InputState currentState;
-    private FocusState focusState;
-    private final StringBuilder designationBuffer;
-    private final StringBuilder valueBuffer;
-    private final StringBuilder unitBuffer;
-    private final StringBuilder operationBuffer;
-    private final StringBuilder valueOperationBuffer;
-    private final TextView designationsView;
-    private final TextView unknownView;
-    private final List<ConcreteMeasurement> measurements;
-    private final List<SpannableStringBuilder> history;
-    private final List<UnknownQuantity> unknowns;
-    private Boolean designationUsesStix;
-    private Boolean unknownUsesStix;
-    private String logicalDesignation;
-    private Typeface stixTypeface;
-    private KeyboardModeSwitcher keyboardModeSwitcher;
-    private boolean isCurrentConstant;
-    private final Map<String, String> lastUnitForDesignation;
-    private String currentInputField;
-    private String unknownDesignation;
-    private String logicalUnknownDesignation;
-    private boolean isUnknownInputAllowed = true;
-    private InputModule designationSubscriptModule;
-    private InputModule unknownSubscriptModule;
-    private long lastDeleteTime = 0;
-    private int deleteClickCount = 0;
-    private static final long DOUBLE_CLICK_TIME_DELTA = 300;
-    private final ConversionService conversionService;
-    private boolean isConversionMode = false;
+    // Поля класса
+    private InputState currentState;                    // Текущее состояние ввода
+    private FocusState focusState;                      // Текущее состояние фокуса
+    private final StringBuilder designationBuffer;      // Буфер для обозначения
+    private final StringBuilder valueBuffer;            // Буфер для значения
+    private final StringBuilder unitBuffer;             // Буфер для единицы измерения
+    private final StringBuilder operationBuffer;        // Буфер для операций над обозначением
+    private final StringBuilder valueOperationBuffer;   // Буфер для операций над значением
+    private final TextView designationsView;            // Поле отображения обозначений
+    private final TextView unknownView;                 // Поле отображения неизвестных
+    private final View rootView;                        // Корневой вид для Snackbar
+    private final List<ConcreteMeasurement> measurements; // Список сохраненных измерений
+    private final List<SpannableStringBuilder> history;   // История отображения измерений
+    private final List<UnknownQuantity> unknowns;         // Список неизвестных величин
+    private Boolean designationUsesStix;                // Используется ли шрифт STIX для обозначения
+    private Boolean unknownUsesStix;                    // Используется ли шрифт STIX для неизвестного
+    private String logicalDesignation;                  // Логический идентификатор обозначения
+    private Typeface stixTypeface;                      // Шрифт STIX
+    private KeyboardModeSwitcher keyboardModeSwitcher;  // Переключатель режимов клавиатуры
+    private boolean isCurrentConstant;                  // Является ли текущее значение константой
+    private final Map<String, String> lastUnitForDesignation; // Последние единицы измерения для обозначений
+    private String currentInputField;                   // Текущее поле ввода ("designations" или "unknown")
+    private String unknownDesignation;                  // Обозначение неизвестного
+    private String logicalUnknownDesignation;           // Логический идентификатор неизвестного
+    private boolean isUnknownInputAllowed = true;       // Разрешён ли ввод неизвестного
+    private InputModule designationSubscriptModule;     // Модуль нижнего индекса для обозначения
+    private InputModule unknownSubscriptModule;         // Модуль нижнего индекса для неизвестного
+    private long lastDeleteTime = 0;                    // Время последнего удаления
+    private int deleteClickCount = 0;                   // Счётчик кликов удаления
+    private static final long DOUBLE_CLICK_TIME_DELTA = 300; // Интервал для двойного клика (мс)
+    private final ConversionService conversionService;  // Сервис конвертации в СИ
+    private boolean isConversionMode = false;           // Режим конвертации в СИ
 
-    public InputController(TextView designationsView, TextView unknownView, ConversionService conversionService) {
+    /**
+     * Конструктор класса
+     * @param designationsView Поле для отображения обозначений
+     * @param unknownView Поле для отображения неизвестных
+     * @param conversionService Сервис конвертации в СИ
+     * @param rootView Корневой вид для Snackbar
+     */
+    public InputController(TextView designationsView, TextView unknownView, ConversionService conversionService, View rootView) {
         this.designationsView = designationsView;
         this.unknownView = unknownView;
+        this.rootView = rootView;
         this.conversionService = conversionService;
         this.currentState = InputState.ENTERING_DESIGNATION;
         this.focusState = FocusState.DESIGNATION;
@@ -97,29 +113,34 @@ public class InputController {
         LogUtils.logControllerInitialized("InputController");
     }
 
+    /** Установка разрешения ввода неизвестного */
     public void setUnknownInputAllowed(boolean allowed) {
         this.isUnknownInputAllowed = allowed;
         LogUtils.logPropertySet("InputController", "разрешение ввода неизвестного", allowed);
     }
 
+    /** Установка шрифта STIX */
     public void setStixTypeface(Typeface stixTypeface) {
         this.stixTypeface = stixTypeface;
         LogUtils.logPropertySet("InputController", "шрифт STIX", "установлен");
     }
 
+    /** Установка переключателя режимов клавиатуры */
     public void setKeyboardModeSwitcher(KeyboardModeSwitcher switcher) {
         this.keyboardModeSwitcher = switcher;
         LogUtils.logPropertySet("InputController", "переключатель режимов клавиатуры", "установлен");
     }
 
+    /** Установка режима конвертации в СИ */
     public void setConversionMode(boolean isConversionMode) {
         this.isConversionMode = isConversionMode;
         LogUtils.logPropertySet("InputController", "режим", isConversionMode ? "перевод в СИ" : "калькулятор");
     }
 
+    /** Установка текущего поля ввода */
     public void setCurrentInputField(String field) {
         if ("unknown".equals(field) && !isUnknownInputAllowed) {
-            LogUtils.w("InputController", "переключение на 'Введите неизвестное' заблокировано");
+            LogUtils.wWithSnackbar("InputController", "переключение на 'Введите неизвестное' заблокировано", rootView);
             return;
         }
         if (!field.equals(currentInputField)) {
@@ -141,16 +162,26 @@ public class InputController {
         LogUtils.d("InputController", "текущее поле ввода установлено: " + field);
     }
 
+    /** Получение текущего обозначения */
     public String getCurrentDesignation() {
         return logicalDesignation;
     }
 
+    /**
+     * Обработка ввода с клавиатуры
+     * @param input Введённый символ
+     * @param sourceKeyboardMode Режим клавиатуры
+     * @param keyUsesStix Используется ли шрифт STIX
+     * @param logicalId Логический идентификатор
+     */
     public void onKeyInput(String input, String sourceKeyboardMode, boolean keyUsesStix, String logicalId) {
         LogUtils.logInputProcessing("InputController", currentState.toString(), focusState.toString(), input, logicalId, isConversionMode ? "СИ" : "калькулятор");
 
         if ("designations".equals(currentInputField)) {
             if (focusState == FocusState.MODULE && designationSubscriptModule != null && designationSubscriptModule.isActive()) {
-                designationSubscriptModule.apply(input);
+                if (!designationSubscriptModule.apply(input)) {
+                    LogUtils.wWithSnackbar("InputController", "недопустимый символ для индекса: " + input, rootView);
+                }
                 updateDisplay();
                 return;
             }
@@ -158,11 +189,11 @@ public class InputController {
             if (currentState == InputState.ENTERING_DESIGNATION) {
                 if (designationBuffer.length() == 0) {
                     if (!"Designation".equals(sourceKeyboardMode)) {
-                        LogUtils.w("InputController", "символ обозначения должен быть из режима 'Designation'");
+                        LogUtils.wWithSnackbar("InputController", "символ обозначения должен быть из режима 'Designation'", rootView);
                         return;
                     }
                     if (logicalId.equals("op_subscript")) {
-                        LogUtils.w("InputController", "нельзя начинать ввод с модуля");
+                        LogUtils.wWithSnackbar("InputController", "нельзя начинать ввод с индекса", rootView);
                         return;
                     }
                     designationBuffer.append(input);
@@ -194,7 +225,7 @@ public class InputController {
                         handleValueInput(input, logicalId);
                     } else if (logicalId.equals("op_subscript")) {
                         if (!ModuleValidator.canAddModule(ModuleType.SUBSCRIPT, designationSubscriptModule)) {
-                            LogUtils.w("InputController", "нельзя добавить индекс");
+                            LogUtils.wWithSnackbar("InputController", "нельзя добавить индекс", rootView);
                             return;
                         }
                         designationSubscriptModule = new InputModule(ModuleType.SUBSCRIPT);
@@ -202,17 +233,17 @@ public class InputController {
                         updateKeyboardMode();
                         updateDisplay();
                     } else {
-                        LogUtils.w("InputController", "обозначение уже введено, ожидается число или модуль");
+                        LogUtils.wWithSnackbar("InputController", "обозначение уже введено, ожидается число или индекс", rootView);
                     }
                 }
             } else if (currentState == InputState.ENTERING_VALUE) {
                 if (designationBuffer.length() == 0) {
-                    LogUtils.w("InputController", "нельзя ввести число без обозначения");
+                    LogUtils.wWithSnackbar("InputController", "нельзя ввести число без обозначения", rootView);
                     return;
                 }
                 if (logicalId.equals("op_subscript")) {
                     if (!ModuleValidator.canAddModule(ModuleType.SUBSCRIPT, designationSubscriptModule)) {
-                        LogUtils.w("InputController", "нельзя добавить индекс");
+                        LogUtils.wWithSnackbar("InputController", "нельзя добавить индекс", rootView);
                         return;
                     }
                     designationSubscriptModule = new InputModule(ModuleType.SUBSCRIPT);
@@ -224,20 +255,22 @@ public class InputController {
                 }
             } else if (currentState == InputState.ENTERING_UNIT) {
                 if (logicalId.equals("op_subscript")) {
-                    LogUtils.w("InputController", "нельзя ввести индекс в режиме единиц");
+                    LogUtils.wWithSnackbar("InputController", "нельзя ввести индекс в режиме единиц", rootView);
                     return;
                 }
                 handleUnitInput(input, logicalId);
             }
         } else if ("unknown".equals(currentInputField)) {
             if (focusState == FocusState.MODULE && unknownSubscriptModule != null && unknownSubscriptModule.isActive()) {
-                unknownSubscriptModule.apply(input);
+                if (!unknownSubscriptModule.apply(input)) {
+                    LogUtils.wWithSnackbar("InputController", "недопустимый символ для индекса: " + input, rootView);
+                }
                 updateDisplay();
                 return;
             }
             if (logicalId.equals("op_subscript")) {
                 if (!ModuleValidator.canAddModule(ModuleType.SUBSCRIPT, unknownSubscriptModule)) {
-                    LogUtils.w("InputController", "нельзя добавить индекс в 'Введите неизвестное'");
+                    LogUtils.wWithSnackbar("InputController", "нельзя добавить индекс в 'Введите неизвестное'", rootView);
                     return;
                 }
                 unknownSubscriptModule = new InputModule(ModuleType.SUBSCRIPT);
@@ -253,28 +286,29 @@ public class InputController {
                 focusState = FocusState.DESIGNATION;
                 LogUtils.d("InputController", "введено неизвестное обозначение: " + input);
             } else {
-                LogUtils.w("InputController", "в 'Введите неизвестное' можно ввести только одно обозначение");
+                LogUtils.wWithSnackbar("InputController", "в 'Введите неизвестное' можно ввести только одно обозначение", rootView);
                 return;
             }
         }
         updateDisplay();
     }
 
+    /** Обработка ввода значения */
     private void handleValueInput(String input, String logicalId) {
         LogUtils.d("InputController", "обработка значения: " + input);
         if (input.matches("[0-9]")) {
             valueBuffer.append(input);
         } else if (".".equals(input)) {
             if (valueBuffer.length() == 0 || valueBuffer.toString().equals("-")) {
-                LogUtils.w("InputController", "число не может начинаться с точки");
+                LogUtils.wWithSnackbar("InputController", "число не может начинаться с точки", rootView);
             } else if (valueBuffer.indexOf(".") != -1) {
-                LogUtils.w("InputController", "число уже содержит точку");
+                LogUtils.wWithSnackbar("InputController", "число уже содержит точку", rootView);
             } else {
                 valueBuffer.append(input);
             }
         } else if ("-".equals(input)) {
             if (valueBuffer.length() > 0) {
-                LogUtils.w("InputController", "минус можно вводить только в начале");
+                LogUtils.wWithSnackbar("InputController", "минус можно вводить только в начале", rootView);
             } else {
                 valueBuffer.append(input);
             }
@@ -294,10 +328,11 @@ public class InputController {
         updateDisplay();
     }
 
+    /** Обработка ввода единицы измерения */
     private void handleUnitInput(String input, String logicalId) {
         PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(logicalDesignation);
         if (pq == null) {
-            LogUtils.w("InputController", "неизвестная физическая величина: " + logicalDesignation);
+            LogUtils.wWithSnackbar("InputController", "неизвестная физическая величина: " + logicalDesignation, rootView);
             return;
         }
         int maxAllowedLength = pq.getAllowedUnits().stream().mapToInt(String::length).max().orElse(0);
@@ -307,15 +342,16 @@ public class InputController {
             unitBuffer.append(input);
             LogUtils.d("InputController", "добавлена единица измерения: " + input);
         } else {
-            LogUtils.w("InputController", "недопустимая единица измерения: " + potentialUnit);
+            LogUtils.wWithSnackbar("InputController", "недопустимая единица измерения: " + potentialUnit, rootView);
         }
         updateDisplay();
     }
 
+    /** Сохранение неизвестной величины */
     private void saveUnknown() {
         if (unknownDesignation != null) {
             if (unknownSubscriptModule != null && unknownSubscriptModule.isActive() && unknownSubscriptModule.isEmpty()) {
-                LogUtils.w("InputController", "нельзя сохранить с пустым активным индексом");
+                LogUtils.wWithSnackbar("InputController", "нельзя сохранить с пустым активным индексом", rootView);
                 return;
             }
             String subscript = (unknownSubscriptModule != null && !unknownSubscriptModule.isEmpty()) ? unknownSubscriptModule.getDisplayText().toString() : "";
@@ -335,6 +371,7 @@ public class InputController {
         }
     }
 
+    /** Проверка, пустой ли ввод */
     private boolean isInputEmpty() {
         if ("designations".equals(currentInputField)) {
             return designationBuffer.length() == 0 && valueBuffer.length() == 0 && unitBuffer.length() == 0 &&
@@ -346,6 +383,7 @@ public class InputController {
         return true;
     }
 
+    /** Обработка нажатия клавиши удаления */
     public void onDeletePressed() {
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastDeleteTime < DOUBLE_CLICK_TIME_DELTA) {
@@ -375,6 +413,7 @@ public class InputController {
         updateDisplay();
     }
 
+    /** Выполнение одиночного удаления */
     private void performSingleDelete() {
         if ("designations".equals(currentInputField)) {
             if (focusState == FocusState.MODULE && designationSubscriptModule != null && designationSubscriptModule.isActive()) {
@@ -421,6 +460,7 @@ public class InputController {
         }
     }
 
+    /** Удаление последнего сохраненного поля */
     private void deleteLastSavedField() {
         if ("designations".equals(currentInputField)) {
             if (!measurements.isEmpty()) {
@@ -436,6 +476,7 @@ public class InputController {
         }
     }
 
+    /** Обработка нажатия стрелки влево */
     public void onLeftArrowPressed() {
         if ("designations".equals(currentInputField)) {
             if (focusState == FocusState.MODULE && designationSubscriptModule != null && designationSubscriptModule.isActive()) {
@@ -463,6 +504,7 @@ public class InputController {
         }
     }
 
+    /** Обработка нажатия стрелки вправо */
     public void onRightArrowPressed() {
         if ("designations".equals(currentInputField)) {
             if (focusState == FocusState.DESIGNATION) {
@@ -499,18 +541,19 @@ public class InputController {
         }
     }
 
+    /** Обработка нажатия стрелки вниз (сохранение) */
     public void onDownArrowPressed() {
         if ("designations".equals(currentInputField)) {
             if (designationSubscriptModule != null && designationSubscriptModule.isActive() && designationSubscriptModule.isEmpty()) {
-                LogUtils.w("InputController", "нельзя сохранить с пустым активным индексом");
+                LogUtils.wWithSnackbar("InputController", "нельзя сохранить с пустым активным индексом", rootView);
                 return;
             }
             if (designationBuffer.length() == 0) {
-                LogUtils.w("InputController", "нельзя сохранить: отсутствует обозначение");
+                LogUtils.wWithSnackbar("InputController", "нельзя сохранить: отсутствует обозначение", rootView);
                 return;
             }
             if (valueBuffer.length() == 0 && valueOperationBuffer.length() == 0) {
-                LogUtils.w("InputController", "нельзя сохранить: отсутствует числовое значение");
+                LogUtils.wWithSnackbar("InputController", "нельзя сохранить: отсутствует числовое значение", rootView);
                 return;
             }
 
@@ -518,12 +561,12 @@ public class InputController {
             if (unit.isEmpty()) {
                 PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(logicalDesignation);
                 if (pq == null) {
-                    LogUtils.e("InputController", "неизвестная физическая величина: " + logicalDesignation);
+                    LogUtils.eWithSnackbar("InputController", "неизвестная физическая величина: " + logicalDesignation, rootView);
                     return;
                 }
                 unit = pq.getSiUnit();
                 if (unit.isEmpty()) {
-                    LogUtils.w("InputController", "нельзя сохранить: отсутствует единица измерения");
+                    LogUtils.wWithSnackbar("InputController", "нельзя сохранить: отсутствует единица измерения", rootView);
                     return;
                 }
             }
@@ -532,20 +575,20 @@ public class InputController {
             try {
                 value = Double.parseDouble(valueBuffer.length() > 0 ? valueBuffer.toString() : "0");
             } catch (NumberFormatException e) {
-                LogUtils.e("InputController", "ошибка формата числа: " + valueBuffer.toString(), e);
+                LogUtils.eWithSnackbar("InputController", "ошибка формата числа: " + valueBuffer.toString(), rootView);
                 return;
             }
 
             String subscript = (designationSubscriptModule != null && !designationSubscriptModule.isEmpty()) ? designationSubscriptModule.getDisplayText().toString() : "";
 
             if (!ModuleValidator.isSubscriptUnique(logicalDesignation, subscript, measurements)) {
-                LogUtils.e("InputController", "ошибка: индекс уже используется для обозначения: " + logicalDesignation);
+                LogUtils.eWithSnackbar("InputController", "ошибка: индекс уже используется для обозначения: " + logicalDesignation, rootView);
                 return;
             }
 
             PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(logicalDesignation);
             if (pq == null) {
-                LogUtils.e("InputController", "неизвестная физическая величина: " + logicalDesignation);
+                LogUtils.eWithSnackbar("InputController", "неизвестная физическая величина: " + logicalDesignation, rootView);
                 return;
             }
 
@@ -631,6 +674,7 @@ public class InputController {
         }
     }
 
+    /** Обновление режима клавиатуры */
     private void updateKeyboardMode() {
         if (keyboardModeSwitcher != null && "designations".equals(currentInputField)) {
             if (focusState == FocusState.MODULE) {
@@ -649,6 +693,7 @@ public class InputController {
         }
     }
 
+    /** Обновление отображения интерфейса */
     private void updateDisplay() {
         SpannableStringBuilder designationsText = new SpannableStringBuilder();
 
@@ -780,6 +825,7 @@ public class InputController {
         LogUtils.d("InputController", "обновлен интерфейс отображения");
     }
 
+    /** Полная очистка всех данных */
     public void clearAll() {
         if ("designations".equals(currentInputField)) {
             resetInput();
@@ -801,6 +847,7 @@ public class InputController {
         }
     }
 
+    /** Сброс текущего ввода */
     private void resetInput() {
         designationBuffer.setLength(0);
         valueBuffer.setLength(0);
@@ -818,14 +865,17 @@ public class InputController {
         LogUtils.d("InputController", "сброшены все буферы ввода");
     }
 
+    /** Получение списка измерений */
     public List<ConcreteMeasurement> getMeasurements() {
         return new ArrayList<>(measurements);
     }
 
+    /** Получение списка неизвестных */
     public List<UnknownQuantity> getUnknowns() {
         return new ArrayList<>(unknowns);
     }
 
+    /** Логирование всех сохранённых данных */
     public void logAllSavedData() {
         StringBuilder logMessage = new StringBuilder("все сохраненные данные:\n");
 

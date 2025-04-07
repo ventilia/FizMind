@@ -15,11 +15,15 @@ import com.example.fizmind.PhysicalQuantityRegistry;
 import com.example.fizmind.R;
 import com.example.fizmind.animation.KeyboardAnimation;
 import com.example.fizmind.utils.LogUtils;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * логика работы клавиатуры для ввода физических величин и операций
+ */
 public class KeyboardLogic implements KeyboardModeSwitcher {
     private final Context context;
     private final List<TextView> keyboardCells;
@@ -32,6 +36,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
     private final ImageButton buttonScrollDown;
     private final TextView designationView;
     private final TextView unknownView;
+    private final View rootView; // добавлено для передачи в InputController
     private InputController inputController;
     private boolean useStixFont;
     private String currentMode = "Designation";
@@ -42,6 +47,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
     private final ImageButton rightArrowButton;
     private final Map<String, String> unitIdToUnitMap;
 
+    // конструктор с добавленным параметром rootView
     public KeyboardLogic(
             Context context,
             List<TextView> keyboardCells,
@@ -55,7 +61,8 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
             TextView designationView,
             TextView unknownView,
             ImageButton leftArrowButton,
-            ImageButton rightArrowButton
+            ImageButton rightArrowButton,
+            View rootView
     ) {
         this.context = context;
         this.keyboardCells = keyboardCells;
@@ -70,13 +77,17 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         this.unknownView = unknownView;
         this.leftArrowButton = leftArrowButton;
         this.rightArrowButton = rightArrowButton;
+        this.rootView = rootView; // инициализация нового поля
 
+        // загрузка шрифта STIX
         try {
             stixTypeface = Typeface.createFromAsset(context.getAssets(), "fonts/stix_two_text_italic.ttf");
         } catch (Exception e) {
             LogUtils.logFontLoadError("KeyboardLogic", e);
             stixTypeface = Typeface.DEFAULT;
         }
+
+        // установка тегов для кнопок режимов
         designationButton.setTag("MODE_BUTTON");
         unitsButton.setTag("MODE_BUTTON");
         numbersButton.setTag("MODE_BUTTON");
@@ -84,7 +95,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         keyboardData = new HashMap<>();
         unitIdToUnitMap = new HashMap<>();
 
-        // заполнение keyboardData (оставлено без изменений)
+        // инициализация данных клавиатуры для режима Designation
         keyboardData.put("Designation", Arrays.asList(
                 Arrays.asList(
                         new SymbolKey("a_latin", "a", true),
@@ -120,6 +131,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                 )
         ));
 
+        // инициализация данных клавиатуры для режима Units_of_measurement
         List<List<SymbolKey>> unitsPages = Arrays.asList(
                 Arrays.asList(
                         new SymbolKey("unit_m/s", "m/s", false),
@@ -190,12 +202,14 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         );
         keyboardData.put("Units_of_measurement", unitsPages);
 
+        // заполнение маппинга единиц измерения
         for (List<SymbolKey> page : unitsPages) {
             for (SymbolKey key : page) {
                 unitIdToUnitMap.put(key.getLogicalId(), key.getDisplayText());
             }
         }
 
+        // инициализация данных клавиатуры для режима Numbers_and_operations
         keyboardData.put("Numbers_and_operations", Arrays.asList(
                 Arrays.asList(
                         new SymbolKey("num_1", "1", false),
@@ -220,6 +234,12 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                 )
         ));
 
+        // инициализация контроллера ввода с учетом rootView
+        inputController = new InputController(designationView, unknownView, new ConversionService(), rootView);
+        inputController.setStixTypeface(stixTypeface);
+        inputController.setKeyboardModeSwitcher(this);
+
+        // настройка обработчиков
         setupScrollButton();
         setModeListeners();
         setPageListeners();
@@ -227,15 +247,9 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         applyModeButtonAnimations();
         updateModeButtonStyles();
         updateKeyboard();
-
-        inputController = new InputController(designationView, unknownView,
-
-                new ConversionService());
-
-        inputController.setStixTypeface(stixTypeface);
-        inputController.setKeyboardModeSwitcher(this);
     }
 
+    // настройка кнопок стрелок
     private void setupArrowButtons() {
         leftArrowButton.setOnClickListener(v -> {
             if (inputController != null) {
@@ -250,6 +264,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         });
     }
 
+    // установка контроллера ввода
     public void setInputController(InputController inputController) {
         this.inputController = inputController;
         inputController.setKeyboardModeSwitcher(this);
@@ -286,6 +301,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         }
     }
 
+    // настройка кнопки прокрутки вниз
     private void setupScrollButton() {
         buttonScrollDown.setOnClickListener(v -> {
             LogUtils.logButtonPressed("KeyboardLogic", "прокрутка вниз");
@@ -308,6 +324,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         designationView.getViewTreeObserver().addOnScrollChangedListener(this::updateScrollButtonVisibility);
     }
 
+    // прокрутка текста к нижней части
     private void scrollToBottom() {
         designationView.post(() -> {
             int scrollY = designationView.getLayout().getHeight() - designationView.getHeight();
@@ -320,6 +337,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         });
     }
 
+    // обновление видимости кнопки прокрутки
     private void updateScrollButtonVisibility() {
         if (designationView.getLayout() == null) {
             buttonScrollDown.setVisibility(View.GONE);
@@ -336,20 +354,24 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         }
     }
 
+    // получение шрифта STIX
     public Typeface getStixTypeface() {
         return stixTypeface;
     }
 
+    // установка использования шрифта STIX
     public void setUseStixFont(boolean useStixFont) {
         this.useStixFont = useStixFont;
     }
 
+    // применение анимаций к кнопкам режимов
     private void applyModeButtonAnimations() {
         KeyboardAnimation.applyButtonAnimation(designationButton);
         KeyboardAnimation.applyButtonAnimation(unitsButton);
         KeyboardAnimation.applyButtonAnimation(numbersButton);
     }
 
+    // обновление содержимого клавиатуры
     private void updateKeyboard() {
         List<List<SymbolKey>> pages = keyboardData.get(currentMode);
         if (pages == null || pages.isEmpty()) return;
@@ -418,6 +440,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         pageNumberView.setText(String.format("%d | %d", currentPage + 1, pages.size()));
     }
 
+    // обновление стилей кнопок режимов
     private void updateModeButtonStyles() {
         if ("Designation".equals(currentMode)) {
             designationButton.setBackgroundResource(R.drawable.ic_back_black);
@@ -450,6 +473,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         }
     }
 
+    // установка слушателей для кнопок режимов
     private void setModeListeners() {
         View.OnClickListener modeClickListener = view -> {
             String selectedMode = "";
@@ -476,6 +500,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         numbersButton.setOnClickListener(modeClickListener);
     }
 
+    // установка слушателей для переключения страниц
     private void setPageListeners() {
         prevPageButton.setOnClickListener(view -> {
             if (currentPage > 0) {

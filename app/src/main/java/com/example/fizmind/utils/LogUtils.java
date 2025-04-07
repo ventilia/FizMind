@@ -1,11 +1,13 @@
 package com.example.fizmind.utils;
 
 import android.util.Log;
+import android.view.View;
 
 import com.example.fizmind.modules.ModuleType;
+import com.google.android.material.snackbar.Snackbar;
 
 /**
- * утилитный класс для централизованного логирования
+ * утилитный класс для централизованного логирования и отображения уведомлений
  */
 public class LogUtils {
     private static final boolean LOG_ENABLED = true; // логи всегда включены
@@ -38,6 +40,23 @@ public class LogUtils {
     public static void e(String tag, String message, Throwable tr) {
         if (LOG_ENABLED) {
             Log.e(tag, message, tr);
+        }
+    }
+
+    // методы с отображением Snackbar
+    public static void wWithSnackbar(String tag, String message, View view) {
+        w(tag, message);
+        showSnackbar(view, message);
+    }
+
+    public static void eWithSnackbar(String tag, String message, View view) {
+        e(tag, message);
+        showSnackbar(view, message);
+    }
+
+    private static void showSnackbar(View view, String message) {
+        if (view != null) {
+            Snackbar.make(view, message, Snackbar.LENGTH_LONG).show();
         }
     }
 

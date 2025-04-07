@@ -84,16 +84,24 @@ public class KeyboardFragment extends Fragment {
         editTextDesignations.setMovementMethod(new ScrollingMovementMethod());
 
         keyboardLogic = new KeyboardLogic(
-                requireContext(), keyboardCells, pageNumberView, designationButton, unitsButton, numbersButton,
-                prevPageButton, nextPageButton, buttonScrollDown,
+                requireContext(),
+                keyboardCells,
+                pageNumberView,
+                designationButton,
+                unitsButton,
+                numbersButton,
+                prevPageButton,
+                nextPageButton,
+                buttonScrollDown,
                 editTextDesignations,
                 editTextUnknown,
                 buttonLeft,
-                buttonRight
+                buttonRight,
+                view // Добавлен rootView
         );
         keyboardLogic.setUseStixFont(true);
 
-        inputController = new InputController(editTextDesignations, editTextUnknown, new ConversionService());
+        inputController = new InputController(editTextDesignations, editTextUnknown, new ConversionService(), view);
         inputController.setConversionMode(isConversionMode);
         inputController.setUnknownInputAllowed(isUnknownInputAllowed);
         inputController.setStixTypeface(keyboardLogic.getStixTypeface());
