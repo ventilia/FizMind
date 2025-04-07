@@ -27,64 +27,64 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Контроллер ввода данных для управления обозначениями и неизвестными
+ * контроллер ввода данных для управления обозначениями и неизвестными
  */
 public class InputController {
 
-    /** Перечисления для состояния ввода */
+    /** перечисления для состояния ввода */
     public enum InputState {
-        ENTERING_DESIGNATION,  // Ввод обозначения
-        ENTERING_VALUE,        // Ввод значения
-        ENTERING_UNIT          // Ввод единицы измерения
+        ENTERING_DESIGNATION,  // ввод обозначения
+        ENTERING_VALUE,        // ввод значения
+        ENTERING_UNIT          // ввод единицы измерения
     }
 
-    /** Перечисления для состояния фокуса */
+    /** перечисления для состояния фокуса */
     public enum FocusState {
-        DESIGNATION,  // Фокус на обозначении
-        VALUE,        // Фокус на значении
-        UNIT,         // Фокус на единице измерения
-        MODULE        // Фокус на модуле (индексе)
+        DESIGNATION,  // фокус на обозначении
+        VALUE,        // фокус на значении
+        UNIT,         // фокус на единице измерения
+        MODULE        // фокус на модуле (индексе)
     }
 
-    // Поля класса
-    private InputState currentState;                    // Текущее состояние ввода
-    private FocusState focusState;                      // Текущее состояние фокуса
-    private final StringBuilder designationBuffer;      // Буфер для обозначения
-    private final StringBuilder valueBuffer;            // Буфер для значения
-    private final StringBuilder unitBuffer;             // Буфер для единицы измерения
-    private final StringBuilder operationBuffer;        // Буфер для операций над обозначением
-    private final StringBuilder valueOperationBuffer;   // Буфер для операций над значением
-    private final TextView designationsView;            // Поле отображения обозначений
-    private final TextView unknownView;                 // Поле отображения неизвестных
-    private final View rootView;                        // Корневой вид для Snackbar
-    private final List<ConcreteMeasurement> measurements; // Список сохраненных измерений
-    private final List<SpannableStringBuilder> history;   // История отображения измерений
-    private final List<UnknownQuantity> unknowns;         // Список неизвестных величин
-    private Boolean designationUsesStix;                // Используется ли шрифт STIX для обозначения
-    private Boolean unknownUsesStix;                    // Используется ли шрифт STIX для неизвестного
-    private String logicalDesignation;                  // Логический идентификатор обозначения
-    private Typeface stixTypeface;                      // Шрифт STIX
-    private KeyboardModeSwitcher keyboardModeSwitcher;  // Переключатель режимов клавиатуры
-    private boolean isCurrentConstant;                  // Является ли текущее значение константой
-    private final Map<String, String> lastUnitForDesignation; // Последние единицы измерения для обозначений
-    private String currentInputField;                   // Текущее поле ввода ("designations" или "unknown")
-    private String unknownDesignation;                  // Обозначение неизвестного
-    private String logicalUnknownDesignation;           // Логический идентификатор неизвестного
-    private boolean isUnknownInputAllowed = true;       // Разрешён ли ввод неизвестного
-    private InputModule designationSubscriptModule;     // Модуль нижнего индекса для обозначения
-    private InputModule unknownSubscriptModule;         // Модуль нижнего индекса для неизвестного
-    private long lastDeleteTime = 0;                    // Время последнего удаления
-    private int deleteClickCount = 0;                   // Счётчик кликов удаления
-    private static final long DOUBLE_CLICK_TIME_DELTA = 300; // Интервал для двойного клика (мс)
-    private final ConversionService conversionService;  // Сервис конвертации в СИ
-    private boolean isConversionMode = false;           // Режим конвертации в СИ
+    // поля класса
+    private InputState currentState;                    // текущее состояние ввода
+    private FocusState focusState;                      // текущее состояние фокуса
+    private final StringBuilder designationBuffer;      // буфер для обозначения
+    private final StringBuilder valueBuffer;            // буфер для значения
+    private final StringBuilder unitBuffer;             // буфер для единицы измерения
+    private final StringBuilder operationBuffer;        // буфер для операций над обозначением
+    private final StringBuilder valueOperationBuffer;   // буфер для операций над значением
+    private final TextView designationsView;            // поле отображения обозначений
+    private final TextView unknownView;                 // поле отображения неизвестных
+    private final View rootView;                        // корневой вид для Snackbar
+    private final List<ConcreteMeasurement> measurements; // список сохраненных измерений
+    private final List<SpannableStringBuilder> history;   // история отображения измерений
+    private final List<UnknownQuantity> unknowns;         // список неизвестных величин
+    private Boolean designationUsesStix;                // используется ли шрифт STIX для обозначения
+    private Boolean unknownUsesStix;                    // используется ли шрифт STIX для неизвестного
+    private String logicalDesignation;                  // логический идентификатор обозначения
+    private Typeface stixTypeface;                      // шрифт STIX
+    private KeyboardModeSwitcher keyboardModeSwitcher;  // переключатель режимов клавиатуры
+    private boolean isCurrentConstant;                  // является ли текущее значение константой
+    private final Map<String, String> lastUnitForDesignation; // последние единицы измерения для обозначений
+    private String currentInputField;                   // текущее поле ввода ("designations" или "unknown")
+    private String unknownDesignation;                  // обозначение неизвестного
+    private String logicalUnknownDesignation;           // логический идентификатор неизвестного
+    private boolean isUnknownInputAllowed = true;       // разрешён ли ввод неизвестного
+    private InputModule designationSubscriptModule;     // модуль нижнего индекса для обозначения
+    private InputModule unknownSubscriptModule;         // модуль нижнего индекса для неизвестного
+    private long lastDeleteTime = 0;                    // время последнего удаления
+    private int deleteClickCount = 0;                   // счётчик кликов удаления
+    private static final long DOUBLE_CLICK_TIME_DELTA = 300; // интервал для двойного клика (мс)
+    private final ConversionService conversionService;  // сервис конвертации в СИ
+    private boolean isConversionMode = false;           // режим конвертации в СИ
 
     /**
-     * Конструктор класса
-     * @param designationsView Поле для отображения обозначений
-     * @param unknownView Поле для отображения неизвестных
-     * @param conversionService Сервис конвертации в СИ
-     * @param rootView Корневой вид для Snackbar
+     * конструктор класса
+     * @param designationsView поле для отображения обозначений
+     * @param unknownView поле для отображения неизвестных
+     * @param conversionService сервис конвертации в СИ
+     * @param rootView корневой вид для Snackbar
      */
     public InputController(TextView designationsView, TextView unknownView, ConversionService conversionService, View rootView) {
         this.designationsView = designationsView;
@@ -113,31 +113,31 @@ public class InputController {
         LogUtils.logControllerInitialized("InputController");
     }
 
-    /** Установка разрешения ввода неизвестного */
+    /** установка разрешения ввода неизвестного */
     public void setUnknownInputAllowed(boolean allowed) {
         this.isUnknownInputAllowed = allowed;
         LogUtils.logPropertySet("InputController", "разрешение ввода неизвестного", allowed);
     }
 
-    /** Установка шрифта STIX */
+    /** установка шрифта STIX */
     public void setStixTypeface(Typeface stixTypeface) {
         this.stixTypeface = stixTypeface;
         LogUtils.logPropertySet("InputController", "шрифт STIX", "установлен");
     }
 
-    /** Установка переключателя режимов клавиатуры */
+    /** установка переключателя режимов клавиатуры */
     public void setKeyboardModeSwitcher(KeyboardModeSwitcher switcher) {
         this.keyboardModeSwitcher = switcher;
         LogUtils.logPropertySet("InputController", "переключатель режимов клавиатуры", "установлен");
     }
 
-    /** Установка режима конвертации в СИ */
+    /** установка режима конвертации в СИ */
     public void setConversionMode(boolean isConversionMode) {
         this.isConversionMode = isConversionMode;
         LogUtils.logPropertySet("InputController", "режим", isConversionMode ? "перевод в СИ" : "калькулятор");
     }
 
-    /** Установка текущего поля ввода */
+    /** установка текущего поля ввода */
     public void setCurrentInputField(String field) {
         if ("unknown".equals(field) && !isUnknownInputAllowed) {
             LogUtils.wWithSnackbar("InputController", "переключение на 'Введите неизвестное' заблокировано", rootView);
@@ -162,17 +162,17 @@ public class InputController {
         LogUtils.d("InputController", "текущее поле ввода установлено: " + field);
     }
 
-    /** Получение текущего обозначения */
+    /** получение текущего обозначения */
     public String getCurrentDesignation() {
         return logicalDesignation;
     }
 
     /**
-     * Обработка ввода с клавиатуры
-     * @param input Введённый символ
-     * @param sourceKeyboardMode Режим клавиатуры
-     * @param keyUsesStix Используется ли шрифт STIX
-     * @param logicalId Логический идентификатор
+     * обработка ввода с клавиатуры
+     * @param input введённый символ
+     * @param sourceKeyboardMode режим клавиатуры
+     * @param keyUsesStix используется ли шрифт STIX
+     * @param logicalId логический идентификатор
      */
     public void onKeyInput(String input, String sourceKeyboardMode, boolean keyUsesStix, String logicalId) {
         LogUtils.logInputProcessing("InputController", currentState.toString(), focusState.toString(), input, logicalId, isConversionMode ? "СИ" : "калькулятор");
@@ -293,7 +293,7 @@ public class InputController {
         updateDisplay();
     }
 
-    /** Обработка ввода значения */
+    /** обработка ввода значения */
     private void handleValueInput(String input, String logicalId) {
         LogUtils.d("InputController", "обработка значения: " + input);
         if (input.matches("[0-9]")) {
@@ -328,7 +328,7 @@ public class InputController {
         updateDisplay();
     }
 
-    /** Обработка ввода единицы измерения */
+    /** обработка ввода единицы измерения */
     private void handleUnitInput(String input, String logicalId) {
         PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(logicalDesignation);
         if (pq == null) {
@@ -347,11 +347,12 @@ public class InputController {
         updateDisplay();
     }
 
-    /** Сохранение неизвестной величины */
+    /** сохранение неизвестной величины */
     private void saveUnknown() {
         if (unknownDesignation != null) {
             if (unknownSubscriptModule != null && unknownSubscriptModule.isActive() && unknownSubscriptModule.isEmpty()) {
-                LogUtils.wWithSnackbar("InputController", "нельзя сохранить с пустым активным индексом", rootView);
+                LogUtils.w("InputController", "ошибка сохранения: пустой активный индекс");
+                LogUtils.wWithSnackbar("InputController", "Пожалуйста, завершите ввод индекса или удалите его перед сохранением.", rootView);
                 return;
             }
             String subscript = (unknownSubscriptModule != null && !unknownSubscriptModule.isEmpty()) ? unknownSubscriptModule.getDisplayText().toString() : "";
@@ -371,7 +372,7 @@ public class InputController {
         }
     }
 
-    /** Проверка, пустой ли ввод */
+    /** проверка, пустой ли ввод */
     private boolean isInputEmpty() {
         if ("designations".equals(currentInputField)) {
             return designationBuffer.length() == 0 && valueBuffer.length() == 0 && unitBuffer.length() == 0 &&
@@ -383,7 +384,7 @@ public class InputController {
         return true;
     }
 
-    /** Обработка нажатия клавиши удаления */
+    /** обработка нажатия клавиши удаления */
     public void onDeletePressed() {
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastDeleteTime < DOUBLE_CLICK_TIME_DELTA) {
@@ -413,7 +414,7 @@ public class InputController {
         updateDisplay();
     }
 
-    /** Выполнение одиночного удаления */
+    /** выполнение одиночного удаления */
     private void performSingleDelete() {
         if ("designations".equals(currentInputField)) {
             if (focusState == FocusState.MODULE && designationSubscriptModule != null && designationSubscriptModule.isActive()) {
@@ -460,7 +461,7 @@ public class InputController {
         }
     }
 
-    /** Удаление последнего сохраненного поля */
+    /** удаление последнего сохраненного поля */
     private void deleteLastSavedField() {
         if ("designations".equals(currentInputField)) {
             if (!measurements.isEmpty()) {
@@ -476,7 +477,7 @@ public class InputController {
         }
     }
 
-    /** Обработка нажатия стрелки влево */
+    /** обработка нажатия стрелки влево */
     public void onLeftArrowPressed() {
         if ("designations".equals(currentInputField)) {
             if (focusState == FocusState.MODULE && designationSubscriptModule != null && designationSubscriptModule.isActive()) {
@@ -504,7 +505,7 @@ public class InputController {
         }
     }
 
-    /** Обработка нажатия стрелки вправо */
+    /** обработка нажатия стрелки вправо */
     public void onRightArrowPressed() {
         if ("designations".equals(currentInputField)) {
             if (focusState == FocusState.DESIGNATION) {
@@ -541,19 +542,25 @@ public class InputController {
         }
     }
 
-    /** Обработка нажатия стрелки вниз (сохранение) */
+    /** обработка нажатия стрелки вниз (сохранение) */
     public void onDownArrowPressed() {
         if ("designations".equals(currentInputField)) {
+            // проверка пустого индекса
             if (designationSubscriptModule != null && designationSubscriptModule.isActive() && designationSubscriptModule.isEmpty()) {
-                LogUtils.wWithSnackbar("InputController", "нельзя сохранить с пустым активным индексом", rootView);
+                LogUtils.w("InputController", "ошибка сохранения: пустой активный индекс");
+                LogUtils.wWithSnackbar("InputController", "Пожалуйста, завершите ввод индекса или удалите его перед сохранением.", rootView);
                 return;
             }
+            // проверка отсутствия обозначения
             if (designationBuffer.length() == 0) {
-                LogUtils.wWithSnackbar("InputController", "нельзя сохранить: отсутствует обозначение", rootView);
+                LogUtils.w("InputController", "ошибка сохранения: отсутствует обозначение");
+                LogUtils.wWithSnackbar("InputController", "Пожалуйста, введите обозначение перед сохранением.", rootView);
                 return;
             }
+            // проверка отсутствия значения
             if (valueBuffer.length() == 0 && valueOperationBuffer.length() == 0) {
-                LogUtils.wWithSnackbar("InputController", "нельзя сохранить: отсутствует числовое значение", rootView);
+                LogUtils.w("InputController", "ошибка сохранения: отсутствует числовое значение");
+                LogUtils.wWithSnackbar("InputController", "Пожалуйста, введите числовое значение перед сохранением.", rootView);
                 return;
             }
 
@@ -561,12 +568,14 @@ public class InputController {
             if (unit.isEmpty()) {
                 PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(logicalDesignation);
                 if (pq == null) {
-                    LogUtils.eWithSnackbar("InputController", "неизвестная физическая величина: " + logicalDesignation, rootView);
+                    LogUtils.e("InputController", "ошибка сохранения: неизвестная физическая величина: " + logicalDesignation);
+                    LogUtils.eWithSnackbar("InputController", "Неизвестная физическая величина: " + logicalDesignation, rootView);
                     return;
                 }
                 unit = pq.getSiUnit();
                 if (unit.isEmpty()) {
-                    LogUtils.wWithSnackbar("InputController", "нельзя сохранить: отсутствует единица измерения", rootView);
+                    LogUtils.w("InputController", "ошибка сохранения: отсутствует единица измерения");
+                    LogUtils.wWithSnackbar("InputController", "Пожалуйста, укажите единицу измерения перед сохранением.", rootView);
                     return;
                 }
             }
@@ -575,20 +584,23 @@ public class InputController {
             try {
                 value = Double.parseDouble(valueBuffer.length() > 0 ? valueBuffer.toString() : "0");
             } catch (NumberFormatException e) {
-                LogUtils.eWithSnackbar("InputController", "ошибка формата числа: " + valueBuffer.toString(), rootView);
+                LogUtils.e("InputController", "ошибка сохранения: некорректный формат числа: " + valueBuffer.toString());
+                LogUtils.eWithSnackbar("InputController", "Некорректный формат числа: " + valueBuffer.toString(), rootView);
                 return;
             }
 
             String subscript = (designationSubscriptModule != null && !designationSubscriptModule.isEmpty()) ? designationSubscriptModule.getDisplayText().toString() : "";
 
             if (!ModuleValidator.isSubscriptUnique(logicalDesignation, subscript, measurements)) {
-                LogUtils.eWithSnackbar("InputController", "ошибка: индекс уже используется для обозначения: " + logicalDesignation, rootView);
+                LogUtils.e("InputController", "ошибка сохранения: индекс '" + subscript + "' уже используется для обозначения: " + logicalDesignation);
+                LogUtils.eWithSnackbar("InputController", "Этот индекс уже используется для '" + logicalDesignation + "'. Используйте другой индекс.", rootView);
                 return;
             }
 
             PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(logicalDesignation);
             if (pq == null) {
-                LogUtils.eWithSnackbar("InputController", "неизвестная физическая величина: " + logicalDesignation, rootView);
+                LogUtils.e("InputController", "ошибка сохранения: неизвестная физическая величина: " + logicalDesignation);
+                LogUtils.eWithSnackbar("InputController", "Неизвестная физическая величина: " + logicalDesignation, rootView);
                 return;
             }
 
@@ -674,7 +686,7 @@ public class InputController {
         }
     }
 
-    /** Обновление режима клавиатуры */
+    /** обновление режима клавиатуры */
     private void updateKeyboardMode() {
         if (keyboardModeSwitcher != null && "designations".equals(currentInputField)) {
             if (focusState == FocusState.MODULE) {
@@ -693,7 +705,7 @@ public class InputController {
         }
     }
 
-    /** Обновление отображения интерфейса */
+    /** обновление отображения интерфейса */
     private void updateDisplay() {
         SpannableStringBuilder designationsText = new SpannableStringBuilder();
 
@@ -825,7 +837,7 @@ public class InputController {
         LogUtils.d("InputController", "обновлен интерфейс отображения");
     }
 
-    /** Полная очистка всех данных */
+    /** полная очистка всех данных */
     public void clearAll() {
         if ("designations".equals(currentInputField)) {
             resetInput();
@@ -847,7 +859,7 @@ public class InputController {
         }
     }
 
-    /** Сброс текущего ввода */
+    /** сброс текущего ввода */
     private void resetInput() {
         designationBuffer.setLength(0);
         valueBuffer.setLength(0);
@@ -865,17 +877,17 @@ public class InputController {
         LogUtils.d("InputController", "сброшены все буферы ввода");
     }
 
-    /** Получение списка измерений */
+    /** получение списка измерений */
     public List<ConcreteMeasurement> getMeasurements() {
         return new ArrayList<>(measurements);
     }
 
-    /** Получение списка неизвестных */
+    /** получение списка неизвестных */
     public List<UnknownQuantity> getUnknowns() {
         return new ArrayList<>(unknowns);
     }
 
-    /** Логирование всех сохранённых данных */
+    /** логирование всех сохранённых данных */
     public void logAllSavedData() {
         StringBuilder logMessage = new StringBuilder("все сохраненные данные:\n");
 
