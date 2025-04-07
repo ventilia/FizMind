@@ -5,6 +5,8 @@ import android.view.View;
 
 import com.example.fizmind.modules.ModuleType;
 import com.google.android.material.snackbar.Snackbar;
+import androidx.preference.PreferenceFragmentCompat;
+
 
 /**
  * утилитный класс для централизованного логирования и отображения уведомлений
