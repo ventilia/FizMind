@@ -1,41 +1,38 @@
 package com.example.fizmind.Activity;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.ImageView;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.fizmind.R;
 import com.example.fizmind.keyboard.KeyboardFragment;
+import com.example.fizmind.utils.LogUtils;
 
 /**
- * Активность для перевода физических величин в систему СИ.
- * Переключение на поле "Введите неизвестное" запрещено.
+ * активность для перевода физических величин в систему СИ.
+ * переключение на поле "Введите неизвестное" запрещено.
  */
 public class SIConversionActivity extends AppCompatActivity {
 
-    // Тег для логирования
     private static final String TAG = "SIConversionActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_si_conversion);
-        Log.d(TAG, "Активность перевода в СИ запущена");
+        LogUtils.logActivityStarted(TAG, "Активность перевода в СИ");
 
-        // Настройка кнопки "Назад"
+        // настройка кнопки "Назад"
         ImageView backButton = findViewById(R.id.backButton);
         backButton.setOnClickListener(v -> {
-            Log.d(TAG, "Нажата кнопка 'Назад'");
+            LogUtils.logButtonPressed(TAG, "Назад");
             finish();
         });
 
-        // Инициализация фрагмента клавиатуры
-        // Первый аргумент: isConversionMode = true (режим перевода в СИ)
-        // Второй аргумент: isUnknownInputAllowed = false (запрет переключения на "Введите неизвестное")
+        // инициализация фрагмента клавиатуры
         KeyboardFragment keyboardFragment = KeyboardFragment.newInstance(true, false);
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.keyboard_container, keyboardFragment)
                 .commit();
-        Log.d(TAG, "Фрагмент клавиатуры инициализирован: режим перевода = true, переключение на неизвестное = false");
+        LogUtils.logFragmentInitialized(TAG, "Фрагмент клавиатуры", "режим перевода = true, переключение на неизвестное = false");
     }
 }

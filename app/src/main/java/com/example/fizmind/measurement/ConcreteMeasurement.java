@@ -1,22 +1,20 @@
 package com.example.fizmind.measurement;
 
 import android.text.SpannableStringBuilder;
-import android.util.Log;
-
 import com.example.fizmind.SIConverter;
+import com.example.fizmind.utils.LogUtils;
 
 public class ConcreteMeasurement extends Measurement {
 
-    private final String subscript;             // индекс
-    private final boolean constant;             // флаг константы
-    private final SpannableStringBuilder originalDisplay; // оригинальное представление для вывода
-    private final double originalValue;         // исходное значение
-    private final String originalUnit;          // исходная единица
-    private final String conversionSteps;       // шаги конвертации
-    private final boolean isSIUnit;             // флаг, указывающий, была ли единица уже в СИ
-    private final boolean isConversionMode;     // режим: true — СИ, false — калькулятор
+    private final String subscript;
+    private final boolean constant;
+    private final SpannableStringBuilder originalDisplay;
+    private final double originalValue;
+    private final String originalUnit;
+    private final String conversionSteps;
+    private final boolean isSIUnit;
+    private final boolean isConversionMode;
 
-    // конструктор
     public ConcreteMeasurement(String designation, double value, String unit,
                                String designationOperations, String valueOperations,
                                String subscript, boolean constant,
@@ -32,29 +30,26 @@ public class ConcreteMeasurement extends Measurement {
         this.conversionSteps = conversionSteps != null ? conversionSteps : "";
         this.isSIUnit = isSIUnit;
         this.isConversionMode = isConversionMode;
-        Log.d("ConcreteMeasurement", "создано измерение: " + toString());
+        LogUtils.logMeasurementCreated("ConcreteMeasurement", toString());
     }
 
-    // проверка корректности
     @Override
     public boolean validate() {
         if (Double.isNaN(value) || Double.isInfinite(value)) {
-            Log.e("ConcreteMeasurement", "недопустимое значение: " + value);
+            LogUtils.e("ConcreteMeasurement", "недопустимое значение: " + value);
             return false;
         }
         if (unit == null || unit.isEmpty()) {
-            Log.e("ConcreteMeasurement", "единица измерения не указана для " + designation);
+            LogUtils.e("ConcreteMeasurement", "единица измерения не указана для " + designation);
             return false;
         }
         return true;
     }
 
-    // строковое представление "под капотом"
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
 
-        // формируем обозначение
         if (!designationOperations.isEmpty()) {
             sb.append(designationOperations).append("(").append(designation).append(")");
         } else {
@@ -64,7 +59,6 @@ public class ConcreteMeasurement extends Measurement {
             sb.append("_").append(subscript);
         }
 
-        // добавляем значение и единицу
         sb.append(" = ");
         if (!valueOperations.isEmpty()) {
             sb.append(valueOperations);
@@ -75,7 +69,6 @@ public class ConcreteMeasurement extends Measurement {
             sb.append(" ").append(isConversionMode ? originalUnit : unit);
         }
 
-        // в режиме СИ добавляем шаги конвертации
         if (isConversionMode && !isSIUnit && !conversionSteps.isEmpty()) {
             sb.append(" = ").append(conversionSteps);
         }
@@ -83,7 +76,6 @@ public class ConcreteMeasurement extends Measurement {
         return sb.toString();
     }
 
-    // геттеры
     public boolean isConstant() { return constant; }
     public String getSubscript() { return subscript != null ? subscript : ""; }
     public SpannableStringBuilder getOriginalDisplay() { return originalDisplay; }

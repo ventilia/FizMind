@@ -1,14 +1,14 @@
 package com.example.fizmind.modules;
 
 /**
- * Типы модулей, которые могут быть применены к обозначению.
+ * типы модулей, которые могут быть применены к обозначению.
  */
 public enum ModuleType {
-    SUBSCRIPT("нижний индекс", "_", false);  // применимо к обозначению
+    SUBSCRIPT("нижний индекс", "_", false);
 
     private final String description;
     private final String symbol;
-    private final boolean appliesToValue;  // false — для обозначений
+    private final boolean appliesToValue;
 
     ModuleType(String description, String symbol, boolean appliesToValue) {
         this.description = description;

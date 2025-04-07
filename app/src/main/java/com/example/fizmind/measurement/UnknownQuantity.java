@@ -4,21 +4,19 @@ import android.text.SpannableStringBuilder;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.SubscriptSpan;
 import android.graphics.Typeface;
-import android.util.Log;
-
 import com.example.fizmind.animation.CustomTypefaceSpan;
+import com.example.fizmind.utils.LogUtils;
 
 public class UnknownQuantity {
-    private final String displayDesignation; // отображаемый текст
-    private final String subscript; // индекс
-    private final boolean usesStix; // флаг шрифта STIX
+    private final String displayDesignation;
+    private final String subscript;
+    private final boolean usesStix;
 
-    // конструктор
     public UnknownQuantity(String displayDesignation, String subscript, boolean usesStix) {
         this.displayDesignation = displayDesignation;
         this.subscript = subscript;
         this.usesStix = usesStix;
-        Log.d("UnknownQuantity", "Создано неизвестное: " + displayDesignation + (subscript != null ? "_" + subscript : ""));
+        LogUtils.logUnknownCreated("UnknownQuantity", displayDesignation, subscript);
     }
 
     public UnknownQuantity(String displayDesignation, boolean usesStix) {
@@ -35,7 +33,7 @@ public class UnknownQuantity {
 
     public boolean validate() {
         if (displayDesignation == null || displayDesignation.isEmpty()) {
-            Log.e("UnknownQuantity", "Пустое обозначение для неизвестного");
+            LogUtils.e("UnknownQuantity", "пустое обозначение для неизвестного");
             return false;
         }
         return true;

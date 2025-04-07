@@ -2,7 +2,6 @@ package com.example.fizmind.keyboard;
 
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,10 +12,13 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import com.example.fizmind.ConversionService;
 import com.example.fizmind.R;
+import com.example.fizmind.utils.LogUtils;
 import java.util.Arrays;
 import java.util.List;
 
-// фрагмент клавиатуры для ввода данных
+/**
+ * фрагмент клавиатуры для ввода данных
+ */
 public class KeyboardFragment extends Fragment {
 
     private KeyboardLogic keyboardLogic;
@@ -45,7 +47,7 @@ public class KeyboardFragment extends Fragment {
             isConversionMode = getArguments().getBoolean("isConversionMode", false);
             isUnknownInputAllowed = getArguments().getBoolean("isUnknownInputAllowed", true);
         }
-        Log.d("KeyboardFragment", "Создан фрагмент, режим: " + (isConversionMode ? "конвертация" : "калькулятор"));
+        LogUtils.d("KeyboardFragment", "создан фрагмент, режим: " + (isConversionMode ? "конвертация" : "калькулятор"));
     }
 
     @Override
@@ -102,39 +104,39 @@ public class KeyboardFragment extends Fragment {
         ImageButton buttonClear = view.findViewById(R.id.button_clear);
 
         buttonSave.setOnClickListener(v -> {
-            Log.d("KeyboardFragment", "Нажата кнопка SAVE");
+            LogUtils.logButtonPressed("KeyboardFragment", "SAVE");
             inputController.onDownArrowPressed();
         });
 
         buttonLeft.setOnClickListener(v -> {
-            Log.d("KeyboardFragment", "Нажата кнопка LEFT");
+            LogUtils.logButtonPressed("KeyboardFragment", "LEFT");
             inputController.onLeftArrowPressed();
         });
 
         buttonRight.setOnClickListener(v -> {
-            Log.d("KeyboardFragment", "Нажата кнопка RIGHT");
+            LogUtils.logButtonPressed("KeyboardFragment", "RIGHT");
             inputController.onRightArrowPressed();
         });
 
         buttonClear.setOnClickListener(v -> {
-            Log.d("KeyboardFragment", "Нажата кнопка DELETE");
+            LogUtils.logButtonPressed("KeyboardFragment", "DELETE");
             inputController.onDeletePressed();
         });
 
         buttonClear.setOnLongClickListener(v -> {
-            Log.d("KeyboardFragment", "Длительное нажатие на DELETE");
+            LogUtils.d("KeyboardFragment", "длительное нажатие на DELETE");
             inputController.clearAll();
             return true;
         });
 
         editTextDesignations.setOnClickListener(v -> {
             inputController.setCurrentInputField("designations");
-            Log.d("KeyboardFragment", "Фокус на 'Введите обозначение'");
+            LogUtils.d("KeyboardFragment", "фокус на 'Введите обозначение'");
         });
 
         editTextUnknown.setOnClickListener(v -> {
             inputController.setCurrentInputField("unknown");
-            Log.d("KeyboardFragment", "Фокус на 'Введите неизвестное'");
+            LogUtils.d("KeyboardFragment", "фокус на 'Введите неизвестное'");
         });
     }
 }

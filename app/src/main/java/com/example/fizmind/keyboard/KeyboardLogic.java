@@ -5,17 +5,16 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import com.example.fizmind.ConversionService;
 import com.example.fizmind.PhysicalQuantity;
 import com.example.fizmind.PhysicalQuantityRegistry;
 import com.example.fizmind.R;
 import com.example.fizmind.animation.KeyboardAnimation;
-import com.example.fizmind.ConversionService;
-
+import com.example.fizmind.utils.LogUtils;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -31,8 +30,8 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
     private final ImageButton prevPageButton;
     private final ImageButton nextPageButton;
     private final ImageButton buttonScrollDown;
-    private final TextView designationView; // поле "Введите обозначение"
-    private final TextView unknownView;     // поле "Введите неизвестное"
+    private final TextView designationView;
+    private final TextView unknownView;
     private InputController inputController;
     private boolean useStixFont;
     private String currentMode = "Designation";
@@ -41,7 +40,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
     private Typeface stixTypeface;
     private final ImageButton leftArrowButton;
     private final ImageButton rightArrowButton;
-    // маппинг ID кнопок единиц на их текст
     private final Map<String, String> unitIdToUnitMap;
 
     public KeyboardLogic(
@@ -76,7 +74,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         try {
             stixTypeface = Typeface.createFromAsset(context.getAssets(), "fonts/stix_two_text_italic.ttf");
         } catch (Exception e) {
-            Log.e("KeyboardLogic", "ошибка загрузки шрифта", e);
+            LogUtils.logFontLoadError("KeyboardLogic", e);
             stixTypeface = Typeface.DEFAULT;
         }
         designationButton.setTag("MODE_BUTTON");
@@ -86,7 +84,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         keyboardData = new HashMap<>();
         unitIdToUnitMap = new HashMap<>();
 
-        // режим "Designation"
+        // заполнение keyboardData (оставлено без изменений)
         keyboardData.put("Designation", Arrays.asList(
                 Arrays.asList(
                         new SymbolKey("a_latin", "a", true),
@@ -122,9 +120,8 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                 )
         ));
 
-        // режим "Units_of_measurement" с разбивкой на страницы
         List<List<SymbolKey>> unitsPages = Arrays.asList(
-                Arrays.asList( // страница 1
+                Arrays.asList(
                         new SymbolKey("unit_m/s", "m/s", false),
                         new SymbolKey("unit_km/h", "km/h", false),
                         new SymbolKey("unit_cm/s", "cm/s", false),
@@ -147,7 +144,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                         new SymbolKey("unit_kPa", "kPa", false),
                         new SymbolKey("unit_atm", "atm", false)
                 ),
-                Arrays.asList( // страница 2
+                Arrays.asList(
                         new SymbolKey("unit_J", "J", false),
                         new SymbolKey("unit_kJ", "kJ", false),
                         new SymbolKey("unit_cal", "cal", false),
@@ -170,7 +167,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                         new SymbolKey("unit_kΩ", "kΩ", false),
                         new SymbolKey("unit_MΩ", "MΩ", false)
                 ),
-                Arrays.asList( // страница 3
+                Arrays.asList(
                         new SymbolKey("unit_F", "F", false),
                         new SymbolKey("unit_μF", "μF", false),
                         new SymbolKey("unit_nF", "nF", false),
@@ -193,14 +190,12 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         );
         keyboardData.put("Units_of_measurement", unitsPages);
 
-        // заполняем маппинг единиц
         for (List<SymbolKey> page : unitsPages) {
             for (SymbolKey key : page) {
                 unitIdToUnitMap.put(key.getLogicalId(), key.getDisplayText());
             }
         }
 
-        // режим "Numbers_and_operations"
         keyboardData.put("Numbers_and_operations", Arrays.asList(
                 Arrays.asList(
                         new SymbolKey("num_1", "1", false),
@@ -233,7 +228,10 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         updateModeButtonStyles();
         updateKeyboard();
 
-        inputController = new InputController(designationView, unknownView, new ConversionService());
+        inputController = new InputController(designationView, unknownView,
+
+                new ConversionService());
+
         inputController.setStixTypeface(stixTypeface);
         inputController.setKeyboardModeSwitcher(this);
     }
@@ -290,7 +288,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
 
     private void setupScrollButton() {
         buttonScrollDown.setOnClickListener(v -> {
-            Log.d("KeyboardLogic", "нажата кнопка прокрутки вниз");
+            LogUtils.logButtonPressed("KeyboardLogic", "прокрутка вниз");
             scrollToBottom();
         });
 
@@ -315,9 +313,9 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
             int scrollY = designationView.getLayout().getHeight() - designationView.getHeight();
             if (scrollY > 0) {
                 designationView.scrollTo(0, scrollY);
-                Log.d("KeyboardLogic", "прокручено к низу, scrollY = " + scrollY);
+                LogUtils.d("KeyboardLogic", "прокручено к низу, scrollY = " + scrollY);
             } else {
-                Log.d("KeyboardLogic", "прокрутка не требуется, scrollY = " + scrollY);
+                LogUtils.d("KeyboardLogic", "прокрутка не требуется, scrollY = " + scrollY);
             }
         });
     }
@@ -325,16 +323,16 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
     private void updateScrollButtonVisibility() {
         if (designationView.getLayout() == null) {
             buttonScrollDown.setVisibility(View.GONE);
-            Log.d("KeyboardLogic", "layout не готов, кнопка скрыта");
+            LogUtils.d("KeyboardLogic", "layout не готов, кнопка скрыта");
             return;
         }
         int scrollRange = designationView.getLayout().getHeight() - designationView.getHeight();
         if (scrollRange > 0) {
             buttonScrollDown.setVisibility(View.VISIBLE);
-            Log.d("KeyboardLogic", "кнопка прокрутки видна, scrollRange = " + scrollRange);
+            LogUtils.d("KeyboardLogic", "кнопка прокрутки видна, scrollRange = " + scrollRange);
         } else {
             buttonScrollDown.setVisibility(View.GONE);
-            Log.d("KeyboardLogic", "кнопка прокрутки скрыта, scrollRange = " + scrollRange);
+            LogUtils.d("KeyboardLogic", "кнопка прокрутки скрыта, scrollRange = " + scrollRange);
         }
     }
 
@@ -362,14 +360,13 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
 
         List<SymbolKey> currentKeys = pages.get(currentPage);
 
-        // получаем текущее обозначение и допустимые единицы
         String currentDesignation = inputController != null ? inputController.getCurrentDesignation() : null;
         List<String> allowedUnits = null;
         if ("Units_of_measurement".equals(currentMode) && currentDesignation != null) {
             PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(currentDesignation);
             if (pq != null) {
                 allowedUnits = pq.getAllowedUnits();
-                Log.d("KeyboardLogic", "допустимые единицы для " + currentDesignation + ": " + allowedUnits);
+                LogUtils.d("KeyboardLogic", "допустимые единицы для " + currentDesignation + ": " + allowedUnits);
             }
         }
 
@@ -379,14 +376,12 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                 SymbolKey symbolKey = currentKeys.get(i);
                 keyView.setText(symbolKey.getDisplayText());
 
-                // установка шрифта
                 if (symbolKey.shouldUseStixFont()) {
                     keyView.setTypeface(stixTypeface);
                 } else {
                     keyView.setTypeface(Typeface.DEFAULT);
                 }
 
-                // стили для режима единиц
                 if ("Units_of_measurement".equals(currentMode) && allowedUnits != null) {
                     String unit = unitIdToUnitMap.get(symbolKey.getLogicalId());
                     if (unit != null && allowedUnits.contains(unit)) {
@@ -397,7 +392,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                         keyView.setTypeface(Typeface.DEFAULT);
                     }
                 } else {
-                    // обычные стили для других режимов
                     if (symbolKey.isColor()) {
                         keyView.setTextColor(Color.WHITE);
                     } else {
@@ -409,7 +403,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                 keyView.setOnClickListener(view -> {
                     String displayText = symbolKey.getDisplayText();
                     String logicalId = symbolKey.getLogicalId();
-                    Log.d("KeyboardLogic", "кнопка нажата: " + logicalId);
+                    LogUtils.logKeyPressed("KeyboardLogic", logicalId);
                     if (inputController != null) {
                         boolean keyUsesStix = symbolKey.shouldUseStixFont();
                         inputController.onKeyInput(displayText, currentMode, keyUsesStix, logicalId);
