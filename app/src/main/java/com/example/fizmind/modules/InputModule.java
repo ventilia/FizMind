@@ -7,7 +7,7 @@ import com.example.fizmind.utils.LogUtils;
 
 /**
  * класс, представляющий модуль (нижний индекс).
- * поддерживает ввод, удаление и отображение с учетом типа модуля.
+ * поддерживает ввод, удаление и отображение с учетом типа модуля
  */
 public class InputModule {
     private final ModuleType type;
@@ -15,17 +15,33 @@ public class InputModule {
     private boolean isActive;
 
     public InputModule(ModuleType type) {
-        if (type != ModuleType.SUBSCRIPT) {
-            throw new IllegalArgumentException("поддерживается только тип SUBSCRIPT");
+        // проверка поддерживаемых типов модулей
+        if (type != ModuleType.SUBSCRIPT && type != ModuleType.SUBSCRIPT_P && type != ModuleType.SUBSCRIPT_K) {
+            throw new IllegalArgumentException("поддерживаются только типы SUBSCRIPT, SUBSCRIPT_P и SUBSCRIPT_K");
         }
         this.type = type;
         this.content = new StringBuilder();
         this.isActive = true;
+
+        // для SUBSCRIPT_P и SUBSCRIPT_K сразу добавляем фиксированный символ
+        if (type == ModuleType.SUBSCRIPT_P) {
+            content.append("p");
+        } else if (type == ModuleType.SUBSCRIPT_K) {
+            content.append("k");
+        }
+
         LogUtils.logModuleCreated("InputModule", type);
     }
 
     public boolean apply(String input) {
-        if (!input.matches("[0-9]")) {
+        // для SUBSCRIPT_P и SUBSCRIPT_K ввод не требуется, так как они фиксированы
+        if (type == ModuleType.SUBSCRIPT_P || type == ModuleType.SUBSCRIPT_K) {
+            LogUtils.w("InputModule", "модули 'p' и 'k' не поддерживают дополнительный ввод");
+            return false;
+        }
+
+        // для обычного SUBSCRIPT проверяем допустимые символы (цифры и буквы)
+        if (!input.matches("[a-zA-Z0-9]")) {
             LogUtils.w("InputModule", "недопустимый символ для " + type.getDescription() + ": " + input);
             return false;
         }

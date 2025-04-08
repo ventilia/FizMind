@@ -8,14 +8,13 @@ import android.text.TextWatcher;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
-
 import com.example.fizmind.ConversionService;
 import com.example.fizmind.PhysicalQuantity;
 import com.example.fizmind.PhysicalQuantityRegistry;
 import com.example.fizmind.R;
 import com.example.fizmind.animation.KeyboardAnimation;
 import com.example.fizmind.utils.LogUtils;
-
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -36,7 +35,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
     private final ImageButton buttonScrollDown;
     private final TextView designationView;
     private final TextView unknownView;
-    private final View rootView; // добавлено для передачи в InputController
+    private final View rootView;
     private InputController inputController;
     private boolean useStixFont;
     private String currentMode = "Designation";
@@ -47,7 +46,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
     private final ImageButton rightArrowButton;
     private final Map<String, String> unitIdToUnitMap;
 
-    // конструктор с добавленным параметром rootView
     public KeyboardLogic(
             Context context,
             List<TextView> keyboardCells,
@@ -77,7 +75,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         this.unknownView = unknownView;
         this.leftArrowButton = leftArrowButton;
         this.rightArrowButton = rightArrowButton;
-        this.rootView = rootView; // инициализация нового поля
+        this.rootView = rootView;
 
         // загрузка шрифта STIX
         try {
@@ -87,7 +85,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
             stixTypeface = Typeface.DEFAULT;
         }
 
-        // установка тегов для кнопок режимов
         designationButton.setTag("MODE_BUTTON");
         unitsButton.setTag("MODE_BUTTON");
         numbersButton.setTag("MODE_BUTTON");
@@ -95,7 +92,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         keyboardData = new HashMap<>();
         unitIdToUnitMap = new HashMap<>();
 
-        // инициализация данных клавиатуры для режима Designation
+        // инициализация данных клавиатуры для Designation
         keyboardData.put("Designation", Arrays.asList(
                 Arrays.asList(
                         new SymbolKey("a_latin", "a", true),
@@ -131,7 +128,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                 )
         ));
 
-        // инициализация данных клавиатуры для режима Units_of_measurement
+        // инициализация данных клавиатуры для Units_of_measurement
         List<List<SymbolKey>> unitsPages = Arrays.asList(
                 Arrays.asList(
                         new SymbolKey("unit_m/s", "m/s", false),
@@ -202,14 +199,13 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         );
         keyboardData.put("Units_of_measurement", unitsPages);
 
-        // заполнение маппинга единиц измерения
         for (List<SymbolKey> page : unitsPages) {
             for (SymbolKey key : page) {
                 unitIdToUnitMap.put(key.getLogicalId(), key.getDisplayText());
             }
         }
 
-        // инициализация данных клавиатуры для режима Numbers_and_operations
+        // инициализация данных клавиатуры для Numbers_and_operations
         keyboardData.put("Numbers_and_operations", Arrays.asList(
                 Arrays.asList(
                         new SymbolKey("num_1", "1", false),
@@ -234,12 +230,10 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                 )
         ));
 
-        // инициализация контроллера ввода с учетом rootView
         inputController = new InputController(designationView, unknownView, new ConversionService(), rootView);
         inputController.setStixTypeface(stixTypeface);
         inputController.setKeyboardModeSwitcher(this);
 
-        // настройка обработчиков
         setupScrollButton();
         setModeListeners();
         setPageListeners();
@@ -249,7 +243,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         updateKeyboard();
     }
 
-    // настройка кнопок стрелок
     private void setupArrowButtons() {
         leftArrowButton.setOnClickListener(v -> {
             if (inputController != null) {
@@ -264,7 +257,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         });
     }
 
-    // установка контроллера ввода
     public void setInputController(InputController inputController) {
         this.inputController = inputController;
         inputController.setKeyboardModeSwitcher(this);
@@ -301,7 +293,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         }
     }
 
-    // настройка кнопки прокрутки вниз
     private void setupScrollButton() {
         buttonScrollDown.setOnClickListener(v -> {
             LogUtils.logButtonPressed("KeyboardLogic", "прокрутка вниз");
@@ -324,54 +315,39 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         designationView.getViewTreeObserver().addOnScrollChangedListener(this::updateScrollButtonVisibility);
     }
 
-    // прокрутка текста к нижней части
     private void scrollToBottom() {
         designationView.post(() -> {
             int scrollY = designationView.getLayout().getHeight() - designationView.getHeight();
             if (scrollY > 0) {
                 designationView.scrollTo(0, scrollY);
                 LogUtils.d("KeyboardLogic", "прокручено к низу, scrollY = " + scrollY);
-            } else {
-                LogUtils.d("KeyboardLogic", "прокрутка не требуется, scrollY = " + scrollY);
             }
         });
     }
 
-    // обновление видимости кнопки прокрутки
     private void updateScrollButtonVisibility() {
         if (designationView.getLayout() == null) {
             buttonScrollDown.setVisibility(View.GONE);
-            LogUtils.d("KeyboardLogic", "layout не готов, кнопка скрыта");
             return;
         }
         int scrollRange = designationView.getLayout().getHeight() - designationView.getHeight();
-        if (scrollRange > 0) {
-            buttonScrollDown.setVisibility(View.VISIBLE);
-            LogUtils.d("KeyboardLogic", "кнопка прокрутки видна, scrollRange = " + scrollRange);
-        } else {
-            buttonScrollDown.setVisibility(View.GONE);
-            LogUtils.d("KeyboardLogic", "кнопка прокрутки скрыта, scrollRange = " + scrollRange);
-        }
+        buttonScrollDown.setVisibility(scrollRange > 0 ? View.VISIBLE : View.GONE);
     }
 
-    // получение шрифта STIX
     public Typeface getStixTypeface() {
         return stixTypeface;
     }
 
-    // установка использования шрифта STIX
     public void setUseStixFont(boolean useStixFont) {
         this.useStixFont = useStixFont;
     }
 
-    // применение анимаций к кнопкам режимов
     private void applyModeButtonAnimations() {
         KeyboardAnimation.applyButtonAnimation(designationButton);
         KeyboardAnimation.applyButtonAnimation(unitsButton);
         KeyboardAnimation.applyButtonAnimation(numbersButton);
     }
 
-    // обновление содержимого клавиатуры
     private void updateKeyboard() {
         List<List<SymbolKey>> pages = keyboardData.get(currentMode);
         if (pages == null || pages.isEmpty()) return;
@@ -380,22 +356,30 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
             currentPage = pages.size() - 1;
         }
 
-        List<SymbolKey> currentKeys = pages.get(currentPage);
+        List<SymbolKey> baseKeys = pages.get(currentPage);
+        List<SymbolKey> displayKeys = new ArrayList<>(baseKeys);
 
         String currentDesignation = inputController != null ? inputController.getCurrentDesignation() : null;
+
+        // добавление кнопок 'p' и 'k' только для 'E' в режиме "Числа и операции"
+        if ("Numbers_and_operations".equals(currentMode) &&
+                ("designation_E".equals(currentDesignation) || "E_latin".equals(currentDesignation))) {
+            displayKeys.add(new SymbolKey("mod_subscript_p", "p", false));
+            displayKeys.add(new SymbolKey("mod_subscript_k", "k", false));
+        }
+
         List<String> allowedUnits = null;
         if ("Units_of_measurement".equals(currentMode) && currentDesignation != null) {
             PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(currentDesignation);
             if (pq != null) {
                 allowedUnits = pq.getAllowedUnits();
-                LogUtils.d("KeyboardLogic", "допустимые единицы для " + currentDesignation + ": " + allowedUnits);
             }
         }
 
         for (int i = 0; i < keyboardCells.size(); i++) {
             TextView keyView = keyboardCells.get(i);
-            if (i < currentKeys.size()) {
-                SymbolKey symbolKey = currentKeys.get(i);
+            if (i < displayKeys.size()) {
+                SymbolKey symbolKey = displayKeys.get(i);
                 keyView.setText(symbolKey.getDisplayText());
 
                 if (symbolKey.shouldUseStixFont()) {
@@ -414,11 +398,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                         keyView.setTypeface(Typeface.DEFAULT);
                     }
                 } else {
-                    if (symbolKey.isColor()) {
-                        keyView.setTextColor(Color.WHITE);
-                    } else {
-                        keyView.setTextColor(Color.BLACK);
-                    }
+                    keyView.setTextColor(symbolKey.isColor() ? Color.WHITE : Color.BLACK);
                     keyView.setTypeface(Typeface.DEFAULT);
                 }
 
@@ -440,59 +420,37 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         pageNumberView.setText(String.format("%d | %d", currentPage + 1, pages.size()));
     }
 
-    // обновление стилей кнопок режимов
     private void updateModeButtonStyles() {
-        if ("Designation".equals(currentMode)) {
-            designationButton.setBackgroundResource(R.drawable.ic_back_black);
-            designationButton.setTextColor(Color.WHITE);
-            designationButton.setSelected(true);
-        } else {
-            designationButton.setBackgroundResource(R.drawable.ic_back);
-            designationButton.setTextColor(Color.BLACK);
-            designationButton.setSelected(false);
-        }
+        designationButton.setBackgroundResource("Designation".equals(currentMode) ?
+                R.drawable.ic_back_black : R.drawable.ic_back);
+        designationButton.setTextColor("Designation".equals(currentMode) ? Color.WHITE : Color.BLACK);
+        designationButton.setSelected("Designation".equals(currentMode));
 
-        if ("Units_of_measurement".equals(currentMode)) {
-            unitsButton.setBackgroundResource(R.drawable.ic_back_black);
-            unitsButton.setTextColor(Color.WHITE);
-            unitsButton.setSelected(true);
-        } else {
-            unitsButton.setBackgroundResource(R.drawable.ic_back);
-            unitsButton.setTextColor(Color.BLACK);
-            unitsButton.setSelected(false);
-        }
+        unitsButton.setBackgroundResource("Units_of_measurement".equals(currentMode) ?
+                R.drawable.ic_back_black : R.drawable.ic_back);
+        unitsButton.setTextColor("Units_of_measurement".equals(currentMode) ? Color.WHITE : Color.BLACK);
+        unitsButton.setSelected("Units_of_measurement".equals(currentMode));
 
-        if ("Numbers_and_operations".equals(currentMode)) {
-            numbersButton.setBackgroundResource(R.drawable.ic_back_black);
-            numbersButton.setTextColor(Color.WHITE);
-            numbersButton.setSelected(true);
-        } else {
-            numbersButton.setBackgroundResource(R.drawable.ic_back);
-            numbersButton.setTextColor(Color.BLACK);
-            numbersButton.setSelected(false);
-        }
+        numbersButton.setBackgroundResource("Numbers_and_operations".equals(currentMode) ?
+                R.drawable.ic_back_black : R.drawable.ic_back);
+        numbersButton.setTextColor("Numbers_and_operations".equals(currentMode) ? Color.WHITE : Color.BLACK);
+        numbersButton.setSelected("Numbers_and_operations".equals(currentMode));
     }
 
-    // установка слушателей для кнопок режимов
     private void setModeListeners() {
         View.OnClickListener modeClickListener = view -> {
             String selectedMode = "";
             int viewId = view.getId();
-            if (viewId == R.id.Designation) {
-                selectedMode = "Designation";
-            } else if (viewId == R.id.Units_of_measurement) {
-                selectedMode = "Units_of_measurement";
-            } else if (viewId == R.id.Numbers_and_operations) {
-                selectedMode = "Numbers_and_operations";
-            }
+            if (viewId == R.id.Designation) selectedMode = "Designation";
+            else if (viewId == R.id.Units_of_measurement) selectedMode = "Units_of_measurement";
+            else if (viewId == R.id.Numbers_and_operations) selectedMode = "Numbers_and_operations";
 
-            if (currentMode.equals(selectedMode)) {
-                return;
+            if (!currentMode.equals(selectedMode)) {
+                currentMode = selectedMode;
+                currentPage = 0;
+                updateModeButtonStyles();
+                updateKeyboard();
             }
-            currentMode = selectedMode;
-            currentPage = 0;
-            updateModeButtonStyles();
-            updateKeyboard();
         };
 
         designationButton.setOnClickListener(modeClickListener);
@@ -500,16 +458,13 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         numbersButton.setOnClickListener(modeClickListener);
     }
 
-    // установка слушателей для переключения страниц
     private void setPageListeners() {
         prevPageButton.setOnClickListener(view -> {
             if (currentPage > 0) {
                 currentPage--;
             } else {
                 List<List<SymbolKey>> pages = keyboardData.get(currentMode);
-                if (pages != null && !pages.isEmpty()) {
-                    currentPage = pages.size() - 1;
-                }
+                if (pages != null && !pages.isEmpty()) currentPage = pages.size() - 1;
             }
             updateKeyboard();
         });
