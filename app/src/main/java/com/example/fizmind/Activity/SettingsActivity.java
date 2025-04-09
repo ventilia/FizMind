@@ -4,9 +4,11 @@ import android.os.Bundle;
 import android.widget.ImageView;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.fizmind.R;
-
 import com.example.fizmind.utils.LogUtils;
 
+/**
+ * активность настроек приложения
+ */
 public class SettingsActivity extends AppCompatActivity {
     private static final String TAG = "SettingsActivity";
 
@@ -14,17 +16,20 @@ public class SettingsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
-        LogUtils.logActivityStarted(TAG, "Активность настроек");
 
-        // Добавляем фрагмент настроек
+
+        LogUtils.updateSettings(this);
+        LogUtils.logActivityStarted(TAG, "активность настроек");
+
+
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.settings_container, new SettingsFragment())
                 .commit();
 
-        // Настройка кнопки "Назад"
+
         ImageView backButton = findViewById(R.id.backButton);
         backButton.setOnClickListener(v -> {
-            LogUtils.logButtonPressed(TAG, "Назад");
+            LogUtils.logButtonPressed(TAG, "назад");
             finish();
         });
     }

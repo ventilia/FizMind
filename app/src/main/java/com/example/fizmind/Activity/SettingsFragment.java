@@ -9,18 +9,26 @@ import com.example.fizmind.PhysicalQuantityRegistry;
 import com.example.fizmind.R;
 import com.example.fizmind.utils.LogUtils;
 
+/**
+ * фрагмент настроек приложения
+ */
 public class SettingsFragment extends PreferenceFragmentCompat {
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         setPreferencesFromResource(R.xml.preferences, rootKey);
 
-        // Регистрируем слушатель изменений настроек
+        // регистрируем слушатель изменений настроек
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireContext());
         sharedPreferences.registerOnSharedPreferenceChangeListener((prefs, key) -> {
             if ("gravity_value".equals(key)) {
+                //  значение ускорения свободного падения
                 PhysicalQuantityRegistry.updateGravityValue(requireContext());
-                LogUtils.d("SettingsFragment", "Значение g обновлено: " + PhysicalQuantityRegistry.getGravityValue());
+                LogUtils.d("SettingsFragment", "значение g обновлено: " + PhysicalQuantityRegistry.getGravityValue());
+            } else if ("enable_debug_features".equals(key)) {
+                //  настройки отладочных функций
+                LogUtils.updateSettings(requireContext());
+
             }
         });
     }
@@ -28,7 +36,8 @@ public class SettingsFragment extends PreferenceFragmentCompat {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        // Обновляем значение g при первом запуске фрагмента
+        // инициализируем значения при первом запуске фрагмента
         PhysicalQuantityRegistry.updateGravityValue(context);
+        LogUtils.updateSettings(context);
     }
 }
