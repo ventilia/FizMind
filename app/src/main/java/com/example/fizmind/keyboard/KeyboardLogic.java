@@ -226,7 +226,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                         new SymbolKey("num_8", "8", false),
                         new SymbolKey("num_9", "9", false),
                         new SymbolKey(" ", " ", false),
-                        new SymbolKey(" ", " ", false)
+                        new SymbolKey("num_0", "0", false)
                 )
         ));
 
