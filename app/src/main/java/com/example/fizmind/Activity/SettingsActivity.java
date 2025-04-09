@@ -18,7 +18,7 @@ public class SettingsActivity extends AppCompatActivity {
 
         // Добавляем фрагмент настроек
         getSupportFragmentManager().beginTransaction()
-                .replace(R.id.settings_container, new com.example.fizmind.SettingsFragment())
+                .replace(R.id.settings_container, new SettingsFragment())
                 .commit();
 
         // Настройка кнопки "Назад"

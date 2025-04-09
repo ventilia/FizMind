@@ -1,4 +1,4 @@
-package com.example.fizmind;
+package com.example.fizmind.Activity;
 
 import android.content.Context;
 import android.content.SharedPreferences;
