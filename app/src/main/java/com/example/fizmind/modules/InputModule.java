@@ -7,7 +7,7 @@ import com.example.fizmind.utils.LogUtils;
 
 /**
  * класс, представляющий модуль (нижний индекс).
- * поддерживает ввод, удаление и отображение с учетом типа модуля
+ * поддерживает ввод, удаление (по символам и целиком) и отображение с учетом типа модуля
  */
 public class InputModule {
     private final ModuleType type;
@@ -33,14 +33,16 @@ public class InputModule {
         LogUtils.logModuleCreated("InputModule", type);
     }
 
+    /**
+     * применяет ввод символа к содержимому модуля
+     * @param input символ для добавления
+     * @return true, если ввод успешен, иначе false
+     */
     public boolean apply(String input) {
-        // для SUBSCRIPT_P и SUBSCRIPT_K ввод не требуется, так как они фиксированы
         if (type == ModuleType.SUBSCRIPT_P || type == ModuleType.SUBSCRIPT_K) {
             LogUtils.w("InputModule", "модули 'p' и 'k' не поддерживают дополнительный ввод");
             return false;
         }
-
-        // для обычного SUBSCRIPT проверяем допустимые символы (цифры и буквы)
         if (!input.matches("[a-zA-Z0-9]")) {
             LogUtils.w("InputModule", "недопустимый символ для " + type.getDescription() + ": " + input);
             return false;
@@ -50,7 +52,11 @@ public class InputModule {
         return true;
     }
 
-    public boolean delete() {
+    /**
+     * удаляет последний символ из содержимого модуля
+     * @return true, если модуль стал пустым, иначе false
+     */
+    public boolean deleteChar() {
         if (content.length() > 0) {
             content.deleteCharAt(content.length() - 1);
             LogUtils.logSymbolDeleted("InputModule", type, content.toString());
@@ -59,11 +65,25 @@ public class InputModule {
         return true;
     }
 
+    /**
+     * удаляет весь модуль целиком
+     */
+    public void deleteEntire() {
+        content.setLength(0);
+        LogUtils.logSymbolDeleted("InputModule", type, "модуль удален целиком");
+    }
+
+    /**
+     * активирует модуль для редактирования
+     */
     public void activate() {
         isActive = true;
         LogUtils.logModuleActivated("InputModule", type);
     }
 
+    /**
+     * деактивирует модуль
+     */
     public void deactivate() {
         isActive = false;
         LogUtils.logModuleDeactivated("InputModule", type);
@@ -77,6 +97,10 @@ public class InputModule {
         return content.length() == 0;
     }
 
+    /**
+     * возвращает отформатированный текст модуля для отображения
+     * @return SpannableStringBuilder с примененными стилями
+     */
     public SpannableStringBuilder getDisplayText() {
         SpannableStringBuilder result = new SpannableStringBuilder();
         if (content.length() > 0) {
@@ -93,5 +117,9 @@ public class InputModule {
 
     public ModuleType getType() {
         return type;
+    }
+
+    public String getContent() {
+        return content.toString();
     }
 }

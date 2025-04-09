@@ -25,9 +25,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
- //контроллер ввода данных для управления обозначениями и неизвестными
-
+/**
+ * контроллер ввода данных для управления обозначениями и неизвестными
+ */
 public class InputController {
 
     public enum InputState {
@@ -102,6 +102,7 @@ public class InputController {
         LogUtils.logControllerInitialized("InputController");
     }
 
+    // существующие методы-конструкторы и сеттеры остаются без изменений
     public void setUnknownInputAllowed(boolean allowed) {
         this.isUnknownInputAllowed = allowed;
         LogUtils.logPropertySet("InputController", "разрешение ввода неизвестного", allowed);
@@ -201,6 +202,7 @@ public class InputController {
                             return;
                         }
                         designationSubscriptModule = new InputModule(ModuleType.SUBSCRIPT);
+                        designationSubscriptModule.activate();
                         focusState = FocusState.MODULE;
                         updateKeyboardMode();
                         updateDisplay();
@@ -210,7 +212,7 @@ public class InputController {
                             return;
                         }
                         designationSubscriptModule = new InputModule(ModuleType.SUBSCRIPT_P);
-                        focusState = FocusState.VALUE; // сразу переходим к значению
+                        focusState = FocusState.VALUE;
                         currentState = InputState.ENTERING_VALUE;
                         updateKeyboardMode();
                         updateDisplay();
@@ -220,7 +222,7 @@ public class InputController {
                             return;
                         }
                         designationSubscriptModule = new InputModule(ModuleType.SUBSCRIPT_K);
-                        focusState = FocusState.VALUE; // сразу переходим к значению
+                        focusState = FocusState.VALUE;
                         currentState = InputState.ENTERING_VALUE;
                         updateKeyboardMode();
                         updateDisplay();
@@ -239,6 +241,7 @@ public class InputController {
                         return;
                     }
                     designationSubscriptModule = new InputModule(ModuleType.SUBSCRIPT);
+                    designationSubscriptModule.activate();
                     focusState = FocusState.MODULE;
                     updateKeyboardMode();
                     updateDisplay();
@@ -284,6 +287,7 @@ public class InputController {
                     return;
                 }
                 unknownSubscriptModule = new InputModule(ModuleType.SUBSCRIPT);
+                unknownSubscriptModule.activate();
                 focusState = FocusState.MODULE;
                 updateKeyboardMode();
                 updateDisplay();
@@ -302,6 +306,7 @@ public class InputController {
         updateDisplay();
     }
 
+    // методы handleValueInput, handleUnitInput, saveUnknown остаются без изменений
     private void handleValueInput(String input, String logicalId) {
         LogUtils.d("InputController", "обработка значения: " + input);
         if (input.matches("[0-9]")) {
@@ -389,6 +394,9 @@ public class InputController {
         return true;
     }
 
+    /**
+     * обработка нажатия клавиши Delete
+     */
     public void onDeletePressed() {
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastDeleteTime < DOUBLE_CLICK_TIME_DELTA) {
@@ -418,13 +426,25 @@ public class InputController {
         updateDisplay();
     }
 
+    /**
+     * выполнение одиночного удаления с учетом фокуса
+     */
     private void performSingleDelete() {
         if ("designations".equals(currentInputField)) {
             if (focusState == FocusState.MODULE && designationSubscriptModule != null && designationSubscriptModule.isActive()) {
-                if (designationSubscriptModule.delete()) {
+                if (designationSubscriptModule.getType() == ModuleType.SUBSCRIPT && designationSubscriptModule.getContent().length() > 1) {
+                    // для общего индекса с несколькими символами удаляем по одному
+                    if (designationSubscriptModule.deleteChar()) {
+                        designationSubscriptModule = null;
+                        focusState = FocusState.DESIGNATION;
+                        LogUtils.d("InputController", "индекс удален полностью");
+                    }
+                } else {
+                    // для 'p', 'k' или короткого индекса удаляем целиком
+                    designationSubscriptModule.deleteEntire();
                     designationSubscriptModule = null;
                     focusState = FocusState.DESIGNATION;
-                    LogUtils.d("InputController", "индекс удален");
+                    LogUtils.d("InputController", "модуль удален целиком");
                 }
             } else if (currentState == InputState.ENTERING_UNIT) {
                 unitBuffer.setLength(0);
@@ -439,27 +459,48 @@ public class InputController {
                     valueOperationBuffer.deleteCharAt(valueOperationBuffer.length() - 1);
                     LogUtils.d("InputController", "удален символ из операции");
                 } else if (designationBuffer.length() > 0) {
+                    if (designationSubscriptModule != null) {
+                        designationSubscriptModule = null;
+                        LogUtils.d("InputController", "модуль удален");
+                    } else {
+                        resetInput();
+                        LogUtils.d("InputController", "обозначение удалено");
+                    }
+                }
+            } else if (currentState == InputState.ENTERING_DESIGNATION && designationBuffer.length() > 0) {
+                if (designationSubscriptModule != null) {
+                    designationSubscriptModule = null;
+                    LogUtils.d("InputController", "модуль удален");
+                } else {
                     resetInput();
                     LogUtils.d("InputController", "обозначение удалено");
                 }
-            } else if (currentState == InputState.ENTERING_DESIGNATION && designationBuffer.length() > 0) {
-                resetInput();
-                LogUtils.d("InputController", "обозначение удалено");
             }
         } else if ("unknown".equals(currentInputField)) {
             if (focusState == FocusState.MODULE && unknownSubscriptModule != null && unknownSubscriptModule.isActive()) {
-                if (unknownSubscriptModule.delete()) {
+                if (unknownSubscriptModule.getType() == ModuleType.SUBSCRIPT && unknownSubscriptModule.getContent().length() > 1) {
+                    if (unknownSubscriptModule.deleteChar()) {
+                        unknownSubscriptModule = null;
+                        focusState = FocusState.DESIGNATION;
+                        LogUtils.d("InputController", "индекс удален полностью");
+                    }
+                } else {
+                    unknownSubscriptModule.deleteEntire();
                     unknownSubscriptModule = null;
                     focusState = FocusState.DESIGNATION;
-                    LogUtils.d("InputController", "индекс удален в 'Введите неизвестное'");
+                    LogUtils.d("InputController", "модуль удален целиком");
                 }
             } else if (unknownDesignation != null) {
-                unknownDesignation = null;
-                logicalUnknownDesignation = null;
-                unknownUsesStix = null;
-                unknownSubscriptModule = null;
-                focusState = FocusState.DESIGNATION;
-                LogUtils.d("InputController", "неизвестное обозначение удалено");
+                if (unknownSubscriptModule != null) {
+                    unknownSubscriptModule = null;
+                    LogUtils.d("InputController", "модуль удален в 'Введите неизвестное'");
+                } else {
+                    unknownDesignation = null;
+                    logicalUnknownDesignation = null;
+                    unknownUsesStix = null;
+                    focusState = FocusState.DESIGNATION;
+                    LogUtils.d("InputController", "неизвестное обозначение удалено");
+                }
             }
         }
     }
@@ -490,9 +531,15 @@ public class InputController {
                 currentState = InputState.ENTERING_VALUE;
                 LogUtils.d("InputController", "фокус переключен с единицы измерения на значение");
             } else if (focusState == FocusState.VALUE && designationBuffer.length() > 0) {
-                focusState = FocusState.DESIGNATION;
-                currentState = InputState.ENTERING_DESIGNATION;
-                LogUtils.d("InputController", "фокус переключен на обозначение");
+                if (designationSubscriptModule != null) {
+                    designationSubscriptModule.activate();
+                    focusState = FocusState.MODULE;
+                    LogUtils.d("InputController", "фокус переключен на модуль");
+                } else {
+                    focusState = FocusState.DESIGNATION;
+                    currentState = InputState.ENTERING_DESIGNATION;
+                    LogUtils.d("InputController", "фокус переключен на обозначение");
+                }
             }
             updateKeyboardMode();
             updateDisplay();
@@ -542,6 +589,7 @@ public class InputController {
         }
     }
 
+    // методы onDownArrowPressed, updateKeyboardMode, updateDisplay, clearAll, resetInput, getMeasurements, getUnknowns, logAllSavedData остаются без изменений
     public void onDownArrowPressed() {
         if ("designations".equals(currentInputField)) {
             if (designationSubscriptModule != null && designationSubscriptModule.isActive() && designationSubscriptModule.isEmpty()) {
