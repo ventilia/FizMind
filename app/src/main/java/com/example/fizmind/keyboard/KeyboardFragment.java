@@ -16,9 +16,7 @@ import com.example.fizmind.utils.LogUtils;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * фрагмент клавиатуры для ввода данных
- */
+
 public class KeyboardFragment extends Fragment {
 
     private KeyboardLogic keyboardLogic;
@@ -97,7 +95,7 @@ public class KeyboardFragment extends Fragment {
                 editTextUnknown,
                 buttonLeft,
                 buttonRight,
-                view // Добавлен rootView
+                view
         );
         keyboardLogic.setUseStixFont(true);
 

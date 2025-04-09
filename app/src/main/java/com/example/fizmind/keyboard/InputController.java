@@ -25,9 +25,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * контроллер ввода данных для управления обозначениями и неизвестными
- */
+
+ //контроллер ввода данных для управления обозначениями и неизвестными
+
 public class InputController {
 
     public enum InputState {
