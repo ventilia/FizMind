@@ -6,7 +6,6 @@
     android:orientation="vertical"
     android:background="#F5E7FF">
 
-    <!-- Хедер -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -31,7 +30,6 @@
             android:textSize="20sp" />
     </RelativeLayout>
 
-    <!-- Контейнер для настроек с андроид фто бекраунд -->
     <FrameLayout
 
         android:id="@+id/settings_container"

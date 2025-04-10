@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- переключатель для выбора значения ускорения свободного падения -->
     <SwitchPreferenceCompat
         android:key="gravity_value"
         android:title="Значение g"
@@ -8,7 +7,6 @@
         android:summaryOff="g = 9.8 м/с²"
         android:defaultValue="false" />
 
-    <!-- переключатель для управления отладочными функциями (логи и snackbar) -->
     <SwitchPreferenceCompat
         android:key="enable_debug_features"
         android:title="Включить  сообщения"
