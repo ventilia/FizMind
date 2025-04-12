@@ -20,17 +20,16 @@ public class PhysicsCalculatorActivity extends AppCompatActivity {
         setContentView(R.layout.activity_physics_calculator);
         LogUtils.logActivityStarted(TAG, "Активность физического калькулятора");
 
-        // Обновляем значение g при запуске
         PhysicalQuantityRegistry.updateGravityValue(this);
 
-        // Настройка кнопки "Назад"
+
         ImageView backButton = findViewById(R.id.backButton);
         backButton.setOnClickListener(v -> {
             LogUtils.logButtonPressed(TAG, "Назад");
             finish();
         });
 
-        // Инициализация фрагмента клавиатуры
+
         KeyboardFragment keyboardFragment = KeyboardFragment.newInstance(false, true);
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.keyboard_container, keyboardFragment)

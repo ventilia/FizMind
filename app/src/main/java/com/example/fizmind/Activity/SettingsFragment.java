@@ -36,7 +36,6 @@ public class SettingsFragment extends PreferenceFragmentCompat {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        // инициализируем значения при первом запуске фрагмента
         PhysicalQuantityRegistry.updateGravityValue(context);
         LogUtils.updateSettings(context);
     }
