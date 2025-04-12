@@ -7,7 +7,7 @@ public abstract class Measurement {
     protected String designationOperations;
     protected String valueOperations;
 
-    // поля
+    // Конструкторы
     public Measurement(String designation, double value, String unit, String designationOperations, String valueOperations) {
         this.designation = designation;
         this.value = value;
@@ -20,9 +20,13 @@ public abstract class Measurement {
         this(designation, value, unit, "", "");
     }
 
-    // геттер для designation
+    // Геттеры
     public String getDesignation() {
         return designation;
+    }
+
+    public double getValue() {
+        return value;
     }
 
     public String getDesignationOperations() {

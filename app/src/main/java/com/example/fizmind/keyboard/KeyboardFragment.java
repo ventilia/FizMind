@@ -1,5 +1,6 @@
 package com.example.fizmind.keyboard;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
 import android.view.LayoutInflater;
@@ -12,10 +13,16 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import com.example.fizmind.ConversionService;
 import com.example.fizmind.R;
+import com.example.fizmind.SolutionActivity;
+import com.example.fizmind.measurement.ConcreteMeasurement;
+import com.example.fizmind.measurement.UnknownQuantity;
 import com.example.fizmind.utils.LogUtils;
-import java.util.Arrays;
-import java.util.List;
+import com.google.android.material.snackbar.Snackbar;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class KeyboardFragment extends Fragment {
 
@@ -78,6 +85,9 @@ public class KeyboardFragment extends Fragment {
         editTextUnknown = view.findViewById(R.id.editText_unknown);
         ImageButton buttonLeft = view.findViewById(R.id.button_left);
         ImageButton buttonRight = view.findViewById(R.id.button_right);
+        ImageButton buttonSave = view.findViewById(R.id.button_save);
+        ImageButton buttonClear = view.findViewById(R.id.button_clear);
+        ImageButton buttonCycle = view.findViewById(R.id.button_cycle);
 
         editTextDesignations.setMovementMethod(new ScrollingMovementMethod());
 
@@ -105,9 +115,6 @@ public class KeyboardFragment extends Fragment {
         inputController.setStixTypeface(keyboardLogic.getStixTypeface());
         inputController.setKeyboardModeSwitcher(keyboardLogic);
         keyboardLogic.setInputController(inputController);
-
-        ImageButton buttonSave = view.findViewById(R.id.button_save);
-        ImageButton buttonClear = view.findViewById(R.id.button_clear);
 
         buttonSave.setOnClickListener(v -> {
             LogUtils.logButtonPressed("KeyboardFragment", "SAVE");
@@ -144,5 +151,40 @@ public class KeyboardFragment extends Fragment {
             inputController.setCurrentInputField("unknown");
             LogUtils.d("KeyboardFragment", "фокус на 'Введите неизвестное'");
         });
+
+        // Добавляем обработчик для button_cycle
+        buttonCycle.setOnClickListener(v -> {
+            LogUtils.logButtonPressed("KeyboardFragment", "CYCLE");
+            handleCycleButtonPress();
+        });
+    }
+
+    /**
+     * Обрабатывает нажатие на кнопку button_cycle
+     */
+    private void handleCycleButtonPress() {
+        List<UnknownQuantity> unknowns = inputController.getUnknowns();
+        if (unknowns.isEmpty()) {
+            // Если неизвестная не введена, показываем Snackbar
+            if (getView() != null) {
+                Snackbar.make(getView(), "Пожалуйста, введите неизвестное", Snackbar.LENGTH_SHORT).show();
+            }
+            return;
+        }
+
+        // Собираем данные для передачи
+        Map<String, Double> knownValues = new HashMap<>();
+        for (ConcreteMeasurement measurement : inputController.getMeasurements()) {
+            knownValues.put(measurement.getDesignation(), measurement.getValue());
+        }
+
+        // Берем первую неизвестную (пока реализуем только одно неизвестное)
+        String unknown = unknowns.get(0).getDisplayDesignation();
+
+        // Переход к SolutionActivity
+        Intent intent = new Intent(getActivity(), SolutionActivity.class);
+        intent.putExtra("knownValues", (java.io.Serializable) knownValues);
+        intent.putExtra("unknown", unknown);
+        startActivity(intent);
     }
 }

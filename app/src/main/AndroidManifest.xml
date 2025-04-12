@@ -20,6 +20,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".SolutionActivity" />
         <activity android:name=".Activity.SIConversionActivity" />
         <activity android:name=".Activity.PhysicsCalculatorActivity" />
         <activity android:name=".Activity.TheoryActivity" />
