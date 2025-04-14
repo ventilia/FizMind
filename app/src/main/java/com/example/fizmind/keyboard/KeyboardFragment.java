@@ -24,6 +24,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * фрагмент клавиатуры для ввода данных
+ */
 public class KeyboardFragment extends Fragment {
 
     private KeyboardLogic keyboardLogic;
@@ -36,6 +39,9 @@ public class KeyboardFragment extends Fragment {
     public KeyboardFragment() {
     }
 
+    /**
+     * создание экземпляра фрагмента с параметрами
+     */
     public static KeyboardFragment newInstance(boolean isConversionMode, boolean isUnknownInputAllowed) {
         KeyboardFragment fragment = new KeyboardFragment();
         Bundle args = new Bundle();
@@ -152,7 +158,6 @@ public class KeyboardFragment extends Fragment {
             LogUtils.d("KeyboardFragment", "фокус на 'Введите неизвестное'");
         });
 
-        // Добавляем обработчик для button_cycle
         buttonCycle.setOnClickListener(v -> {
             LogUtils.logButtonPressed("KeyboardFragment", "CYCLE");
             handleCycleButtonPress();
@@ -160,28 +165,26 @@ public class KeyboardFragment extends Fragment {
     }
 
     /**
-     * Обрабатывает нажатие на кнопку button_cycle
+     * обработка нажатия кнопки решения
      */
     private void handleCycleButtonPress() {
         List<UnknownQuantity> unknowns = inputController.getUnknowns();
         if (unknowns.isEmpty()) {
-            // Если неизвестная не введена, показываем Snackbar
             if (getView() != null) {
                 Snackbar.make(getView(), "Пожалуйста, введите неизвестное", Snackbar.LENGTH_SHORT).show();
             }
+            LogUtils.w("KeyboardFragment", "неизвестное не введено");
             return;
         }
 
-        // Собираем данные для передачи
         Map<String, Double> knownValues = new HashMap<>();
         for (ConcreteMeasurement measurement : inputController.getMeasurements()) {
             knownValues.put(measurement.getDesignation(), measurement.getValue());
         }
+        String unknown = unknowns.get(0).getLogicalDesignation();
 
-        // Берем первую неизвестную (пока реализуем только одно неизвестное)
-        String unknown = unknowns.get(0).getDisplayDesignation();
+        LogUtils.d("KeyboardFragment", "передача данных в SolutionActivity: knownValues = " + knownValues + ", unknown = " + unknown);
 
-        // Переход к SolutionActivity
         Intent intent = new Intent(getActivity(), SolutionActivity.class);
         intent.putExtra("knownValues", (java.io.Serializable) knownValues);
         intent.putExtra("unknown", unknown);

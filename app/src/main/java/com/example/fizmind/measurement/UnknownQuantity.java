@@ -8,23 +8,29 @@ import com.example.fizmind.animation.CustomTypefaceSpan;
 import com.example.fizmind.utils.LogUtils;
 
 public class UnknownQuantity {
-    private final String displayDesignation;
-    private final String subscript;
-    private final boolean usesStix;
+    private final String displayDesignation;  // Отображаемое обозначение (например, "E")
+    private final String logicalDesignation;  // Логическое обозначение (например, "E_latin")
+    private final String subscript;           // Индекс (если есть)
+    private final boolean usesStix;           // Использование шрифта STIX
 
-    public UnknownQuantity(String displayDesignation, String subscript, boolean usesStix) {
+    public UnknownQuantity(String displayDesignation, String logicalDesignation, String subscript, boolean usesStix) {
         this.displayDesignation = displayDesignation;
+        this.logicalDesignation = logicalDesignation;
         this.subscript = subscript;
         this.usesStix = usesStix;
         LogUtils.logUnknownCreated("UnknownQuantity", displayDesignation, subscript);
     }
 
-    public UnknownQuantity(String displayDesignation, boolean usesStix) {
-        this(displayDesignation, "", usesStix);
+    public UnknownQuantity(String displayDesignation, String logicalDesignation, boolean usesStix) {
+        this(displayDesignation, logicalDesignation, "", usesStix);
     }
 
     public String getDisplayDesignation() {
         return displayDesignation;
+    }
+
+    public String getLogicalDesignation() {
+        return logicalDesignation;
     }
 
     public String getSubscript() {

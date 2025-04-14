@@ -15,12 +15,15 @@ public class FormulaDatabase {
      */
     public FormulaDatabase() {
         formulas = new ArrayList<>();
-        // добавляем примеры формул
-        formulas.add(new Formula("F = m * a", Arrays.asList("F", "m", "a"),
+        // используем обозначения из PhysicalQuantityRegistry
+        formulas.add(new Formula("F_latin = m_latin * a_latin",
+                Arrays.asList("F_latin", "m_latin", "a_latin"),
                 values -> values[1] * values[2])); // F = m * a
-        formulas.add(new Formula("v = s / t", Arrays.asList("v", "s", "t"),
+        formulas.add(new Formula("v_latin = s_latin / designation_t",
+                Arrays.asList("v_latin", "s_latin", "designation_t"),
                 values -> values[1] / values[2])); // v = s / t
-        formulas.add(new Formula("E = m * g * h", Arrays.asList("E", "m", "g", "h"),
+        formulas.add(new Formula("E_latin = m_latin * designation_g * h_latin",
+                Arrays.asList("E_latin", "m_latin", "designation_g", "h_latin"),
                 values -> values[1] * values[2] * values[3])); // E = m * g * h
     }
 

@@ -9,6 +9,7 @@ import com.example.fizmind.formulas.FormulaDatabase;
 import com.example.fizmind.solver.InputAnalyzer;
 import com.example.fizmind.solver.Solver;
 import com.example.fizmind.solver.SolutionFormatter;
+import com.example.fizmind.utils.LogUtils;
 
 import java.util.Map;
 
@@ -31,11 +32,17 @@ public class SolutionActivity extends AppCompatActivity {
             Map<String, Double> knownValues = (Map<String, Double>) extras.getSerializable("knownValues");
             String unknown = extras.getString("unknown");
 
+            LogUtils.d("SolutionActivity", "получены данные: knownValues = " + knownValues + ", unknown = " + unknown);
+
             if (knownValues != null && unknown != null) {
                 displaySolution(knownValues, unknown);
             } else {
                 solutionTextView.setText("Ошибка: данные не переданы");
+                LogUtils.e("SolutionActivity", "данные не переданы: knownValues = " + knownValues + ", unknown = " + unknown);
             }
+        } else {
+            solutionTextView.setText("Ошибка: Intent пуст");
+            LogUtils.e("SolutionActivity", "Intent extras отсутствуют");
         }
     }
 
@@ -54,18 +61,21 @@ public class SolutionActivity extends AppCompatActivity {
         Formula formula = inputAnalyzer.findSuitableFormula(knownValues, unknown);
         if (formula == null) {
             solutionTextView.setText("Подходящая формула не найдена");
+            LogUtils.w("SolutionActivity", "формула не найдена для knownValues = " + knownValues + ", unknown = " + unknown);
             return;
         }
 
         try {
             // вычисление результата
             double result = solver.solve(formula, knownValues, unknown);
+            LogUtils.d("SolutionActivity", "результат вычисления: " + result);
 
             // форматирование и отображение решения
             SpannableStringBuilder solution = formatter.formatSolution(knownValues, unknown, formula, result);
             solutionTextView.setText(solution);
         } catch (IllegalArgumentException e) {
             solutionTextView.setText("Ошибка: " + e.getMessage());
+            LogUtils.e("SolutionActivity", "ошибка вычисления: " + e.getMessage());
         }
     }
 }

@@ -20,6 +20,7 @@ import com.example.fizmind.modules.InputModule;
 import com.example.fizmind.modules.ModuleType;
 import com.example.fizmind.modules.ModuleValidator;
 import com.example.fizmind.utils.LogUtils;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -59,12 +60,13 @@ public class InputController {
     private Boolean designationUsesStix;
     private Boolean unknownUsesStix;
     private String logicalDesignation;
+    private String displayDesignation; // поле для отображаемого обозначения
     private android.graphics.Typeface stixTypeface;
     private KeyboardModeSwitcher keyboardModeSwitcher;
     private boolean isCurrentConstant;
     private final Map<String, String> lastUnitForDesignation;
     private String currentInputField;
-    private String unknownDesignation;
+    private String unknownDisplayDesignation;
     private String logicalUnknownDesignation;
     private boolean isUnknownInputAllowed = true;
     private InputModule designationSubscriptModule;
@@ -75,6 +77,9 @@ public class InputController {
     private final ConversionService conversionService;
     private boolean isConversionMode = false;
 
+    /**
+     * конструктор контроллера ввода
+     */
     public InputController(TextView designationsView, TextView unknownView, ConversionService conversionService, View rootView) {
         this.designationsView = designationsView;
         this.unknownView = unknownView;
@@ -93,6 +98,7 @@ public class InputController {
         this.designationUsesStix = null;
         this.unknownUsesStix = null;
         this.logicalDesignation = null;
+        this.displayDesignation = null;
         this.isCurrentConstant = false;
         this.currentInputField = "designations";
         this.lastUnitForDesignation = new HashMap<>();
@@ -123,6 +129,9 @@ public class InputController {
         LogUtils.logPropertySet("InputController", "режим", isConversionMode ? "перевод в СИ" : "калькулятор");
     }
 
+    /**
+     * установка текущего поля ввода
+     */
     public void setCurrentInputField(String field) {
         if ("unknown".equals(field) && !isUnknownInputAllowed) {
             LogUtils.wWithSnackbar("InputController", "переключение на 'Введите неизвестное' заблокировано", rootView);
@@ -151,10 +160,6 @@ public class InputController {
 
     /**
      * обработка ввода клавиши
-     * @param input символ ввода
-     * @param sourceKeyboardMode режим клавиатуры, из которого пришел ввод
-     * @param keyUsesStix флаг использования шрифта STIX
-     * @param logicalId логический идентификатор клавиши
      */
     public void onKeyInput(String input, String sourceKeyboardMode, boolean keyUsesStix, String logicalId) {
         LogUtils.logInputProcessing("InputController", currentState.toString(), focusState.toString(), input, logicalId, isConversionMode ? "СИ" : "калькулятор");
@@ -183,12 +188,12 @@ public class InputController {
                 unknownSubscriptModule.activate();
                 focusState = FocusState.MODULE;
                 updateKeyboardMode();
-            } else if (unknownDesignation == null) {
-                unknownDesignation = input;
+            } else if (unknownDisplayDesignation == null) {
+                unknownDisplayDesignation = input;
                 logicalUnknownDesignation = logicalId;
                 unknownUsesStix = keyUsesStix;
                 focusState = FocusState.DESIGNATION;
-                LogUtils.d("InputController", "введено неизвестное обозначение: " + input);
+                LogUtils.d("InputController", "введено неизвестное обозначение: " + input + " (логическое: " + logicalId + ")");
             } else {
                 LogUtils.wWithSnackbar("InputController", "в 'Введите неизвестное' можно ввести только одно обозначение", rootView);
             }
@@ -233,6 +238,7 @@ public class InputController {
             }
             designationBuffer.append(input);
             logicalDesignation = logicalId;
+            displayDesignation = input; // сохраняем отображаемое обозначение
             designationUsesStix = keyUsesStix;
             if (lastUnitForDesignation.containsKey(logicalDesignation) && valueBuffer.length() > 0) {
                 unitBuffer.setLength(0);
@@ -251,6 +257,7 @@ public class InputController {
                 focusState = FocusState.VALUE;
                 updateKeyboardMode();
             }
+            LogUtils.d("InputController", "введено обозначение: " + input + " (логическое: " + logicalId + ")");
         } else {
             if (input.matches("[0-9]") || ".".equals(input) || "-".equals(input)) {
                 currentState = InputState.ENTERING_VALUE;
@@ -385,21 +392,21 @@ public class InputController {
      * сохранение неизвестного
      */
     private void saveUnknown() {
-        if (unknownDesignation != null) {
+        if (unknownDisplayDesignation != null) {
             if (unknownSubscriptModule != null && unknownSubscriptModule.isActive() && unknownSubscriptModule.isEmpty()) {
                 LogUtils.w("InputController", "ошибка сохранения: пустой активный индекс");
-                LogUtils.wWithSnackbar("InputController", "Пожалуйста, завершите ввод индекса или удалите его перед сохранением.", rootView);
+                LogUtils.wWithSnackbar("InputController", "завершите ввод индекса или удалите его перед сохранением", rootView);
                 return;
             }
             String subscript = (unknownSubscriptModule != null && !unknownSubscriptModule.isEmpty()) ? unknownSubscriptModule.getDisplayText().toString() : "";
-            UnknownQuantity unknown = new UnknownQuantity(unknownDesignation, subscript, unknownUsesStix != null && unknownUsesStix);
+            UnknownQuantity unknown = new UnknownQuantity(unknownDisplayDesignation, logicalUnknownDesignation, subscript, unknownUsesStix != null && unknownUsesStix);
             if (!unknown.validate()) {
                 LogUtils.logValidationError("InputController", unknown.toString());
                 return;
             }
             unknowns.add(unknown);
             LogUtils.logSaveUnknown("InputController", unknown.toString());
-            unknownDesignation = null;
+            unknownDisplayDesignation = null;
             logicalUnknownDesignation = null;
             unknownUsesStix = null;
             unknownSubscriptModule = null;
@@ -417,7 +424,7 @@ public class InputController {
                     operationBuffer.length() == 0 && valueOperationBuffer.length() == 0 &&
                     designationSubscriptModule == null;
         } else if ("unknown".equals(currentInputField)) {
-            return unknownDesignation == null && unknownSubscriptModule == null;
+            return unknownDisplayDesignation == null && unknownSubscriptModule == null;
         }
         return true;
     }
@@ -516,12 +523,12 @@ public class InputController {
                     focusState = FocusState.DESIGNATION;
                     LogUtils.d("InputController", "модуль удален целиком");
                 }
-            } else if (unknownDesignation != null) {
+            } else if (unknownDisplayDesignation != null) {
                 if (unknownSubscriptModule != null) {
                     unknownSubscriptModule = null;
                     LogUtils.d("InputController", "модуль удален в 'Введите неизвестное'");
                 } else {
-                    unknownDesignation = null;
+                    unknownDisplayDesignation = null;
                     logicalUnknownDesignation = null;
                     unknownUsesStix = null;
                     focusState = FocusState.DESIGNATION;
@@ -631,17 +638,17 @@ public class InputController {
         if ("designations".equals(currentInputField)) {
             if (designationSubscriptModule != null && designationSubscriptModule.isActive() && designationSubscriptModule.isEmpty()) {
                 LogUtils.w("InputController", "ошибка сохранения: пустой активный индекс");
-                LogUtils.wWithSnackbar("InputController", "Пожалуйста, завершите ввод индекса или удалите его перед сохранением.", rootView);
+                LogUtils.wWithSnackbar("InputController", "завершите ввод индекса или удалите его перед сохранением", rootView);
                 return;
             }
             if (designationBuffer.length() == 0) {
                 LogUtils.w("InputController", "ошибка сохранения: отсутствует обозначение");
-                LogUtils.wWithSnackbar("InputController", "Пожалуйста, введите обозначение перед сохранением.", rootView);
+                LogUtils.wWithSnackbar("InputController", "введите обозначение перед сохранением", rootView);
                 return;
             }
             if (valueBuffer.length() == 0 && valueOperationBuffer.length() == 0) {
                 LogUtils.w("InputController", "ошибка сохранения: отсутствует числовое значение");
-                LogUtils.wWithSnackbar("InputController", "Пожалуйста, введите числовое значение перед сохранением.", rootView);
+                LogUtils.wWithSnackbar("InputController", "введите числовое значение перед сохранением", rootView);
                 return;
             }
 
@@ -650,13 +657,13 @@ public class InputController {
                 PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(logicalDesignation);
                 if (pq == null) {
                     LogUtils.e("InputController", "ошибка сохранения: неизвестная физическая величина: " + logicalDesignation);
-                    LogUtils.eWithSnackbar("InputController", "Неизвестная физическая величина: " + logicalDesignation, rootView);
+                    LogUtils.eWithSnackbar("InputController", "неизвестная физическая величина: " + logicalDesignation, rootView);
                     return;
                 }
                 unit = pq.getSiUnit();
                 if (unit.isEmpty()) {
                     LogUtils.w("InputController", "ошибка сохранения: отсутствует единица измерения");
-                    LogUtils.wWithSnackbar("InputController", "Пожалуйста, укажите единицу измерения перед сохранением.", rootView);
+                    LogUtils.wWithSnackbar("InputController", "укажите единицу измерения перед сохранением", rootView);
                     return;
                 }
             }
@@ -666,7 +673,7 @@ public class InputController {
                 value = Double.parseDouble(valueBuffer.length() > 0 ? valueBuffer.toString() : "0");
             } catch (NumberFormatException e) {
                 LogUtils.e("InputController", "ошибка сохранения: некорректный формат числа: " + valueBuffer.toString());
-                LogUtils.eWithSnackbar("InputController", "Некорректный формат числа: " + valueBuffer.toString(), rootView);
+                LogUtils.eWithSnackbar("InputController", "некорректный формат числа: " + valueBuffer.toString(), rootView);
                 return;
             }
 
@@ -674,14 +681,14 @@ public class InputController {
 
             if (!ModuleValidator.isSubscriptUnique(logicalDesignation, subscript, measurements)) {
                 LogUtils.e("InputController", "ошибка сохранения: индекс '" + subscript + "' уже используется для обозначения: " + logicalDesignation);
-                LogUtils.eWithSnackbar("InputController", "Этот индекс уже используется для '" + logicalDesignation + "'. Используйте другой индекс.", rootView);
+                LogUtils.eWithSnackbar("InputController", "этот индекс уже используется для '" + logicalDesignation + "'. используйте другой индекс", rootView);
                 return;
             }
 
             PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(logicalDesignation);
             if (pq == null) {
                 LogUtils.e("InputController", "ошибка сохранения: неизвестная физическая величина: " + logicalDesignation);
-                LogUtils.eWithSnackbar("InputController", "Неизвестная физическая величина: " + logicalDesignation, rootView);
+                LogUtils.eWithSnackbar("InputController", "неизвестная физическая величина: " + logicalDesignation, rootView);
                 return;
             }
 
@@ -693,9 +700,9 @@ public class InputController {
 
             int start = historyEntry.length();
             if (operationBuffer.length() > 0) {
-                historyEntry.append(operationBuffer).append("(").append(designationBuffer).append(")");
+                historyEntry.append(operationBuffer).append("(").append(displayDesignation).append(")");
             } else {
-                historyEntry.append(designationBuffer);
+                historyEntry.append(displayDesignation);
             }
             int designationEnd = historyEntry.length();
             if (subscript != null && !subscript.isEmpty()) {
@@ -798,9 +805,9 @@ public class InputController {
                 designationSubscriptModule != null) {
             int designationStart = designationsText.length();
             if (operationBuffer.length() > 0) {
-                designationsText.append(operationBuffer).append("(").append(designationBuffer).append(")");
+                designationsText.append(operationBuffer).append("(").append(displayDesignation).append(")");
             } else {
-                designationsText.append(designationBuffer);
+                designationsText.append(displayDesignation);
             }
             int designationEnd = designationsText.length();
             if (designationSubscriptModule != null) {
@@ -876,9 +883,9 @@ public class InputController {
         designationsView.setText(designationsText);
 
         SpannableStringBuilder unknownText = new SpannableStringBuilder();
-        if (unknownDesignation != null) {
+        if (unknownDisplayDesignation != null) {
             int start = unknownText.length();
-            unknownText.append(unknownDesignation);
+            unknownText.append(unknownDisplayDesignation);
             int end = unknownText.length();
             if (unknownUsesStix != null && unknownUsesStix && stixTypeface != null) {
                 unknownText.setSpan(new CustomTypefaceSpan(stixTypeface), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -921,7 +928,7 @@ public class InputController {
             measurements.clear();
             LogUtils.d("InputController", "очищены все данные для 'Введите обозначение'");
         } else if ("unknown".equals(currentInputField)) {
-            unknownDesignation = null;
+            unknownDisplayDesignation = null;
             logicalUnknownDesignation = null;
             unknownUsesStix = null;
             unknownSubscriptModule = null;
@@ -948,6 +955,7 @@ public class InputController {
         focusState = FocusState.DESIGNATION;
         designationUsesStix = null;
         logicalDesignation = null;
+        displayDesignation = null;
         isCurrentConstant = false;
         designationSubscriptModule = null;
         updateKeyboardMode();
