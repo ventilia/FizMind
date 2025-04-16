@@ -3,7 +3,6 @@ package com.example.fizmind.solver;
 import com.example.fizmind.formulas.Formula;
 import com.example.fizmind.formulas.FormulaDatabase;
 import com.example.fizmind.utils.LogUtils;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

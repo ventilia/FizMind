@@ -1,7 +1,7 @@
 package com.example.fizmind.solver;
 
 import com.example.fizmind.formulas.Formula;
-
+import com.example.fizmind.utils.LogUtils;
 import java.util.List;
 import java.util.Map;
 
@@ -39,6 +39,8 @@ public class Solver {
         }
 
         // вычисление результата
-        return formula.calculate(values);
+        double result = formula.calculate(values);
+        LogUtils.d("Solver", "вычислено: " + unknownDesignation + " = " + result);
+        return result;
     }
 }

@@ -29,6 +29,10 @@ public abstract class Measurement {
         return value;
     }
 
+    public String getUnit() {
+        return unit;
+    }
+
     public String getDesignationOperations() {
         return designationOperations;
     }

@@ -20,9 +20,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * логика работы клавиатуры для ввода физических величин и операций
- */
 public class KeyboardLogic implements KeyboardModeSwitcher {
     private final Context context;
     private final List<TextView> keyboardCells;
@@ -77,7 +74,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         this.rightArrowButton = rightArrowButton;
         this.rootView = rootView;
 
-        // загрузка шрифта STIX
         try {
             stixTypeface = Typeface.createFromAsset(context.getAssets(), "fonts/stix_two_text_italic.ttf");
         } catch (Exception e) {
@@ -92,7 +88,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         keyboardData = new HashMap<>();
         unitIdToUnitMap = new HashMap<>();
 
-        // инициализация данных клавиатуры для Designation
         keyboardData.put("Designation", Arrays.asList(
                 Arrays.asList(
                         new SymbolKey("a_latin", "a", true),
@@ -128,7 +123,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                 )
         ));
 
-        // инициализация данных клавиатуры для Units_of_measurement
         List<List<SymbolKey>> unitsPages = Arrays.asList(
                 Arrays.asList(
                         new SymbolKey("unit_m/s", "m/s", false),
@@ -205,7 +199,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
             }
         }
 
-        // инициализация данных клавиатуры для Numbers_and_operations
         keyboardData.put("Numbers_and_operations", Arrays.asList(
                 Arrays.asList(
                         new SymbolKey("num_1", "1", false),
@@ -361,7 +354,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
 
         String currentDesignation = inputController != null ? inputController.getCurrentDesignation() : null;
 
-        // добавление кнопок 'p' и 'k' только для 'E' в режиме "Числа и операции"
         if ("Numbers_and_operations".equals(currentMode) &&
                 ("designation_E".equals(currentDesignation) || "E_latin".equals(currentDesignation))) {
             displayKeys.add(new SymbolKey("mod_subscript_p", "p", false));

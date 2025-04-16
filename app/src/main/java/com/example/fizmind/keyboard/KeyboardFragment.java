@@ -19,10 +19,9 @@ import com.example.fizmind.measurement.UnknownQuantity;
 import com.example.fizmind.utils.LogUtils;
 import com.google.android.material.snackbar.Snackbar;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * фрагмент клавиатуры для ввода данных
@@ -36,6 +35,9 @@ public class KeyboardFragment extends Fragment {
     private boolean isUnknownInputAllowed = true;
     private boolean isConversionMode = false;
 
+    /**
+     * пустой конструктор
+     */
     public KeyboardFragment() {
     }
 
@@ -51,6 +53,9 @@ public class KeyboardFragment extends Fragment {
         return fragment;
     }
 
+    /**
+     * инициализация параметров из аргументов
+     */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,11 +66,17 @@ public class KeyboardFragment extends Fragment {
         LogUtils.d("KeyboardFragment", "создан фрагмент, режим: " + (isConversionMode ? "конвертация" : "калькулятор"));
     }
 
+    /**
+     * создание представления фрагмента
+     */
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_keyboard, container, false);
     }
 
+    /**
+     * настройка элементов интерфейса после создания представления
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -177,16 +188,24 @@ public class KeyboardFragment extends Fragment {
             return;
         }
 
-        Map<String, Double> knownValues = new HashMap<>();
-        for (ConcreteMeasurement measurement : inputController.getMeasurements()) {
-            knownValues.put(measurement.getDesignation(), measurement.getValue());
+        List<ConcreteMeasurement> measurementsList = inputController.getMeasurements();
+        if (measurementsList == null || measurementsList.isEmpty()) {
+            if (getView() != null) {
+                Snackbar.make(getView(), "Пожалуйста, введите измерения", Snackbar.LENGTH_SHORT).show();
+            }
+            LogUtils.w("KeyboardFragment", "измерения не введены или null");
+            return;
         }
+
+        // приводим к arraylist для parcelable
+        ArrayList<ConcreteMeasurement> measurements = new ArrayList<>(measurementsList);
         String unknown = unknowns.get(0).getLogicalDesignation();
 
-        LogUtils.d("KeyboardFragment", "передача данных в SolutionActivity: knownValues = " + knownValues + ", unknown = " + unknown);
+        // логируем передаваемые данные для отладки
+        LogUtils.d("KeyboardFragment", "передача данных в SolutionActivity: measurements=" + measurements.toString() + ", unknown=" + unknown);
 
         Intent intent = new Intent(getActivity(), SolutionActivity.class);
-        intent.putExtra("knownValues", (java.io.Serializable) knownValues);
+        intent.putParcelableArrayListExtra("measurements", measurements);
         intent.putExtra("unknown", unknown);
         startActivity(intent);
     }
