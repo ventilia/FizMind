@@ -20,14 +20,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * активити для отображения решения
+ * активити для отображения решения физической задачи
  */
 public class SolutionActivity extends AppCompatActivity {
     private TextView solutionTextView;
     private MeasurementValidator measurementValidator;
 
     /**
-     * создание активити и инициализация интерфейса
+     * инициализация активити
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,23 +37,23 @@ public class SolutionActivity extends AppCompatActivity {
         solutionTextView = findViewById(R.id.solution_text);
         measurementValidator = new MeasurementValidatorImpl();
 
-        // получение данных из intent
         Intent intent = getIntent();
         if (intent != null) {
             ArrayList<ConcreteMeasurement> measurements = intent.getParcelableArrayListExtra("measurements");
             String unknown = intent.getStringExtra("unknown");
 
-            // логируем полученные данные для отладки
-            LogUtils.d("SolutionActivity", "получены данные: measurements=" + (measurements != null ? measurements.toString() : "null") + ", unknown=" + unknown);
+            LogUtils.d("SolutionActivity", "получены данные: measurements=" +
+                    (measurements != null ? measurements.toString() : "null") + ", unknown=" + unknown);
 
             if (measurements != null && !measurements.isEmpty() && unknown != null) {
                 displaySolution(measurements, unknown);
             } else {
-                solutionTextView.setText("Ошибка: данные не переданы корректно");
-                LogUtils.e("SolutionActivity", "данные не переданы: measurements=" + measurements + ", unknown=" + unknown);
+                solutionTextView.setText("ошибка: данные не переданы корректно");
+                LogUtils.e("SolutionActivity", "некорректные входные данные: measurements=" +
+                        measurements + ", unknown=" + unknown);
             }
         } else {
-            solutionTextView.setText("Ошибка: Intent пуст");
+            solutionTextView.setText("ошибка: Intent пуст");
             LogUtils.e("SolutionActivity", "Intent extras отсутствуют");
         }
     }
@@ -69,34 +69,60 @@ public class SolutionActivity extends AppCompatActivity {
         Solver solver = new Solver();
         SolutionFormatter formatter = new SolutionFormatter();
 
-        // проверка и конвертация в СИ, если требуется
+        // проверка и конвертация в СИ
         List<ConcreteMeasurement> siMeasurements = measurements;
         if (measurementValidator.requiresConversion(measurements)) {
+            LogUtils.d("SolutionActivity", "выполняется конвертация измерений в СИ");
             siMeasurements = measurementValidator.convertToSI(measurements);
+            LogUtils.d("SolutionActivity", "измерения после конвертации: " + siMeasurements);
+        } else {
+            LogUtils.d("SolutionActivity", "конвертация в СИ не требуется");
         }
 
-        // преобразование в map для вычислений
-        Map<String, Double> knownValues = formatter.convertToMap(siMeasurements);
+        // проверка валидности измерений
+        for (ConcreteMeasurement measurement : siMeasurements) {
+            if (!measurement.validate()) {
+                solutionTextView.setText("ошибка: некорректное измерение: " + measurement.toString());
+                LogUtils.e("SolutionActivity", "некорректное измерение: " + measurement);
+                return;
+            }
+        }
+
+        // преобразование в карту для вычислений
+        Map<String, Double> knownValues;
+        try {
+            knownValues = formatter.convertToMap(siMeasurements);
+            LogUtils.d("SolutionActivity", "измерения преобразованы в карту: " + knownValues);
+        } catch (Exception e) {
+            solutionTextView.setText("ошибка: невозможно обработать измерения");
+            LogUtils.e("SolutionActivity", "ошибка преобразования в карту: " + e.getMessage());
+            return;
+        }
 
         // поиск подходящей формулы
         Formula formula = inputAnalyzer.findSuitableFormula(knownValues, unknown);
         if (formula == null) {
-            solutionTextView.setText("Подходящая формула не найдена");
+            solutionTextView.setText("ошибка: подходящая формула не найдена");
             LogUtils.w("SolutionActivity", "формула не найдена для knownValues=" + knownValues + ", unknown=" + unknown);
             return;
         }
+        LogUtils.d("SolutionActivity", "найдена формула: " + formula.getExpression());
 
+        // вычисление результата
         try {
-            // вычисление результата
             double result = solver.solve(formula, knownValues, unknown);
-            LogUtils.d("SolutionActivity", "результат вычисления: " + result);
+            LogUtils.d("SolutionActivity", "результат вычисления: " + unknown + " = " + result);
 
-            // форматирование и отображение решения с учетом единиц измерения
+            // форматирование и отображение решения
             SpannableStringBuilder solution = formatter.formatSolution(measurements, siMeasurements, unknown, formula, result);
             solutionTextView.setText(solution);
+            LogUtils.d("SolutionActivity", "решение отформатировано и отображено");
         } catch (IllegalArgumentException e) {
-            solutionTextView.setText("Ошибка: " + e.getMessage());
+            solutionTextView.setText("ошибка вычисления: " + e.getMessage());
             LogUtils.e("SolutionActivity", "ошибка вычисления: " + e.getMessage());
+        } catch (Exception e) {
+            solutionTextView.setText("ошибка: неожиданная ошибка при вычислении");
+            LogUtils.e("SolutionActivity", "неожиданная ошибка: " + e.getMessage());
         }
     }
 }
