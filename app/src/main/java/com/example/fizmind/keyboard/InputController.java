@@ -60,7 +60,7 @@ public class InputController {
     private Boolean designationUsesStix;
     private Boolean unknownUsesStix;
     private String logicalDesignation;
-    private String displayDesignation; // поле для отображаемого обозначения
+    private String displayDesignation;
     private android.graphics.Typeface stixTypeface;
     private KeyboardModeSwitcher keyboardModeSwitcher;
     private boolean isCurrentConstant;
@@ -238,7 +238,7 @@ public class InputController {
             }
             designationBuffer.append(input);
             logicalDesignation = logicalId;
-            displayDesignation = input; // сохраняем отображаемое обозначение
+            displayDesignation = input;
             designationUsesStix = keyUsesStix;
             if (lastUnitForDesignation.containsKey(logicalDesignation) && valueBuffer.length() > 0) {
                 unitBuffer.setLength(0);
@@ -692,12 +692,27 @@ public class InputController {
                 return;
             }
 
+            // инициализация значений для СИ и шагов перевода
             double siValue = value;
             String siUnit = unit;
             String steps = "";
             boolean isSIUnit = conversionService.isSiUnit(pq, unit);
-            SpannableStringBuilder historyEntry = new SpannableStringBuilder();
 
+            // генерация шагов перевода, если единица не в СИ
+            if (!isSIUnit) {
+                steps = conversionService.getSteps(pq, value, unit);
+                Object[] siData = conversionService.convert(pq, value, unit);
+                if (siData != null) {
+                    siValue = (double) siData[0];
+                    siUnit = (String) siData[1];
+                } else {
+                    LogUtils.logConversionError("InputController", logicalDesignation, unit);
+                    return;
+                }
+            }
+
+            // создание записи для истории
+            SpannableStringBuilder historyEntry = new SpannableStringBuilder();
             int start = historyEntry.length();
             if (operationBuffer.length() > 0) {
                 historyEntry.append(operationBuffer).append("(").append(displayDesignation).append(")");
@@ -717,28 +732,19 @@ public class InputController {
             }
             historyEntry.append(" = ").append(SIConverter.formatValue(value)).append(" ").append(unit);
 
-            if (isConversionMode) {
-                Object[] siData = conversionService.convert(pq, value, unit);
-                if (siData == null) {
-                    LogUtils.logConversionError("InputController", logicalDesignation, unit);
-                    return;
-                }
-                siValue = (double) siData[0];
-                siUnit = (String) siData[1];
-                steps = conversionService.getSteps(pq, value, unit);
-
-                if (!isSIUnit && !steps.isEmpty()) {
-                    int stepsStart = historyEntry.length();
-                    historyEntry.append(" = ").append(steps);
-                    int lastEqualIndex = historyEntry.toString().lastIndexOf("= ");
-                    if (lastEqualIndex != -1) {
-                        int resultStart = lastEqualIndex + 2;
-                        int resultEnd = historyEntry.length();
-                        historyEntry.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), resultStart, resultEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                    }
+            // добавление шагов перевода в историю только в режиме конвертации
+            if (isConversionMode && !isSIUnit && !steps.isEmpty()) {
+                int stepsStart = historyEntry.length();
+                historyEntry.append(" = ").append(steps);
+                int lastEqualIndex = historyEntry.toString().lastIndexOf("= ");
+                if (lastEqualIndex != -1) {
+                    int resultStart = lastEqualIndex + 2;
+                    int resultEnd = historyEntry.length();
+                    historyEntry.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), resultStart, resultEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                 }
             }
 
+            // создание объекта измерения
             ConcreteMeasurement measurement = new ConcreteMeasurement(
                     logicalDesignation, siValue, siUnit,
                     operationBuffer.toString(), valueOperationBuffer.toString(),

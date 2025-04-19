@@ -7,17 +7,18 @@ import com.example.fizmind.SIConverter;
 import com.example.fizmind.formulas.Formula;
 import com.example.fizmind.measurement.ConcreteMeasurement;
 import com.example.fizmind.utils.LogUtils;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * форматировщик решения для красивого вывода
+ * Форматировщик решения для красивого вывода
  */
 public class SolutionFormatter {
 
     /**
-     * форматирует пошаговое решение
+     * Форматирует пошаговое решение
      * @param originalMeasurements исходные измерения
      * @param siMeasurements измерения после конвертации в СИ
      * @param unknownDesignation обозначение неизвестной
@@ -30,29 +31,41 @@ public class SolutionFormatter {
                                                  String unknownDesignation, Formula formula, double result) {
         SpannableStringBuilder builder = new SpannableStringBuilder();
 
-        // шаг 1: дано
+        // Шаг 1: Дано
         builder.append("Дано:\n");
         for (ConcreteMeasurement measurement : originalMeasurements) {
             builder.append(measurement.getOriginalDisplay()).append("\n");
         }
         builder.append("\n");
 
-        // шаг 2: перевод в СИ, если требуется
-        boolean conversionNeeded = false;
+        // Шаг 2: Перевод в СИ
+        builder.append("Перевод в СИ:\n");
+        boolean conversionPerformed = false;
         for (int i = 0; i < originalMeasurements.size(); i++) {
             ConcreteMeasurement original = originalMeasurements.get(i);
             ConcreteMeasurement si = siMeasurements.get(i);
+            builder.append(original.getDesignation()).append(": ");
             if (!original.isSIUnit()) {
-                conversionNeeded = true;
-                builder.append(original.getDesignation()).append(" требуется перевести в СИ\n");
-                builder.append(original.getConversionSteps()).append("\n\n");
+                conversionPerformed = true;
+                String steps = original.getConversionSteps();
+                if (!steps.isEmpty()) {
+                    builder.append(original.getDesignation())
+                            .append(" = ")
+                            .append(steps)
+                            .append("\n");
+                } else {
+                    builder.append("ошибка: шаги перевода не сгенерированы\n");
+                }
+            } else {
+                builder.append(original.getOriginalDisplay()).append(" (уже в СИ)\n");
             }
         }
-        if (conversionNeeded) {
-            builder.append("\n");
+        if (!conversionPerformed) {
+            builder.append("Все величины уже в СИ.\n");
         }
+        builder.append("\n");
 
-        // шаг 3: воспользуемся формулой
+        // Шаг 3: Воспользуемся формулой
         builder.append("Воспользуемся формулой:\n");
         int formulaStart = builder.length();
         builder.append(formula.getExpression());
@@ -61,7 +74,7 @@ public class SolutionFormatter {
                 SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
         builder.append("\n\n");
 
-        // шаг 4: подставим значения
+        // Шаг 4: Подставим значения
         builder.append("Подставим значения:\n");
         StringBuilder substitution = new StringBuilder();
         substitution.append(unknownDesignation).append(" = ");
@@ -69,27 +82,33 @@ public class SolutionFormatter {
             if (!var.equals(unknownDesignation)) {
                 ConcreteMeasurement measurement = findMeasurement(siMeasurements, var);
                 if (measurement != null) {
-                    substitution.append(SIConverter.formatValue(measurement.getValue())).append(" * ");
+                    substitution.append(SIConverter.formatValue(measurement.getValue())).append(" × ");
                 }
             }
         }
-        substitution.delete(substitution.length() - 3, substitution.length()); // убираем лишнее " * "
+        substitution.delete(substitution.length() - 3, substitution.length()); // Убираем лишнее " × "
         builder.append(substitution.toString()).append("\n");
 
-        // шаг 5: результат
+        // Шаг 5: Результат
         builder.append("Результат:\n");
-        builder.append(unknownDesignation).append(" = ").append(SIConverter.formatValue(result)).append("\n");
+        builder.append(unknownDesignation)
+                .append(" = ")
+                .append(SIConverter.formatValue(result))
+                .append("\n");
 
-        // шаг 6: округленный ответ
+        // Шаг 6: Округленный ответ
         double roundedResult = Math.round(result * 100.0) / 100.0;
-        builder.append("Ответ: ").append(unknownDesignation).append(" ≈ ").append(SIConverter.formatValue(roundedResult));
+        builder.append("Ответ: ")
+                .append(unknownDesignation)
+                .append(" ≈ ")
+                .append(SIConverter.formatValue(roundedResult));
 
-        LogUtils.d("SolutionFormatter", "сформировано решение:\n" + builder.toString());
+        LogUtils.d("SolutionFormatter", "Сформировано решение:\n" + builder.toString());
         return builder;
     }
 
     /**
-     * находит измерение по обозначению
+     * Находит измерение по обозначению
      * @param measurements список измерений
      * @param designation обозначение
      * @return измерение или null
@@ -104,7 +123,7 @@ public class SolutionFormatter {
     }
 
     /**
-     * преобразует список измерений в Map для вычислений
+     * Преобразует список измерений в Map для вычислений
      * @param measurements список измерений
      * @return карта обозначений и значений
      */

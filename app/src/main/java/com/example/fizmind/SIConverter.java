@@ -29,9 +29,6 @@ public class SIConverter {
         CONVERSION_FACTORS.put("m/s", 1.0);
         CONVERSION_FACTORS.put("km/h", 0.277778);
         CONVERSION_FACTORS.put("cm/s", 0.01);
-        CONVERSION_FACTORS.put("м/с", 1.0);
-        CONVERSION_FACTORS.put("км/ч", 0.277778);
-        CONVERSION_FACTORS.put("см/с", 0.01);
         // ускорение
         CONVERSION_FACTORS.put("m/s²", 1.0);
         CONVERSION_FACTORS.put("cm/s²", 0.01);
@@ -107,7 +104,6 @@ public class SIConverter {
             return new Object[]{pq.getConstantValue(), pq.getSiUnit()};
         }
 
-        // проверка единицы без учета регистра
         String unitLower = unit.toLowerCase();
         boolean isValidUnit = pq.getAllowedUnits().stream()
                 .anyMatch(allowed -> allowed.toLowerCase().equals(unitLower));
@@ -116,7 +112,6 @@ public class SIConverter {
             return null;
         }
 
-        // обработка температуры отдельно
         if (pq.getDesignation().equals("designation_T")) {
             if (unitLower.equals("k")) {
                 return new Object[]{value, "K"};
@@ -129,7 +124,6 @@ public class SIConverter {
             }
         }
 
-        // поиск коэффициента без учета регистра
         Double factor = null;
         for (Map.Entry<String, Double> entry : CONVERSION_FACTORS.entrySet()) {
             if (entry.getKey().toLowerCase().equals(unitLower)) {
@@ -186,11 +180,11 @@ public class SIConverter {
                 return formatValue(value) + " K";
             } else if (unitLower.equals("°c")) {
                 double kelvin = value + 273.15;
-                return formatValue(value) + " + 273.15 = " + formatValue(kelvin) + " K";
+                return formatValue(value) + " °C + 273.15 = " + formatValue(kelvin) + " K";
             } else if (unitLower.equals("°f")) {
                 double celsius = (value - 32) * 5 / 9;
                 double kelvin = celsius + 273.15;
-                return "(" + formatValue(value) + " - 32) × 5/9 + 273.15 = " + formatValue(kelvin) + " K";
+                return "(" + formatValue(value) + " °F - 32) × 5/9 + 273.15 = " + formatValue(kelvin) + " K";
             }
         }
 
@@ -207,8 +201,8 @@ public class SIConverter {
         }
 
         double siValue = value * factor;
-        String steps = String.format("%s × %s = %s %s",
-                formatValue(value), formatValue(factor), formatValue(siValue), pq.getSiUnit());
+        String steps = String.format("%s %s × %s = %s %s",
+                formatValue(value), unit, formatValue(factor), formatValue(siValue), pq.getSiUnit());
         LogUtils.d("SIConverter", "сгенерированы шаги перевода: " + steps);
         return steps;
     }
