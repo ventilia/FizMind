@@ -1,6 +1,7 @@
 package com.example.fizmind;
 
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
 import android.view.View;
@@ -41,6 +42,9 @@ public class SolutionActivity extends AppCompatActivity {
         solutionTextView = findViewById(R.id.solution_text);
         measurementValidator = new MeasurementValidatorImpl();
 
+        // загрузка шрифта MontserratAlternates
+        Typeface montserratAlternatesTypeface = Typeface.createFromAsset(getAssets(), "fonts/MontserratAlternates-Regular.ttf");
+
         // находим ImageView для кнопки "назад"
         ImageView backButton = findViewById(R.id.backButton);
         // устанавливаем обработчик нажатия для кнопки "назад"
@@ -60,7 +64,7 @@ public class SolutionActivity extends AppCompatActivity {
                     (measurements != null ? measurements.toString() : "null") + ", unknown=" + unknown);
 
             if (measurements != null && !measurements.isEmpty() && unknown != null) {
-                displaySolution(measurements, unknown);
+                displaySolution(measurements, unknown, montserratAlternatesTypeface);
             } else {
                 solutionTextView.setText("ошибка: данные не переданы корректно");
                 LogUtils.e("SolutionActivity", "некорректные входные данные: measurements=" +
@@ -76,12 +80,13 @@ public class SolutionActivity extends AppCompatActivity {
      * отображает решение на экране
      * @param measurements список исходных измерений
      * @param unknown обозначение неизвестной величины
+     * @param montserratAlternatesTypeface шрифт MontserratAlternates для форматирования
      */
-    private void displaySolution(List<ConcreteMeasurement> measurements, String unknown) {
+    private void displaySolution(List<ConcreteMeasurement> measurements, String unknown, Typeface montserratAlternatesTypeface) {
         FormulaDatabase formulaDatabase = new FormulaDatabase();
         InputAnalyzer inputAnalyzer = new InputAnalyzer(formulaDatabase);
         Solver solver = new Solver();
-        SolutionFormatter formatter = new SolutionFormatter();
+        SolutionFormatter formatter = new SolutionFormatter(montserratAlternatesTypeface);
 
         // проверка и конвертация в СИ
         List<ConcreteMeasurement> siMeasurements = measurements;
