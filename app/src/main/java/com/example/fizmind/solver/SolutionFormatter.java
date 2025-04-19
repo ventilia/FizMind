@@ -55,9 +55,9 @@ public class SolutionFormatter {
             } else {
                 builder.append(original.getDesignation())
                         .append(" = ")
-                        .append(SIConverter.formatValue(original.getValue()))
+                        .append(SIConverter.formatValue(original.getOriginalValue()))
                         .append(" ")
-                        .append(original.getUnit())
+                        .append(original.getOriginalUnit()) // используем исходный регистр
                         .append(" (уже в СИ)\n");
             }
         }
