@@ -4,7 +4,9 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
 import android.widget.TextView;
+
 import androidx.appcompat.app.AppCompatActivity;
+
 import com.example.fizmind.formulas.Formula;
 import com.example.fizmind.formulas.FormulaDatabase;
 import com.example.fizmind.measurement.ConcreteMeasurement;
@@ -60,8 +62,8 @@ public class SolutionActivity extends AppCompatActivity {
 
     /**
      * отображает решение на экране
-     * @param measurements список измерений
-     * @param unknown неизвестная величина
+     * @param measurements список исходных измерений
+     * @param unknown обозначение неизвестной величины
      */
     private void displaySolution(List<ConcreteMeasurement> measurements, String unknown) {
         FormulaDatabase formulaDatabase = new FormulaDatabase();
@@ -88,16 +90,9 @@ public class SolutionActivity extends AppCompatActivity {
             }
         }
 
-        // преобразование в карту для вычислений
-        Map<String, Double> knownValues;
-        try {
-            knownValues = formatter.convertToMap(siMeasurements);
-            LogUtils.d("SolutionActivity", "измерения преобразованы в карту: " + knownValues);
-        } catch (Exception e) {
-            solutionTextView.setText("ошибка: невозможно обработать измерения");
-            LogUtils.e("SolutionActivity", "ошибка преобразования в карту: " + e.getMessage());
-            return;
-        }
+        // преобразование измерений в карту
+        Map<String, Double> knownValues = formatter.convertToMap(siMeasurements);
+        LogUtils.d("SolutionActivity", "измерения преобразованы в карту: " + knownValues);
 
         // поиск подходящей формулы
         Formula formula = inputAnalyzer.findSuitableFormula(knownValues, unknown);
