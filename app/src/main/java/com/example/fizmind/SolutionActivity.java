@@ -3,6 +3,8 @@ package com.example.fizmind;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
+import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -38,6 +40,16 @@ public class SolutionActivity extends AppCompatActivity {
 
         solutionTextView = findViewById(R.id.solution_text);
         measurementValidator = new MeasurementValidatorImpl();
+
+        // находим ImageView для кнопки "назад"
+        ImageView backButton = findViewById(R.id.backButton);
+        // устанавливаем обработчик нажатия для кнопки "назад"
+        backButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish(); // завершаем активити и возвращаемся на предыдущий экран
+            }
+        });
 
         Intent intent = getIntent();
         if (intent != null) {
