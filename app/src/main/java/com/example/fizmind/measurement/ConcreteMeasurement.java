@@ -30,15 +30,33 @@ public class ConcreteMeasurement extends Measurement implements Parcelable {
                                double originalValue, String originalUnit,
                                String conversionSteps, boolean isSIUnit, boolean isConversionMode) {
         super(designation, value, unit, designationOperations, valueOperations);
-        this.subscript = subscript;
+        this.subscript = subscript != null ? subscript : "";
         this.constant = constant;
-        this.originalDisplay = originalDisplay;
+        this.originalDisplay = originalDisplay != null ? originalDisplay : createDefaultDisplay(designation, subscript, originalValue, originalUnit);
         this.originalValue = originalValue;
-        this.originalUnit = originalUnit;
+        this.originalUnit = originalUnit != null ? originalUnit : "";
         this.conversionSteps = conversionSteps != null ? conversionSteps : "";
         this.isSIUnit = isSIUnit;
         this.isConversionMode = isConversionMode;
         LogUtils.logMeasurementCreated("ConcreteMeasurement", toString());
+    }
+
+    /**
+     * создает стандартное отображение, если originalDisplay не предоставлен
+     * @param designation обозначение
+     * @param subscript индекс
+     * @param value значение
+     * @param unit единица измерения
+     * @return SpannableStringBuilder с отформатированным текстом
+     */
+    private SpannableStringBuilder createDefaultDisplay(String designation, String subscript, double value, String unit) {
+        SpannableStringBuilder display = new SpannableStringBuilder();
+        display.append(designation);
+        if (subscript != null && !subscript.isEmpty()) {
+            display.append("_").append(subscript);
+        }
+        display.append(" = ").append(SIConverter.formatValue(value)).append(" ").append(unit);
+        return display;
     }
 
     /**
@@ -149,11 +167,11 @@ public class ConcreteMeasurement extends Measurement implements Parcelable {
     }
 
     /**
-     * получение единицы измерения в верхнем регистре
+     * получение единицы измерения
      */
     @Override
     public String getUnit() {
-        return unit != null ? unit.toUpperCase() : "";
+        return unit != null ? unit : "";
     }
 
     // геттеры для остальных полей

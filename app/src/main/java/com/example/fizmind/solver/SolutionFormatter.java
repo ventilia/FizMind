@@ -34,30 +34,41 @@ public class SolutionFormatter {
         // шаг 1: выводим "Дано"
         builder.append("Дано:\n");
         for (ConcreteMeasurement measurement : originalMeasurements) {
-            builder.append(measurement.getOriginalDisplay()).append("\n");
+            String designation = measurement.getDesignation();
+            String subscript = measurement.getSubscript();
+            String fullDesignation = subscript.isEmpty() ? designation : designation + "_" + subscript;
+            builder.append(fullDesignation)
+                    .append(" = ")
+                    .append(SIConverter.formatValue(measurement.getOriginalValue()))
+                    .append(" ")
+                    .append(measurement.getOriginalUnit())
+                    .append("\n");
         }
         builder.append("\n");
 
         // шаг 2: перевод в СИ
         builder.append("Перевод в СИ:\n");
         for (ConcreteMeasurement original : originalMeasurements) {
+            String designation = original.getDesignation();
+            String subscript = original.getSubscript();
+            String fullDesignation = subscript.isEmpty() ? designation : designation + "_" + subscript;
             if (!original.isSIUnit()) {
                 String steps = original.getConversionSteps();
                 if (!steps.isEmpty()) {
-                    builder.append(original.getDesignation())
+                    builder.append(fullDesignation)
                             .append(" = ")
                             .append(steps)
                             .append("\n");
                 } else {
-                    builder.append(original.getDesignation())
+                    builder.append(fullDesignation)
                             .append(" = ошибка: шаги перевода не сгенерированы\n");
                 }
             } else {
-                builder.append(original.getDesignation())
+                builder.append(fullDesignation)
                         .append(" = ")
                         .append(SIConverter.formatValue(original.getOriginalValue()))
                         .append(" ")
-                        .append(original.getOriginalUnit()) // используем исходный регистр
+                        .append(original.getOriginalUnit())
                         .append(" (уже в СИ)\n");
             }
         }
