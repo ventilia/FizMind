@@ -21,6 +21,7 @@ import com.example.fizmind.solver.Solver;
 import com.example.fizmind.utils.LogUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,9 +32,6 @@ public class SolutionActivity extends AppCompatActivity {
     private TextView solutionTextView;
     private MeasurementValidator measurementValidator;
 
-    /**
-     * инициализация активити
-     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,63 +43,50 @@ public class SolutionActivity extends AppCompatActivity {
         // загрузка шрифта MontserratAlternates
         Typeface montserratAlternatesTypeface = Typeface.createFromAsset(getAssets(), "fonts/MontserratAlternates-Regular.ttf");
 
-        // находим ImageView для кнопки "назад"
+        // настройка кнопки "назад"
         ImageView backButton = findViewById(R.id.backButton);
-        // устанавливаем обработчик нажатия для кнопки "назад"
-        backButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish(); // завершаем активити и возвращаемся на предыдущий экран
-            }
-        });
+        backButton.setOnClickListener(v -> finish());
 
         Intent intent = getIntent();
         if (intent != null) {
             ArrayList<ConcreteMeasurement> measurements = intent.getParcelableArrayListExtra("measurements");
             String unknown = intent.getStringExtra("unknown");
 
-            LogUtils.d("SolutionActivity", "получены данные: measurements=" +
-                    (measurements != null ? measurements.toString() : "null") + ", unknown=" + unknown);
+            LogUtils.d("SolutionActivity", "получены данные: measurements=" + measurements + ", unknown=" + unknown);
 
             if (measurements != null && !measurements.isEmpty() && unknown != null) {
                 displaySolution(measurements, unknown, montserratAlternatesTypeface);
             } else {
                 solutionTextView.setText("ошибка: данные не переданы корректно");
-                LogUtils.e("SolutionActivity", "некорректные входные данные: measurements=" +
-                        measurements + ", unknown=" + unknown);
+                LogUtils.e("SolutionActivity", "некорректные данные: measurements=" + measurements + ", unknown=" + unknown);
             }
         } else {
             solutionTextView.setText("ошибка: Intent пуст");
-            LogUtils.e("SolutionActivity", "Intent extras отсутствуют");
+            LogUtils.e("SolutionActivity", "Intent отсутствует");
         }
     }
 
     /**
-     * отображает решение на экране
-     * @param measurements список исходных измерений
-     * @param unknown обозначение неизвестной величины
-     * @param montserratAlternatesTypeface шрифт MontserratAlternates для форматирования
+     * отображает решение задачи на экране
+     * @param measurements исходные измерения
+     * @param unknown неизвестная величина
+     * @param typeface шрифт для форматирования
      */
-    private void displaySolution(List<ConcreteMeasurement> measurements, String unknown, Typeface montserratAlternatesTypeface) {
+    private void displaySolution(List<ConcreteMeasurement> measurements, String unknown, Typeface typeface) {
         FormulaDatabase formulaDatabase = new FormulaDatabase();
         InputAnalyzer inputAnalyzer = new InputAnalyzer(formulaDatabase);
         Solver solver = new Solver();
-        SolutionFormatter formatter = new SolutionFormatter(montserratAlternatesTypeface);
+        SolutionFormatter formatter = new SolutionFormatter(typeface);
 
-        // проверка и конвертация в СИ
-        List<ConcreteMeasurement> siMeasurements = measurements;
-        if (measurementValidator.requiresConversion(measurements)) {
-            LogUtils.d("SolutionActivity", "выполняется конвертация измерений в СИ");
-            siMeasurements = measurementValidator.convertToSI(measurements);
-            LogUtils.d("SolutionActivity", "измерения после конвертации: " + siMeasurements);
-        } else {
-            LogUtils.d("SolutionActivity", "конвертация в СИ не требуется");
-        }
+        // конвертация измерений в СИ
+        List<ConcreteMeasurement> siMeasurements = measurementValidator.requiresConversion(measurements)
+                ? measurementValidator.convertToSI(measurements)
+                : measurements;
 
-        // проверка валидности измерений
+        // валидация измерений
         for (ConcreteMeasurement measurement : siMeasurements) {
             if (!measurement.validate()) {
-                solutionTextView.setText("ошибка: некорректное измерение: " + measurement.toString());
+                solutionTextView.setText("ошибка: некорректное измерение: " + measurement);
                 LogUtils.e("SolutionActivity", "некорректное измерение: " + measurement);
                 return;
             }
@@ -109,32 +94,41 @@ public class SolutionActivity extends AppCompatActivity {
 
         // преобразование измерений в карту
         Map<String, Double> knownValues = formatter.convertToMap(siMeasurements);
-        LogUtils.d("SolutionActivity", "измерения преобразованы в карту: " + knownValues);
+        LogUtils.d("SolutionActivity", "известные величины: " + knownValues);
 
-        // поиск подходящей формулы
-        Formula formula = inputAnalyzer.findSuitableFormula(knownValues, unknown);
-        if (formula == null) {
-            solutionTextView.setText("ошибка: подходящая формула не найдена");
-            LogUtils.w("SolutionActivity", "формула не найдена для knownValues=" + knownValues + ", unknown=" + unknown);
+        // поиск пути решения
+        List<Formula> formulaPath = inputAnalyzer.findFormulaPath(knownValues, unknown);
+        if (formulaPath == null || formulaPath.isEmpty()) {
+            solutionTextView.setText("ошибка: решение не найдено");
+            LogUtils.w("SolutionActivity", "путь не найден для " + unknown);
             return;
         }
-        LogUtils.d("SolutionActivity", "найдена формула: " + formula.getExpression());
+
+        // выбор подходящей формулы для вычисления неизвестной
+        Formula targetFormula = null;
+        for (Formula formula : formulaPath) {
+            List<String> variables = formula.getVariables();
+            if (variables.contains(unknown) && variables.stream().filter(var -> !var.equals(unknown)).allMatch(knownValues::containsKey)) {
+                targetFormula = formula;
+                break;
+            }
+        }
+
+        if (targetFormula == null) {
+            solutionTextView.setText("ошибка: подходящая формула не найдена");
+            LogUtils.w("SolutionActivity", "не найдена формула для вычисления " + unknown);
+            return;
+        }
 
         // вычисление результата
         try {
-            double result = solver.solve(formula, knownValues, unknown);
-            LogUtils.d("SolutionActivity", "результат вычисления: " + unknown + " = " + result);
-
-            // форматирование и отображение решения
-            SpannableStringBuilder solution = formatter.formatSolution(measurements, siMeasurements, unknown, formula, result);
+            double result = solver.solve(targetFormula, knownValues, unknown);
+            SpannableStringBuilder solution = formatter.formatSolution(measurements, siMeasurements, unknown, targetFormula, result);
             solutionTextView.setText(solution);
-            LogUtils.d("SolutionActivity", "решение отформатировано и отображено");
-        } catch (IllegalArgumentException e) {
-            solutionTextView.setText("ошибка вычисления: " + e.getMessage());
-            LogUtils.e("SolutionActivity", "ошибка вычисления: " + e.getMessage());
+            LogUtils.d("SolutionActivity", "решение: " + unknown + " = " + result);
         } catch (Exception e) {
-            solutionTextView.setText("ошибка: неожиданная ошибка при вычислении");
-            LogUtils.e("SolutionActivity", "неожиданная ошибка: " + e.getMessage());
+            solutionTextView.setText("ошибка вычисления: " + e.getMessage());
+            LogUtils.e("SolutionActivity", "ошибка вычисления: " + e.getMessage(), e);
         }
     }
 }

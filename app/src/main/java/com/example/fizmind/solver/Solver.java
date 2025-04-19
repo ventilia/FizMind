@@ -2,6 +2,7 @@ package com.example.fizmind.solver;
 
 import com.example.fizmind.formulas.Formula;
 import com.example.fizmind.utils.LogUtils;
+
 import java.util.List;
 import java.util.Map;
 
@@ -10,29 +11,37 @@ import java.util.Map;
  */
 public class Solver {
     /**
-     * вычисляет неизвестную величину
+     * вычисляет неизвестную величину на основе формулы
      * @param formula выбранная формула
      * @param knownValues карта известных величин
-     * @param unknownDesignation обозначение неизвестной
+     * @param unknownDesignation обозначение неизвестной величины
      * @return значение неизвестной величины
-     * @throws IllegalArgumentException если данных недостаточно
+     * @throws IllegalArgumentException если данных недостаточно или вычисление невозможно
      */
     public double solve(Formula formula, Map<String, Double> knownValues, String unknownDesignation) {
         List<String> variables = formula.getVariables();
 
-        // проверка наличия всех необходимых данных
+        // проверка наличия всех необходимых данных, кроме неизвестной
+        int nullCount = 0;
         for (String var : variables) {
-            if (!var.equals(unknownDesignation) && !knownValues.containsKey(var)) {
-                throw new IllegalArgumentException("недостаточно данных для вычисления: отсутствует " + var);
+            if (!knownValues.containsKey(var)) {
+                if (var.equals(unknownDesignation)) {
+                    nullCount++;
+                } else {
+                    throw new IllegalArgumentException("недостаточно данных для вычисления: отсутствует " + var);
+                }
             }
         }
+        if (nullCount != 1 || !variables.contains(unknownDesignation)) {
+            throw new IllegalArgumentException("формула не подходит для вычисления " + unknownDesignation);
+        }
 
-        // подготовка значений для вычисления
+        // подготовка массива значений для вычисления
         Double[] values = new Double[variables.size()];
         for (int i = 0; i < variables.size(); i++) {
             String var = variables.get(i);
             if (var.equals(unknownDesignation)) {
-                values[i] = null; // неизвестная
+                values[i] = null; // неизвестная величина
             } else {
                 values[i] = knownValues.get(var);
             }
@@ -40,6 +49,10 @@ public class Solver {
 
         // вычисление результата
         double result = formula.calculate(values);
+        if (Double.isNaN(result) || Double.isInfinite(result)) {
+            throw new IllegalArgumentException("результат вычисления недопустим: " + result);
+        }
+
         LogUtils.d("Solver", "вычислено: " + unknownDesignation + " = " + result);
         return result;
     }
