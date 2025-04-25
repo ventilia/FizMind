@@ -1,0 +1,189 @@
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#F4E5FF">
+
+        <ImageView
+            android:id="@+id/menu_icon"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="20dp"
+            android:src="@drawable/ic_menu"
+            android:contentDescription="@string/menu"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true" />
+
+        <ImageView
+            android:id="@+id/top_image"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:src="@drawable/logo2"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="5dp"
+            android:contentDescription="@null" />
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/btn_si_conversion"
+            android:layout_width="300dp"
+            android:layout_height="120dp"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="100dp"
+            app:cardElevation="8dp"
+            app:cardCornerRadius="16dp"
+            app:cardBackgroundColor="@color/button_background">
+
+            <TextView
+                android:fontFamily="@font/montserrat_alternates"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="Перевод в СИ"
+                android:textColor="#2D1067"
+                android:textSize="16sp" />
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/btn_physics_calculator"
+            android:layout_width="300dp"
+            android:layout_height="120dp"
+            android:layout_below="@id/btn_si_conversion"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="100dp"
+            app:cardElevation="10dp"
+            app:cardCornerRadius="16dp"
+            app:cardBackgroundColor="@color/button_background">
+
+            <TextView
+                android:fontFamily="@font/montserrat_alternates"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="Физический калькулятор"
+                android:textColor="#2D1067"
+                android:textSize="16sp" />
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/btn_theory"
+            android:layout_width="300dp"
+            android:layout_height="120dp"
+            android:layout_below="@id/btn_physics_calculator"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="100dp"
+            app:cardElevation="8dp"
+            app:cardCornerRadius="16dp"
+            app:cardBackgroundColor="@color/button_background">
+
+            <TextView
+                android:fontFamily="@font/montserrat_alternates"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="Теория"
+                android:textColor="#2D1067"
+                android:textSize="16sp" />
+        </androidx.cardview.widget.CardView>
+    </RelativeLayout>
+
+    <LinearLayout
+        android:layout_width="300dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:orientation="vertical"
+        android:background="#FBF5FF">
+
+        <include layout="@layout/nav_header"/>
+
+        <LinearLayout
+            android:id="@+id/options_container"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="20dp"
+            android:orientation="vertical"
+            android:background="@drawable/nav_back"
+            android:padding="16dp">
+
+
+
+            <LinearLayout
+                android:id="@+id/settings_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:orientation="horizontal"
+                android:padding="16dp"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:src="@drawable/ic_settings"
+                    android:contentDescription="Настройки"
+                    android:alpha="0.7"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Настройки"
+                    android:textSize="15sp"
+                    android:textColor="#000"
+                    android:layout_marginStart="16dp"
+                    android:fontFamily="@font/montserrat_alternates"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/about_us_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:orientation="horizontal"
+                android:padding="16dp"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:src="@drawable/ic_info"
+                    android:contentDescription="О нас"
+                    android:alpha="0.7"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="О нас"
+                    android:textSize="15sp"
+                    android:textColor="#000"
+                    android:layout_marginStart="16dp"
+                    android:fontFamily="@font/montserrat_alternates"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Физика - не сложно,\nкогда есть правильный\nинструмент"
+            android:textSize="25sp"
+            android:textColor="#000"
+            android:gravity="center"
+            android:padding="30dp"
+            android:fontFamily="@font/montserrat_alternates"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="fizmindd@gmail.com"
+            android:textSize="20sp"
+            android:textColor="#808080 "
+            android:gravity="center"
+            android:padding="30dp"
+            ></TextView>
+    </LinearLayout>
+</androidx.drawerlayout.widget.DrawerLayout>

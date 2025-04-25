@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <SwitchPreferenceCompat
+        android:key="gravity_value"
+        android:title="Значение g"
+        android:summaryOn="g = 10 м/с²"
+        android:summaryOff="g = 9.8 м/с²"
+        android:defaultValue="false" />
+
+    <SwitchPreferenceCompat
+        android:key="enable_debug_features"
+        android:title="Включить  сообщения"
+        android:summaryOn="Логи и сообщения включены"
+        android:summaryOff="Логи и сообщения отключены"
+        android:defaultValue="true" />
+</PreferenceScreen>

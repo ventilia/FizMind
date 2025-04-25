@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FizMind</string>
+    <string name="menu">Меню</string>
+    <string name="image_description">Описание изображения</string>
+
+    <string name="down">Down</string>
+    <string name="left">Left</string>
+    <string name="right">Right</string>
+    <string name="clear">Clear</string>
+    <string name="cycle">Cycle</string>
+    <string name="labels">Обозначения</string>
+    <string name="units">Единицы измерения</string>
+    <string name="numbers_operations">Числа и операции</string>
+    <string name="x">x</string>
+    <string name="left_page">Left Page</string>
+
+    <string name="about_us">О нас</string>
+    <string name="optimization_title">Оптимизация и упрощение —</string>
+    <string name="optimization_body">это ключевые качество человека. Именно эти качества мы развили в FizMind: мы стремимся сделать изучение физики максимально доступным и легким.</string>
+
+    <string name="physics_easy">физика - легко вместе c</string>
+    <string name="contributors">Над проектом работали:</string>
+    <string name="accordion_header">Особые благодарности</string>
+    <string name="accordion_content">...</string>
+    <string name="contributors_names">Ученики МБОУ СОШ “МОЗАИКА”</string>
+
+
+    <string name="solution1">Решение</string>
+
+    <string name="theory">Теория</string>
+
+    <string name="formulas">Список формул</string>
+    <string name="designation">Список обозначений</string>
+    <string name="guide">Как пользоваться\nприложением</string>
+
+    <string name="butt1">Формулы</string>
+    <string name="butt2">Список обозначений</string>
+    <string name="butt3">Как пользоваться\nприложением</string>
+
+    <string name="seting">Настройки</string>
+
+
+
+
+    <string name="right_page">Right Page</string>
+    <string name="page_number">%d  %d</string>
+</resources>
