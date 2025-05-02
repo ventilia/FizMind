@@ -28,12 +28,13 @@ public class SolutionFormatter {
         this.displayManager = displayManager;
     }
 
+    // форматирование решения
     public SpannableStringBuilder formatSolution(List<ConcreteMeasurement> originalMeasurements,
                                                  List<ConcreteMeasurement> siMeasurements,
                                                  String unknownDesignation, Solver.SolutionResult result) {
         SpannableStringBuilder builder = new SpannableStringBuilder();
 
-
+        // раздел "Дано"
         int start = builder.length();
         builder.append("Дано:\n");
         applyTypeface(builder, start, builder.length());
@@ -48,7 +49,7 @@ public class SolutionFormatter {
         }
         builder.append("\n");
 
-
+        // раздел "Перевод в СИ"
         start = builder.length();
         builder.append("Перевод в СИ:\n");
         applyTypeface(builder, start, builder.length());
@@ -72,6 +73,7 @@ public class SolutionFormatter {
 
         Map<String, Double> knownValues = convertToMap(siMeasurements);
 
+        // промежуточные вычисления
         boolean hasIntermediateSteps = false;
         for (Solver.Step step : result.getSteps()) {
             if (!step.getVariable().equals(unknownDesignation)) {
@@ -102,17 +104,15 @@ public class SolutionFormatter {
             }
         }
 
-
+        // финальный шаг
         Solver.Step finalStep = result.getSteps().isEmpty() ? null : result.getSteps().get(result.getSteps().size() - 1);
         if (finalStep != null && finalStep.getVariable().equals(unknownDesignation)) {
-            // Display Formula
             start = builder.length();
             builder.append("Воспользуемся формулой:\n");
             applyTypeface(builder, start, builder.length());
             Formula formula = finalStep.getFormula();
             String displayExpression = displayManager.getDisplayExpression(formula, unknownDesignation);
             builder.append(Html.fromHtml(displayExpression)).append("\n\n");
-
 
             start = builder.length();
             builder.append("Подставим значения:\n");
@@ -121,6 +121,7 @@ public class SolutionFormatter {
             builder.append(Html.fromHtml(substitution)).append("\n\n");
         }
 
+        // результат
         start = builder.length();
         builder.append("Результат:\n");
         applyTypeface(builder, start, builder.length());
@@ -133,7 +134,7 @@ public class SolutionFormatter {
                 .append(unit)
                 .append("\n\n");
 
-
+        // ответ
         start = builder.length();
         builder.append("Ответ: ");
         applyTypeface(builder, start, builder.length());
@@ -150,6 +151,7 @@ public class SolutionFormatter {
         return builder;
     }
 
+    // построение подстановки значений в формулу
     private String buildSubstitution(String displayExpression, Formula formula, Map<String, Double> knownValues, String targetVariable) {
         String[] parts = displayExpression.split("=");
         if (parts.length != 2) return "ошибка в формуле";
@@ -177,17 +179,20 @@ public class SolutionFormatter {
         return left + " = " + right;
     }
 
+    // получение единицы измерения
     private String getUnit(String designation) {
         PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(designation);
         return pq != null ? pq.getSiUnit() : "";
     }
 
+    // применение шрифта
     private void applyTypeface(SpannableStringBuilder builder, int start, int end) {
         if (montserratAlternatesTypeface != null) {
             builder.setSpan(new CustomTypefaceSpan(montserratAlternatesTypeface), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
     }
 
+    // преобразование списка измерений в карту
     public Map<String, Double> convertToMap(List<ConcreteMeasurement> measurements) {
         Map<String, Double> knownValues = new HashMap<>();
         for (ConcreteMeasurement measurement : measurements) {
