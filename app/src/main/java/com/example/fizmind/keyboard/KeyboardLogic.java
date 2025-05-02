@@ -8,12 +8,11 @@ import android.text.TextWatcher;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
-
-import com.example.fizmind.R;
 import com.example.fizmind.SI.ConversionService;
-import com.example.fizmind.animation.KeyboardAnimation;
 import com.example.fizmind.quantly.PhysicalQuantity;
 import com.example.fizmind.quantly.PhysicalQuantityRegistry;
+import com.example.fizmind.R;
+import com.example.fizmind.animation.KeyboardAnimation;
 import com.example.fizmind.utils.LogUtils;
 
 import java.util.ArrayList;
@@ -22,7 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-// логика клавиатуры с интеграцией базы данных через InputController
+
 public class KeyboardLogic implements KeyboardModeSwitcher {
     private final Context context;
     private final List<TextView> keyboardCells;
@@ -46,13 +45,25 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
     private final ImageButton rightArrowButton;
     private final Map<String, String> unitIdToUnitMap;
 
-    // конструктор
+
+     // конструктор с параметрами для инициализации
+
     public KeyboardLogic(
-            Context context, List<TextView> keyboardCells, TextView pageNumberView,
-            TextView designationButton, TextView unitsButton, TextView numbersButton,
-            ImageButton prevPageButton, ImageButton nextPageButton, ImageButton buttonScrollDown,
-            TextView designationView, TextView unknownView, ImageButton leftArrowButton,
-            ImageButton rightArrowButton, View rootView) {
+            Context context,
+            List<TextView> keyboardCells,
+            TextView pageNumberView,
+            TextView designationButton,
+            TextView unitsButton,
+            TextView numbersButton,
+            ImageButton prevPageButton,
+            ImageButton nextPageButton,
+            ImageButton buttonScrollDown,
+            TextView designationView,
+            TextView unknownView,
+            ImageButton leftArrowButton,
+            ImageButton rightArrowButton,
+            View rootView
+    ) {
         this.context = context;
         this.keyboardCells = keyboardCells;
         this.pageNumberView = pageNumberView;
@@ -68,7 +79,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         this.rightArrowButton = rightArrowButton;
         this.rootView = rootView;
 
-        // загрузка шрифта STIX
+
         try {
             stixTypeface = Typeface.createFromAsset(context.getAssets(), "fonts/stix_two_text_italic.ttf");
         } catch (Exception e) {
@@ -83,11 +94,143 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         keyboardData = new HashMap<>();
         unitIdToUnitMap = new HashMap<>();
 
-        // данные клавиатуры (обозначения, единицы, числа)
-        initializeKeyboardData();
+
+        keyboardData.put("Designation", Arrays.asList(
+                Arrays.asList(
+                        new SymbolKey("s_latin", "s", true),        // Длина
+                        new SymbolKey("designation_t", "t", true),  // Время
+                        new SymbolKey("v_latin", "v", true),        // Скорость
+                        new SymbolKey("a_latin", "a", true),        // Ускорение
+                        new SymbolKey("m_latin", "m", true),        // Масса
+                        new SymbolKey("F_latin", "F", true),        // Сила
+                        new SymbolKey("designation_P", "P", true),  // Вес
+                        new SymbolKey("designation_ρ", "ρ", true),  // Плотность
+                        new SymbolKey("designation_p", "p", true),  // Давление
+                        new SymbolKey("designation_A", "A", true),  // Работа
+                        new SymbolKey("designation_N", "N", true),  // Мощность
+                        new SymbolKey("E_latin", "E", true),        // Энергия
+                        new SymbolKey("designation_T", "T", true),  // Температура
+                        new SymbolKey("designation_Q", "Q", true),  // Количество теплоты
+                        new SymbolKey("designation_I", "I", true),  // Электрический ток
+                        new SymbolKey("U_latin", "U", true),        // Напряжение
+                        new SymbolKey("R_latin", "R", true),        // Сопротивление
+                        new SymbolKey("P_power", "P", true),        // Мощность электрического тока
+                        new SymbolKey("designation_c", "c", true),  // Скорость света
+                        new SymbolKey("designation_λ", "λ", true),  // Длина волны
+                        new SymbolKey("designation_f", "f", true)  // Частота
+                ),
+                Arrays.asList(
+                        new SymbolKey("designation_V", "V", true),  // Объем
+                        new SymbolKey("S_latin", "S", true),        // Площадь
+                        new SymbolKey("h_latin", "h", true),        // Высота
+                        new SymbolKey("c_latin", "c", true),
+                        new SymbolKey("designation_g", "g", true)
+                )
+        ));
+
+
+        List<List<SymbolKey>> unitsPages = Arrays.asList(
+                Arrays.asList(
+                        new SymbolKey("unit_cm", "cm", false),
+                        new SymbolKey("unit_m", "m", false),
+                        new SymbolKey("unit_km", "km", false),
+                        new SymbolKey("unit_ms", "ms", false),
+                        new SymbolKey("unit_s", "s", false),
+                        new SymbolKey("unit_min", "min", false),
+                        new SymbolKey("unit_cm/s", "cm/s", false),
+                        new SymbolKey("unit_m/s", "m/s", false),
+                        new SymbolKey("unit_km/h", "km/h", false),
+                        new SymbolKey("unit_cm/s²", "cm/s²", false),
+                        new SymbolKey("unit_m/s²", "m/s²", false),
+                        new SymbolKey("unit_km/h²", "km/h²", false),
+                        new SymbolKey("unit_g", "g", false),
+                        new SymbolKey("unit_kg", "kg", false),
+                        new SymbolKey("unit_t", "t", false),
+                        new SymbolKey("unit_dyne", "dyne", false),
+                        new SymbolKey("unit_N", "N", false),
+                        new SymbolKey("unit_kN", "kN", false),
+                        new SymbolKey("unit_g/cm³", "g/cm³", false),
+                        new SymbolKey("unit_kg/m³", "kg/m³", false),
+                        new SymbolKey("unit_t/m³", "t/m³", false)
+                ),
+                Arrays.asList(
+                        new SymbolKey("unit_mmHg", "mmHg", false),
+                        new SymbolKey("unit_Pa", "Pa", false),
+                        new SymbolKey("unit_atm", "atm", false),
+                        new SymbolKey("unit_erg", "erg", false),
+                        new SymbolKey("unit_J", "J", false),
+                        new SymbolKey("unit_kJ", "kJ", false),
+                        new SymbolKey("unit_erg/s", "erg/s", false),
+                        new SymbolKey("unit_W", "W", false),
+                        new SymbolKey("unit_kW", "kW", false),
+                        new SymbolKey("unit_°C", "°C", false),
+                        new SymbolKey("unit_K", "K", false),
+                        new SymbolKey("unit_°F", "°F", false),
+                        new SymbolKey("unit_cal", "cal", false),
+                        new SymbolKey("unit_mA", "mA", false),
+                        new SymbolKey("unit_A", "A", false),
+                        new SymbolKey("unit_kA", "kA", false),
+                        new SymbolKey("unit_mV", "mV", false),
+                        new SymbolKey("unit_V", "V", false),
+                        new SymbolKey("unit_kV", "kV", false),
+                        new SymbolKey("unit_mΩ", "mΩ", false),
+                        new SymbolKey("unit_Ω", "Ω", false)
+                ),
+                Arrays.asList(
+                        new SymbolKey("unit_kΩ", "kΩ", false),
+                        new SymbolKey("unit_mW", "mW", false),
+                        new SymbolKey("unit_km/s", "km/s", false),
+                        new SymbolKey("unit_nm", "nm", false),
+                        new SymbolKey("unit_mHz", "mHz", false),
+                        new SymbolKey("unit_Hz", "Hz", false),
+                        new SymbolKey("unit_kHz", "kHz", false),
+                        new SymbolKey("unit_cm³", "cm³", false),
+                        new SymbolKey("unit_m³", "m³", false),
+                        new SymbolKey("unit_L", "L", false),
+                        new SymbolKey("unit_cm²", "cm²", false),
+                        new SymbolKey("unit_m²", "m²", false),
+                        new SymbolKey("unit_km²", "km²", false),
+                        new SymbolKey("unit_km/s²", "km/s²", false)
+                )
+        );
+
+        keyboardData.put("Units_of_measurement", unitsPages);
+
+        // заполняем карту единиц измерения
+        for (List<SymbolKey> page : unitsPages) {
+            for (SymbolKey key : page) {
+                unitIdToUnitMap.put(key.getLogicalId(), key.getDisplayText());
+            }
+        }
+
+
+        keyboardData.put("Numbers_and_operations", Arrays.asList(
+                Arrays.asList(
+                        new SymbolKey("num_1", "1", false),
+                        new SymbolKey("num_2", "2", false),
+                        new SymbolKey("num_3", "3", false),
+                        new SymbolKey(" ", " ", false),
+                        new SymbolKey("num_dot", ".", false),
+                        new SymbolKey(" ", " ", false),
+                        new SymbolKey(" ", " ", false),
+                        new SymbolKey("num_4", "4", false),
+                        new SymbolKey("num_5", "5", false),
+                        new SymbolKey("num_6", "6", false),
+                        new SymbolKey(" ", " ", false),
+                        new SymbolKey("op_subscript", "_", false),
+                        new SymbolKey(" ", " ", false),
+                        new SymbolKey(" ", " ", false),
+                        new SymbolKey("num_7", "7", false),
+                        new SymbolKey("num_8", "8", false),
+                        new SymbolKey("num_9", "9", false),
+                        new SymbolKey(" ", " ", false),
+                        new SymbolKey("num_0", "0", false)
+                )
+        ));
+
 
         DisplayManager displayManager = new DisplayManager(stixTypeface);
-        inputController = new InputController(context, designationView, unknownView, new ConversionService(), rootView, displayManager);
+        inputController = new InputController(designationView, unknownView, new ConversionService(), rootView, displayManager);
         inputController.setStixTypeface(stixTypeface);
         inputController.setKeyboardModeSwitcher(this);
 
@@ -100,97 +243,28 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         updateKeyboard();
     }
 
-    // инициализация данных клавиатуры
-    private void initializeKeyboardData() {
-        keyboardData.put("Designation", Arrays.asList(
-                Arrays.asList(
-                        new SymbolKey("s_latin", "s", true), new SymbolKey("designation_t", "t", true),
-                        new SymbolKey("v_latin", "v", true), new SymbolKey("a_latin", "a", true),
-                        new SymbolKey("m_latin", "m", true), new SymbolKey("F_latin", "F", true),
-                        new SymbolKey("designation_P", "P", true), new SymbolKey("designation_ρ", "ρ", true),
-                        new SymbolKey("designation_p", "p", true), new SymbolKey("designation_A", "A", true),
-                        new SymbolKey("designation_N", "N", true), new SymbolKey("E_latin", "E", true),
-                        new SymbolKey("designation_T", "T", true), new SymbolKey("designation_Q", "Q", true),
-                        new SymbolKey("designation_I", "I", true), new SymbolKey("U_latin", "U", true),
-                        new SymbolKey("R_latin", "R", true), new SymbolKey("P_power", "P", true),
-                        new SymbolKey("designation_c", "c", true), new SymbolKey("designation_λ", "λ", true),
-                        new SymbolKey("designation_f", "f", true)
-                ),
-                Arrays.asList(
-                        new SymbolKey("designation_V", "V", true), new SymbolKey("S_latin", "S", true),
-                        new SymbolKey("h_latin", "h", true), new SymbolKey("c_latin", "c", true),
-                        new SymbolKey("designation_g", "g", true)
-                )
-        ));
 
-        List<List<SymbolKey>> unitsPages = Arrays.asList(
-                Arrays.asList(
-                        new SymbolKey("unit_cm", "cm", false), new SymbolKey("unit_m", "m", false),
-                        new SymbolKey("unit_km", "km", false), new SymbolKey("unit_ms", "ms", false),
-                        new SymbolKey("unit_s", "s", false), new SymbolKey("unit_min", "min", false),
-                        new SymbolKey("unit_cm/s", "cm/s", false), new SymbolKey("unit_m/s", "m/s", false),
-                        new SymbolKey("unit_km/h", "km/h", false), new SymbolKey("unit_cm/s²", "cm/s²", false),
-                        new SymbolKey("unit_m/s²", "m/s²", false), new SymbolKey("unit_km/h²", "km/h²", false),
-                        new SymbolKey("unit_g", "g", false), new SymbolKey("unit_kg", "kg", false),
-                        new SymbolKey("unit_t", "t", false), new SymbolKey("unit_dyne", "dyne", false),
-                        new SymbolKey("unit_N", "N", false), new SymbolKey("unit_kN", "kN", false),
-                        new SymbolKey("unit_g/cm³", "g/cm³", false), new SymbolKey("unit_kg/m³", "kg/m³", false),
-                        new SymbolKey("unit_t/m³", "t/m³", false)
-                ),
-                Arrays.asList(
-                        new SymbolKey("unit_mmHg", "mmHg", false), new SymbolKey("unit_Pa", "Pa", false),
-                        new SymbolKey("unit_atm", "atm", false), new SymbolKey("unit_erg", "erg", false),
-                        new SymbolKey("unit_J", "J", false), new SymbolKey("unit_kJ", "kJ", false),
-                        new SymbolKey("unit_erg/s", "erg/s", false), new SymbolKey("unit_W", "W", false),
-                        new SymbolKey("unit_kW", "kW", false), new SymbolKey("unit_°C", "°C", false),
-                        new SymbolKey("unit_K", "K", false), new SymbolKey("unit_°F", "°F", false),
-                        new SymbolKey("unit_cal", "cal", false), new SymbolKey("unit_mA", "mA", false),
-                        new SymbolKey("unit_A", "A", false), new SymbolKey("unit_kA", "kA", false),
-                        new SymbolKey("unit_mV", "mV", false), new SymbolKey("unit_V", "V", false),
-                        new SymbolKey("unit_kV", "kV", false), new SymbolKey("unit_mΩ", "mΩ", false),
-                        new SymbolKey("unit_Ω", "Ω", false)
-                ),
-                Arrays.asList(
-                        new SymbolKey("unit_kΩ", "kΩ", false), new SymbolKey("unit_mW", "mW", false),
-                        new SymbolKey("unit_km/s", "km/s", false), new SymbolKey("unit_nm", "nm", false),
-                        new SymbolKey("unit_mHz", "mHz", false), new SymbolKey("unit_Hz", "Hz", false),
-                        new SymbolKey("unit_kHz", "kHz", false), new SymbolKey("unit_cm³", "cm³", false),
-                        new SymbolKey("unit_m³", "m³", false), new SymbolKey("unit_L", "L", false),
-                        new SymbolKey("unit_cm²", "cm²", false), new SymbolKey("unit_m²", "m²", false),
-                        new SymbolKey("unit_km²", "km²", false), new SymbolKey("unit_km/s²", "km/s²", false)
-                )
-        );
-        keyboardData.put("Units_of_measurement", unitsPages);
-
-        for (List<SymbolKey> page : unitsPages) {
-            for (SymbolKey key : page) {
-                unitIdToUnitMap.put(key.getLogicalId(), key.getDisplayText());
-            }
-        }
-
-        keyboardData.put("Numbers_and_operations", Arrays.asList(
-                Arrays.asList(
-                        new SymbolKey("num_1", "1", false), new SymbolKey("num_2", "2", false),
-                        new SymbolKey("num_3", "3", false), new SymbolKey(" ", " ", false),
-                        new SymbolKey("num_dot", ".", false), new SymbolKey(" ", " ", false),
-                        new SymbolKey(" ", " ", false), new SymbolKey("num_4", "4", false),
-                        new SymbolKey("num_5", "5", false), new SymbolKey("num_6", "6", false),
-                        new SymbolKey(" ", " ", false), new SymbolKey("op_subscript", "_", false),
-                        new SymbolKey(" ", " ", false), new SymbolKey(" ", " ", false),
-                        new SymbolKey("num_7", "7", false), new SymbolKey("num_8", "8", false),
-                        new SymbolKey("num_9", "9", false), new SymbolKey(" ", " ", false),
-                        new SymbolKey("num_0", "0", false)
-                )
-        ));
-    }
-
-    // настройка кнопок стрелок
     private void setupArrowButtons() {
-        leftArrowButton.setOnClickListener(v -> inputController.onLeftArrowPressed());
-        rightArrowButton.setOnClickListener(v -> inputController.onRightArrowPressed());
+        leftArrowButton.setOnClickListener(v -> {
+            if (inputController != null) {
+                inputController.onLeftArrowPressed();
+            }
+        });
+
+        rightArrowButton.setOnClickListener(v -> {
+            if (inputController != null) {
+                inputController.onRightArrowPressed();
+            }
+        });
     }
 
-    // переключение на режим чисел и операций
+
+    public void setInputController(InputController inputController) {
+        this.inputController = inputController;
+        inputController.setKeyboardModeSwitcher(this);
+        inputController.setStixTypeface(stixTypeface);
+    }
+
     @Override
     public void switchToNumbersAndOperations() {
         if (!"Numbers_and_operations".equals(currentMode)) {
@@ -201,7 +275,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         }
     }
 
-    // переключение на режим обозначений
     @Override
     public void switchToDesignation() {
         if (!"Designation".equals(currentMode)) {
@@ -212,7 +285,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         }
     }
 
-    // переключение на режим единиц измерения
     @Override
     public void switchToUnits() {
         if (!"Units_of_measurement".equals(currentMode)) {
@@ -223,7 +295,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         }
     }
 
-    // настройка кнопки прокрутки
+
     private void setupScrollButton() {
         buttonScrollDown.setOnClickListener(v -> {
             LogUtils.logButtonPressed("KeyboardLogic", "прокрутка вниз");
@@ -233,16 +305,20 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         designationView.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
             @Override
-            public void afterTextChanged(Editable s) { updateScrollButtonVisibility(); }
+            public void afterTextChanged(Editable s) {
+                updateScrollButtonVisibility();
+            }
         });
 
         designationView.getViewTreeObserver().addOnScrollChangedListener(this::updateScrollButtonVisibility);
     }
 
-    // прокрутка вниз
+
     private void scrollToBottom() {
         designationView.post(() -> {
             int scrollY = designationView.getLayout().getHeight() - designationView.getHeight();
@@ -253,7 +329,6 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         });
     }
 
-    // обновление видимости кнопки прокрутки
     private void updateScrollButtonVisibility() {
         if (designationView.getLayout() == null) {
             buttonScrollDown.setVisibility(View.GONE);
@@ -263,42 +338,50 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         buttonScrollDown.setVisibility(scrollRange > 0 ? View.VISIBLE : View.GONE);
     }
 
-    // получение шрифта STIX
     public Typeface getStixTypeface() {
         return stixTypeface;
     }
 
-    // установка использования шрифта STIX
+
     public void setUseStixFont(boolean useStixFont) {
         this.useStixFont = useStixFont;
     }
 
-    // применение анимаций к кнопкам режимов
     private void applyModeButtonAnimations() {
         KeyboardAnimation.applyButtonAnimation(designationButton);
         KeyboardAnimation.applyButtonAnimation(unitsButton);
         KeyboardAnimation.applyButtonAnimation(numbersButton);
     }
 
-    // обновление клавиатуры
+
     private void updateKeyboard() {
         List<List<SymbolKey>> pages = keyboardData.get(currentMode);
         if (pages == null || pages.isEmpty()) return;
 
-        if (currentPage >= pages.size()) currentPage = pages.size() - 1;
+        if (currentPage >= pages.size()) {
+            currentPage = pages.size() - 1;
+        }
 
         List<SymbolKey> baseKeys = pages.get(currentPage);
         List<SymbolKey> displayKeys = new ArrayList<>(baseKeys);
 
         String currentField = inputController.getCurrentInputField();
-        String currentDesignation = "designations".equals(currentField)
-                ? inputController.getCurrentDesignation()
-                : inputController.getCurrentUnknownDesignation();
+        String currentDesignation = null;
+        if ("designations".equals(currentField)) {
+            currentDesignation = inputController.getCurrentDesignation();
+        } else if ("unknown".equals(currentField)) {
+            currentDesignation = inputController.getCurrentUnknownDesignation();
+        }
 
-        // добавление модулей для энергии
+        // добавление модулей для энергии, если нет активного модуля
         if ("Numbers_and_operations".equals(currentMode) &&
                 ("designation_E".equals(currentDesignation) || "E_latin".equals(currentDesignation))) {
-            boolean hasSubscript = "designations".equals(currentField) ? inputController.hasSubscript() : inputController.hasUnknownSubscript();
+            boolean hasSubscript = false;
+            if ("designations".equals(currentField)) {
+                hasSubscript = inputController.hasSubscript();
+            } else if ("unknown".equals(currentField)) {
+                hasSubscript = inputController.hasUnknownSubscript();
+            }
             if (!hasSubscript) {
                 displayKeys.add(new SymbolKey("mod_subscript_p", "p", false));
                 displayKeys.add(new SymbolKey("mod_subscript_k", "k", false));
@@ -308,7 +391,9 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         List<String> allowedUnits = null;
         if ("Units_of_measurement".equals(currentMode) && currentDesignation != null) {
             PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(currentDesignation);
-            if (pq != null) allowedUnits = pq.getAllowedUnits();
+            if (pq != null) {
+                allowedUnits = pq.getAllowedUnits();
+            }
         }
 
         for (int i = 0; i < keyboardCells.size(); i++) {
@@ -316,7 +401,12 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
             if (i < displayKeys.size()) {
                 SymbolKey symbolKey = displayKeys.get(i);
                 keyView.setText(symbolKey.getDisplayText());
-                keyView.setTypeface(symbolKey.shouldUseStixFont() ? stixTypeface : Typeface.DEFAULT);
+
+                if (symbolKey.shouldUseStixFont()) {
+                    keyView.setTypeface(stixTypeface);
+                } else {
+                    keyView.setTypeface(Typeface.DEFAULT);
+                }
 
                 if ("Units_of_measurement".equals(currentMode) && allowedUnits != null) {
                     String unit = unitIdToUnitMap.get(symbolKey.getLogicalId());
@@ -332,11 +422,14 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                     keyView.setTypeface(Typeface.DEFAULT);
                 }
 
-                keyView.setOnClickListener(v -> {
+                keyView.setOnClickListener(view -> {
                     String displayText = symbolKey.getDisplayText();
                     String logicalId = symbolKey.getLogicalId();
                     LogUtils.logKeyPressed("KeyboardLogic", logicalId);
-                    inputController.onKeyInput(displayText, currentMode, symbolKey.shouldUseStixFont(), logicalId);
+                    if (inputController != null) {
+                        boolean keyUsesStix = symbolKey.shouldUseStixFont();
+                        inputController.onKeyInput(displayText, currentMode, keyUsesStix, logicalId);
+                    }
                 });
             } else {
                 keyView.setText("");
@@ -347,26 +440,33 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         pageNumberView.setText(String.format("%d | %d", currentPage + 1, pages.size()));
     }
 
-    // обновление стилей кнопок режимов
+    /**
+     * обновление стилей кнопок режимов
+     */
     private void updateModeButtonStyles() {
-        designationButton.setBackgroundResource("Designation".equals(currentMode) ? R.drawable.ic_back_black : R.drawable.ic_back);
+        designationButton.setBackgroundResource("Designation".equals(currentMode) ?
+                R.drawable.ic_back_black : R.drawable.ic_back);
         designationButton.setTextColor("Designation".equals(currentMode) ? Color.WHITE : Color.BLACK);
         designationButton.setSelected("Designation".equals(currentMode));
 
-        unitsButton.setBackgroundResource("Units_of_measurement".equals(currentMode) ? R.drawable.ic_back_black : R.drawable.ic_back);
+        unitsButton.setBackgroundResource("Units_of_measurement".equals(currentMode) ?
+                R.drawable.ic_back_black : R.drawable.ic_back);
         unitsButton.setTextColor("Units_of_measurement".equals(currentMode) ? Color.WHITE : Color.BLACK);
         unitsButton.setSelected("Units_of_measurement".equals(currentMode));
 
-        numbersButton.setBackgroundResource("Numbers_and_operations".equals(currentMode) ? R.drawable.ic_back_black : R.drawable.ic_back);
+        numbersButton.setBackgroundResource("Numbers_and_operations".equals(currentMode) ?
+                R.drawable.ic_back_black : R.drawable.ic_back);
         numbersButton.setTextColor("Numbers_and_operations".equals(currentMode) ? Color.WHITE : Color.BLACK);
         numbersButton.setSelected("Numbers_and_operations".equals(currentMode));
     }
 
-    // установка слушателей для переключения режимов
+    /**
+     * установка слушателей для переключения режимов
+     */
     private void setModeListeners() {
-        View.OnClickListener modeClickListener = v -> {
+        View.OnClickListener modeClickListener = view -> {
             String selectedMode = "";
-            int viewId = v.getId();
+            int viewId = view.getId();
             if (viewId == R.id.Designation) selectedMode = "Designation";
             else if (viewId == R.id.Units_of_measurement) selectedMode = "Units_of_measurement";
             else if (viewId == R.id.Numbers_and_operations) selectedMode = "Numbers_and_operations";
@@ -384,18 +484,21 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         numbersButton.setOnClickListener(modeClickListener);
     }
 
-    // установка слушателей для переключения страниц
+    /**
+     * установка слушателей для переключения страниц
+     */
     private void setPageListeners() {
-        prevPageButton.setOnClickListener(v -> {
-            if (currentPage > 0) currentPage--;
-            else {
+        prevPageButton.setOnClickListener(view -> {
+            if (currentPage > 0) {
+                currentPage--;
+            } else {
                 List<List<SymbolKey>> pages = keyboardData.get(currentMode);
                 if (pages != null && !pages.isEmpty()) currentPage = pages.size() - 1;
             }
             updateKeyboard();
         });
 
-        nextPageButton.setOnClickListener(v -> {
+        nextPageButton.setOnClickListener(view -> {
             List<List<SymbolKey>> pages = keyboardData.get(currentMode);
             if (pages != null && !pages.isEmpty()) {
                 currentPage = (currentPage < pages.size() - 1) ? currentPage + 1 : 0;

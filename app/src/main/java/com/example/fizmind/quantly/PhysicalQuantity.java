@@ -12,14 +12,13 @@ public class PhysicalQuantity {
     private final double constantValue;
     private final Map<String, Double> conversionFactors;
     private final String description;
-    //
 
     // конструктор для обычных величин
     public PhysicalQuantity(String designation, String siUnit, List<String> allowedUnits, String description) {
         this(designation, siUnit, allowedUnits, false, 0.0, new HashMap<>(), description);
         initConversionFactors();
     }
-//
+
     // конструктор для констант
     public PhysicalQuantity(String designation, String siUnit, List<String> allowedUnits,
                             boolean isConstant, double constantValue, String description) {
@@ -39,7 +38,7 @@ public class PhysicalQuantity {
         this.conversionFactors = conversionFactors;
         this.description = description;
     }
-//
+
     //  коэфф пересчета
     private void initConversionFactors() {
         switch (designation) {
