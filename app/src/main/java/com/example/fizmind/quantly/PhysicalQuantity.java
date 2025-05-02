@@ -18,7 +18,7 @@ public class PhysicalQuantity {
         this(designation, siUnit, allowedUnits, false, 0.0, new HashMap<>(), description);
         initConversionFactors();
     }
-
+//
     // конструктор для констант
     public PhysicalQuantity(String designation, String siUnit, List<String> allowedUnits,
                             boolean isConstant, double constantValue, String description) {
