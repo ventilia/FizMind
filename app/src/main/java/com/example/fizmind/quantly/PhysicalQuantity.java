@@ -39,7 +39,7 @@ public class PhysicalQuantity {
         this.conversionFactors = conversionFactors;
         this.description = description;
     }
-
+//
     //  коэфф пересчета
     private void initConversionFactors() {
         switch (designation) {
