@@ -8,138 +8,150 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+// класс для управления реестром физических величин
 public class PhysicalQuantityRegistry {
-    public static final Map<String, PhysicalQuantity> registry = new HashMap<>();
+    // статическая карта для хранения физических величин
+    private static final Map<String, PhysicalQuantity> registry = new HashMap<>();
+    // значение ускорения свободного падения по умолчанию
     private static double gravityValue = 9.8;
 
+    // статический блок инициализации реестра
     static {
-        // Длина: s
-        registry.put("s_latin", new PhysicalQuantity("s_latin", "m",
-                Arrays.asList("cm", "m", "km"), "длина"));
+        // длина: s
+        registry.put("s_latin", new PhysicalQuantity("s_latin", "длина", "m",
+                Arrays.asList("cm", "m", "km"), false, 0.0));
 
-        // Время: t
-        registry.put("designation_t", new PhysicalQuantity("designation_t", "s",
-                Arrays.asList("ms", "s", "min"), "время"));
+        // время: t
+        registry.put("designation_t", new PhysicalQuantity("designation_t", "время", "s",
+                Arrays.asList("ms", "s", "min"), false, 0.0));
 
-        // Скорость: v
-        registry.put("v_latin", new PhysicalQuantity("v_latin", "m/s",
-                Arrays.asList("cm/s", "m/s", "km/h"), "скорость"));
+        // скорость: v
+        registry.put("v_latin", new PhysicalQuantity("v_latin", "скорость", "m/s",
+                Arrays.asList("cm/s", "m/s", "km/h"), false, 0.0));
 
-        // Ускорение: a
-        registry.put("a_latin", new PhysicalQuantity("a_latin", "m/s²",
-                Arrays.asList("cm/s²", "m/s²", "km/h²"), "ускорение"));
+        // ускорение: a
+        registry.put("a_latin", new PhysicalQuantity("a_latin", "ускорение", "m/s²",
+                Arrays.asList("cm/s²", "m/s²", "km/h²"), false, 0.0));
 
-        // Масса: m
-        registry.put("m_latin", new PhysicalQuantity("m_latin", "kg",
-                Arrays.asList("g", "kg", "t"), "масса"));
+        // масса: m
+        registry.put("m_latin", new PhysicalQuantity("m_latin", "масса", "kg",
+                Arrays.asList("g", "kg", "t"), false, 0.0));
 
-        // Сила: F
-        registry.put("F_latin", new PhysicalQuantity("F_latin", "N",
-                Arrays.asList("dyne", "N", "kN"), "сила"));
+        // сила: F
+        registry.put("F_latin", new PhysicalQuantity("F_latin", "сила", "N",
+                Arrays.asList("dyne", "N", "kN"), false, 0.0));
 
-        // Вес: P
-        registry.put("designation_P", new PhysicalQuantity("designation_P", "N",
-                Arrays.asList("dyne", "N", "kN"), "вес"));
+        // вес: P
+        registry.put("designation_P", new PhysicalQuantity("designation_P", "вес", "N",
+                Arrays.asList("dyne", "N", "kN"), false, 0.0));
 
-        // Плотность: ρ
-        registry.put("designation_ρ", new PhysicalQuantity("designation_ρ", "kg/m³",
-                Arrays.asList("g/cm³", "kg/m³", "t/m³"), "плотность"));
+        // плотность: ρ
+        registry.put("designation_ρ", new PhysicalQuantity("designation_ρ", "плотность", "kg/m³",
+                Arrays.asList("g/cm³", "kg/m³", "t/m³"), false, 0.0));
 
-        // Давление: p
-        registry.put("designation_p", new PhysicalQuantity("designation_p", "Pa",
-                Arrays.asList("mmHg", "Pa", "atm"), "давление"));
+        // давление: p
+        registry.put("designation_p", new PhysicalQuantity("designation_p", "давление", "Pa",
+                Arrays.asList("mmHg", "Pa", "atm"), false, 0.0));
 
-        // Работа: A
-        registry.put("designation_A", new PhysicalQuantity("designation_A", "J",
-                Arrays.asList("erg", "J", "kJ"), "работа"));
+        // работа: A
+        registry.put("designation_A", new PhysicalQuantity("designation_A", "работа", "J",
+                Arrays.asList("erg", "J", "kJ"), false, 0.0));
 
-        // Мощность: N
-        registry.put("designation_N", new PhysicalQuantity("designation_N", "W",
-                Arrays.asList("erg/s", "W", "kW"), "мощность"));
+        // мощность: N
+        registry.put("designation_N", new PhysicalQuantity("designation_N", "мощность", "W",
+                Arrays.asList("erg/s", "W", "kW"), false, 0.0));
 
-        // Энергия: E
-        registry.put("E_latin", new PhysicalQuantity("E_latin", "J",
-                Arrays.asList("J", "kJ", "cal"), "энергия"));
-        registry.put("E_latin_p", new PhysicalQuantity("E_latin_p", "J",
-                Arrays.asList("J", "kJ", "cal"), "потенциальная энергия"));
-        registry.put("E_latin_k", new PhysicalQuantity("E_latin_k", "J",
-                Arrays.asList("J", "kJ", "cal"), "кинетическая энергия"));
+        // энергия: E
+        registry.put("E_latin", new PhysicalQuantity("E_latin", "энергия", "J",
+                Arrays.asList("J", "kJ", "cal"), false, 0.0));
+        registry.put("E_latin_p", new PhysicalQuantity("E_latin_p", "потенциальная энергия", "J",
+                Arrays.asList("J", "kJ", "cal"), false, 0.0));
+        registry.put("E_latin_k", new PhysicalQuantity("E_latin_k", "кинетическая энергия", "J",
+                Arrays.asList("J", "kJ", "cal"), false, 0.0));
 
-        // Температура: T
-        registry.put("designation_T", new PhysicalQuantity("designation_T", "K",
-                Arrays.asList("°C", "K", "°F"), "температура"));
+        // температура: T
+        registry.put("designation_T", new PhysicalQuantity("designation_T", "температура", "K",
+                Arrays.asList("°C", "K", "°F"), false, 0.0));
 
-        // Количество теплоты: Q
-        registry.put("designation_Q", new PhysicalQuantity("designation_Q", "J",
-                Arrays.asList("cal", "J", "kJ"), "количество теплоты"));
+        // количество теплоты: Q
+        registry.put("designation_Q", new PhysicalQuantity("designation_Q", "количество теплоты", "J",
+                Arrays.asList("cal", "J", "kJ"), false, 0.0));
 
-        // Электрический ток: I
-        registry.put("designation_I", new PhysicalQuantity("designation_I", "A",
-                Arrays.asList("mA", "A", "kA"), "электрический ток"));
+        // электрический ток: I
+        registry.put("designation_I", new PhysicalQuantity("designation_I", "электрический ток", "A",
+                Arrays.asList("mA", "A", "kA"), false, 0.0));
 
-        // Напряжение: U
-        registry.put("U_latin", new PhysicalQuantity("U_latin", "V",
-                Arrays.asList("mV", "V", "kV"), "напряжение"));
+        // напряжение: U
+        registry.put("U_latin", new PhysicalQuantity("U_latin", "напряжение", "V",
+                Arrays.asList("mV", "V", "kV"), false, 0.0));
 
-        // Сопротивление: R
-        registry.put("R_latin", new PhysicalQuantity("R_latin", "Ω",
-                Arrays.asList("mΩ", "Ω", "kΩ"), "сопротивление"));
+        // сопротивление: R
+        registry.put("R_latin", new PhysicalQuantity("R_latin", "сопротивление", "Ω",
+                Arrays.asList("mΩ", "Ω", "kΩ"), false, 0.0));
 
-        // Мощность электрического тока: P
-        registry.put("P_power", new PhysicalQuantity("P_power", "W",
-                Arrays.asList("mW", "W", "kW"), "мощность электрического тока"));
+        // мощность электрического тока: P
+        registry.put("P_power", new PhysicalQuantity("P_power", "мощность электрического тока", "W",
+                Arrays.asList("mW", "W", "kW"), false, 0.0));
 
-        // Скорость света: c
-        registry.put("designation_c", new PhysicalQuantity("designation_c", "m/s",
-                Arrays.asList("cm/s", "m/s", "km/s"), "скорость света"));
+        // скорость света: c
+        registry.put("designation_c", new PhysicalQuantity("designation_c", "скорость света", "m/s",
+                Arrays.asList("cm/s", "m/s", "km/s"), false, 0.0));
 
-        // Длина волны: λ
-        registry.put("designation_λ", new PhysicalQuantity("designation_λ", "m",
-                Arrays.asList("nm", "m", "km"), "длина волны"));
+        // длина волны: λ
+        registry.put("designation_λ", new PhysicalQuantity("designation_λ", "длина волны", "m",
+                Arrays.asList("nm", "m", "km"), false, 0.0));
 
-        // Частота: f
-        registry.put("designation_f", new PhysicalQuantity("designation_f", "Hz",
-                Arrays.asList("mHz", "Hz", "kHz"), "частота"));
+        // частота: f
+        registry.put("designation_f", new PhysicalQuantity("designation_f", "частота", "Hz",
+                Arrays.asList("mHz", "Hz", "kHz"), false, 0.0));
 
-        // Объем: V
-        registry.put("designation_V", new PhysicalQuantity("designation_V", "m³",
-                Arrays.asList("cm³", "m³", "L"), "объем"));
+        // объем: V
+        registry.put("designation_V", new PhysicalQuantity("designation_V", "объем", "m³",
+                Arrays.asList("cm³", "m³", "L"), false, 0.0));
 
-        // Площадь: S
-        registry.put("S_latin", new PhysicalQuantity("S_latin", "m²",
-                Arrays.asList("cm²", "m²", "km²"), "площадь"));
+        // площадь: S
+        registry.put("S_latin", new PhysicalQuantity("S_latin", "площадь", "m²",
+                Arrays.asList("cm²", "m²", "km²"), false, 0.0));
 
-        // Высота: h
-        registry.put("h_latin", new PhysicalQuantity("h_latin", "m",
-                Arrays.asList("cm", "m", "km"), "высота"));
+        // высота: h
+        registry.put("h_latin", new PhysicalQuantity("h_latin", "высота", "m",
+                Arrays.asList("cm", "m", "km"), false, 0.0));
 
-        // Ускорение свободного падения: g
-        registry.put("designation_g", new PhysicalQuantity("designation_g", "m/s²",
-                Arrays.asList("cm/s²", "m/s²", "km/s²"), true, gravityValue, "ускорение свободного падения"));
+        // ускорение свободного падения: g
+        registry.put("designation_g", new PhysicalQuantity("designation_g", "ускорение свободного падения", "m/s²",
+                Arrays.asList("cm/s²", "m/s²", "km/s²"), true, gravityValue));
 
-        registry.put("c_latin", new PhysicalQuantity("c_latin", "m/s",
-                Arrays.asList("cm/s", "m/s", "km/s"), true, 299792458.0, "скорость света"));
-        
+        // скорость света как константа: c
+        registry.put("c_latin", new PhysicalQuantity("c_latin", "скорость света", "m/s",
+                Arrays.asList("cm/s", "m/s", "km/s"), true, 299792458.0));
     }
 
-
-
-
-    // обновляет g
+    // обновление значения ускорения свободного падения из настроек
     public static void updateGravityValue(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         boolean useTen = prefs.getBoolean("gravity_value", false);
         gravityValue = useTen ? 10.0 : 9.8;
-        registry.put("designation_g", new PhysicalQuantity("designation_g", "m/s²",
-                Arrays.asList("cm/s²", "m/s²", "km/s²"), true, gravityValue, "ускорение свободного падения"));
+        registry.put("designation_g", new PhysicalQuantity("designation_g", "ускорение свободного падения", "m/s²",
+                Arrays.asList("cm/s²", "m/s²", "km/s²"), true, gravityValue));
     }
 
+    // получение физической величины по обозначению
     public static PhysicalQuantity getPhysicalQuantity(String designation) {
         return registry.get(designation);
     }
 
-
+    // получение текущего значения ускорения свободного падения
     public static double getGravityValue() {
         return gravityValue;
+    }
+
+    // очистка реестра (если потребуется для новой логики)
+    public static void clearRegistry() {
+        registry.clear();
+    }
+
+    // добавление новой физической величины в реестр
+    public static void addPhysicalQuantity(String key, PhysicalQuantity quantity) {
+        registry.put(key, quantity);
     }
 }

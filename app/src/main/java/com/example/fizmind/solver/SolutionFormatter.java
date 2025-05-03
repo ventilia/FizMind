@@ -23,22 +23,24 @@ public class SolutionFormatter {
     private final Typeface montserratAlternatesTypeface;
     private final DisplayManager displayManager;
 
+    // конструктор с зависимостями
     public SolutionFormatter(Typeface montserratAlternatesTypeface, DisplayManager displayManager) {
         this.montserratAlternatesTypeface = montserratAlternatesTypeface;
         this.displayManager = displayManager;
     }
 
+    // форматирование решения задачи
     public SpannableStringBuilder formatSolution(List<ConcreteMeasurement> originalMeasurements,
                                                  List<ConcreteMeasurement> siMeasurements,
                                                  String unknownDesignation, Solver.SolutionResult result) {
         SpannableStringBuilder builder = new SpannableStringBuilder();
 
-
+        // вывод исходных данных
         int start = builder.length();
         builder.append("Дано:\n");
         applyTypeface(builder, start, builder.length());
         for (ConcreteMeasurement measurement : originalMeasurements) {
-            String displayDesignation = displayManager.getDisplayTextFromLogicalId(measurement.getFullDesignation());
+            String displayDesignation = displayManager.getDisplayTextFromLogicalId(measurement.getBaseDesignation());
             builder.append(displayDesignation)
                     .append(" = ")
                     .append(SIConverter.formatValue(measurement.getOriginalValue()))
@@ -48,12 +50,12 @@ public class SolutionFormatter {
         }
         builder.append("\n");
 
-
+        // перевод в си
         start = builder.length();
         builder.append("Перевод в СИ:\n");
         applyTypeface(builder, start, builder.length());
         for (ConcreteMeasurement measurement : siMeasurements) {
-            String displayDesignation = displayManager.getDisplayTextFromLogicalId(measurement.getFullDesignation());
+            String displayDesignation = displayManager.getDisplayTextFromLogicalId(measurement.getBaseDesignation());
             if (!measurement.isSIUnit()) {
                 builder.append(displayDesignation)
                         .append(" = ")
@@ -70,10 +72,13 @@ public class SolutionFormatter {
         }
         builder.append("\n");
 
+        // преобразование измерений в карту известных значений
         Map<String, Double> knownValues = convertToMap(siMeasurements);
 
+        // промежуточные вычисления (заглушка, так как шаги не реализованы)
         boolean hasIntermediateSteps = false;
-        for (Solver.Step step : result.getSteps()) {
+        List<Solver.Step> steps = result.getStepsAsList();
+        for (Solver.Step step : steps) {
             if (!step.getVariable().equals(unknownDesignation)) {
                 hasIntermediateSteps = true;
                 break;
@@ -83,7 +88,7 @@ public class SolutionFormatter {
             start = builder.length();
             builder.append("Промежуточные вычисления:\n");
             applyTypeface(builder, start, builder.length());
-            for (Solver.Step step : result.getSteps()) {
+            for (Solver.Step step : steps) {
                 if (!step.getVariable().equals(unknownDesignation)) {
                     Formula formula = step.getFormula();
                     String displayExpression = displayManager.getDisplayExpression(formula, step.getVariable());
@@ -102,17 +107,15 @@ public class SolutionFormatter {
             }
         }
 
-
-        Solver.Step finalStep = result.getSteps().isEmpty() ? null : result.getSteps().get(result.getSteps().size() - 1);
+        // финальный шаг с формулой (заглушка)
+        Solver.Step finalStep = steps.isEmpty() ? null : steps.get(steps.size() - 1);
         if (finalStep != null && finalStep.getVariable().equals(unknownDesignation)) {
-            // Display Formula
             start = builder.length();
             builder.append("Воспользуемся формулой:\n");
             applyTypeface(builder, start, builder.length());
             Formula formula = finalStep.getFormula();
             String displayExpression = displayManager.getDisplayExpression(formula, unknownDesignation);
             builder.append(Html.fromHtml(displayExpression)).append("\n\n");
-
 
             start = builder.length();
             builder.append("Подставим значения:\n");
@@ -121,6 +124,7 @@ public class SolutionFormatter {
             builder.append(Html.fromHtml(substitution)).append("\n\n");
         }
 
+        // результат
         start = builder.length();
         builder.append("Результат:\n");
         applyTypeface(builder, start, builder.length());
@@ -133,7 +137,7 @@ public class SolutionFormatter {
                 .append(unit)
                 .append("\n\n");
 
-
+        // ответ с округлением
         start = builder.length();
         builder.append("Ответ: ");
         applyTypeface(builder, start, builder.length());
@@ -150,6 +154,7 @@ public class SolutionFormatter {
         return builder;
     }
 
+    // построение подстановки значений в формулу
     private String buildSubstitution(String displayExpression, Formula formula, Map<String, Double> knownValues, String targetVariable) {
         String[] parts = displayExpression.split("=");
         if (parts.length != 2) return "ошибка в формуле";
@@ -177,21 +182,24 @@ public class SolutionFormatter {
         return left + " = " + right;
     }
 
+    // получение единицы измерения из реестра
     private String getUnit(String designation) {
         PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(designation);
         return pq != null ? pq.getSiUnit() : "";
     }
 
+    // применение шрифта к тексту
     private void applyTypeface(SpannableStringBuilder builder, int start, int end) {
         if (montserratAlternatesTypeface != null) {
             builder.setSpan(new CustomTypefaceSpan(montserratAlternatesTypeface), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
     }
 
+    // преобразование списка измерений в карту
     public Map<String, Double> convertToMap(List<ConcreteMeasurement> measurements) {
         Map<String, Double> knownValues = new HashMap<>();
         for (ConcreteMeasurement measurement : measurements) {
-            knownValues.put(measurement.getFullDesignation(), measurement.getValue());
+            knownValues.put(measurement.getBaseDesignation(), measurement.getValue());
         }
         return knownValues;
     }

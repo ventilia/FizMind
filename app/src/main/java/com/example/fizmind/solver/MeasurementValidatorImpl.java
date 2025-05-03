@@ -9,25 +9,20 @@ import com.example.fizmind.utils.LogUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-
- // реализация интерфейса
-
 public class MeasurementValidatorImpl implements MeasurementValidator {
-
 
     @Override
     public boolean requiresConversion(List<ConcreteMeasurement> measurements) {
         for (ConcreteMeasurement measurement : measurements) {
             PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(measurement.getDesignation());
             if (pq != null && !pq.getSiUnit().equalsIgnoreCase(measurement.getUnit())) {
-                LogUtils.d("MeasurementValidatorImpl", "измерение требует конвертации: " + measurement);
+                LogUtils.d("MeasurementValidatorImpl", "Измерение требует конвертации: " + measurement);
                 return true;
             }
         }
-        LogUtils.d("MeasurementValidatorImpl", "все измерения уже в си");
+        LogUtils.d("MeasurementValidatorImpl", "Все измерения уже в СИ");
         return false;
     }
-
 
     @Override
     public List<ConcreteMeasurement> convertToSI(List<ConcreteMeasurement> measurements) {
@@ -48,14 +43,14 @@ public class MeasurementValidatorImpl implements MeasurementValidator {
                             true, measurement.isConversionMode()
                     );
                     siMeasurements.add(siMeasurement);
-                    LogUtils.d("MeasurementValidatorImpl", "успешно конвертировано в си: " + siMeasurement);
+                    LogUtils.d("MeasurementValidatorImpl", "Успешно конвертировано в СИ: " + siMeasurement);
                 } else {
-                    LogUtils.w("MeasurementValidatorImpl", "не удалось конвертировать, используется исходное: " + measurement);
+                    LogUtils.w("MeasurementValidatorImpl", "Не удалось конвертировать, используется исходное: " + measurement);
                     siMeasurements.add(measurement);
                 }
             } else {
                 siMeasurements.add(measurement);
-                LogUtils.d("MeasurementValidatorImpl", "измерение уже в си или не требует конвертации: " + measurement);
+                LogUtils.d("MeasurementValidatorImpl", "Измерение уже в СИ или не требует конвертации: " + measurement);
             }
         }
         return siMeasurements;

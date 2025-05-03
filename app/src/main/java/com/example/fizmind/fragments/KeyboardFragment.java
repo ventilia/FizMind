@@ -8,38 +8,41 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.room.Room;
+
 import com.example.fizmind.SI.ConversionService;
 import com.example.fizmind.R;
 import com.example.fizmind.Activity.SolutionActivity;
+import com.example.fizmind.database.AppDatabase;
+import com.example.fizmind.database.ConcreteMeasurementEntity;
+import com.example.fizmind.database.UnknownQuantityEntity;
 import com.example.fizmind.keyboard.DisplayManager;
 import com.example.fizmind.keyboard.InputController;
 import com.example.fizmind.keyboard.KeyboardLogic;
-import com.example.fizmind.measurement.ConcreteMeasurement;
-import com.example.fizmind.measurement.UnknownQuantity;
 import com.example.fizmind.utils.LogUtils;
 import com.google.android.material.snackbar.Snackbar;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-
+// фрагмент клавиатуры, работающий с базой данных
 public class KeyboardFragment extends Fragment {
-
     private KeyboardLogic keyboardLogic;
     private InputController inputController;
     private TextView editTextDesignations;
     private TextView editTextUnknown;
     private boolean isUnknownInputAllowed = true;
     private boolean isConversionMode = false;
+    private AppDatabase database;
 
+    // конструктор по умолчанию
+    public KeyboardFragment() {}
 
-    public KeyboardFragment() {
-    }
-
+    // создание экземпляра фрагмента с параметрами
     public static KeyboardFragment newInstance(boolean isConversionMode, boolean isUnknownInputAllowed) {
         KeyboardFragment fragment = new KeyboardFragment();
         Bundle args = new Bundle();
@@ -49,7 +52,6 @@ public class KeyboardFragment extends Fragment {
         return fragment;
     }
 
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -57,9 +59,12 @@ public class KeyboardFragment extends Fragment {
             isConversionMode = getArguments().getBoolean("isConversionMode", false);
             isUnknownInputAllowed = getArguments().getBoolean("isUnknownInputAllowed", true);
         }
+        // инициализация базы данных
+        database = Room.databaseBuilder(requireContext(), AppDatabase.class, "fizmind-db")
+                .allowMainThreadQueries()
+                .build();
         LogUtils.d("KeyboardFragment", "создан фрагмент, режим: " + (isConversionMode ? "конвертация" : "калькулятор"));
     }
-
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -70,6 +75,7 @@ public class KeyboardFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // инициализация элементов интерфейса
         List<TextView> keyboardCells = Arrays.asList(
                 view.findViewById(R.id.key_1), view.findViewById(R.id.key_2), view.findViewById(R.id.key_3),
                 view.findViewById(R.id.key_4), view.findViewById(R.id.key_5), view.findViewById(R.id.key_6),
@@ -97,25 +103,16 @@ public class KeyboardFragment extends Fragment {
 
         editTextDesignations.setMovementMethod(new ScrollingMovementMethod());
 
+        // инициализация логики клавиатуры
         keyboardLogic = new KeyboardLogic(
-                requireContext(),
-                keyboardCells,
-                pageNumberView,
-                designationButton,
-                unitsButton,
-                numbersButton,
-                prevPageButton,
-                nextPageButton,
-                buttonScrollDown,
-                editTextDesignations,
-                editTextUnknown,
-                buttonLeft,
-                buttonRight,
-                view
+                requireContext(), keyboardCells, pageNumberView, designationButton,
+                unitsButton, numbersButton, prevPageButton, nextPageButton,
+                buttonScrollDown, editTextDesignations, editTextUnknown,
+                buttonLeft, buttonRight, view
         );
         keyboardLogic.setUseStixFont(true);
 
-        //  DisplayManager
+        // инициализация контроллера ввода
         DisplayManager displayManager = new DisplayManager(keyboardLogic.getStixTypeface());
         inputController = new InputController(editTextDesignations, editTextUnknown, new ConversionService(), view, displayManager);
         inputController.setConversionMode(isConversionMode);
@@ -124,6 +121,7 @@ public class KeyboardFragment extends Fragment {
         inputController.setKeyboardModeSwitcher(keyboardLogic);
         keyboardLogic.setInputController(inputController);
 
+        // установка обработчиков событий
         buttonSave.setOnClickListener(v -> {
             LogUtils.logButtonPressed("KeyboardFragment", "SAVE");
             inputController.onDownArrowPressed();
@@ -166,8 +164,9 @@ public class KeyboardFragment extends Fragment {
         });
     }
 
+    // обработка нажатия кнопки перехода к решению
     private void handleCycleButtonPress() {
-        List<UnknownQuantity> unknowns = inputController.getUnknowns();
+        List<UnknownQuantityEntity> unknowns = database.unknownQuantityDao().getAllUnknowns();
         if (unknowns.isEmpty()) {
             if (getView() != null) {
                 Snackbar.make(getView(), "Пожалуйста, введите неизвестное", Snackbar.LENGTH_SHORT).show();
@@ -176,32 +175,17 @@ public class KeyboardFragment extends Fragment {
             return;
         }
 
-        List<ConcreteMeasurement> measurementsList = inputController.getMeasurements();
-        if (measurementsList == null || measurementsList.isEmpty()) {
+        List<ConcreteMeasurementEntity> measurementsList = database.measurementDao().getAllMeasurements();
+        if (measurementsList.isEmpty()) {
             if (getView() != null) {
                 Snackbar.make(getView(), "Пожалуйста, введите измерения", Snackbar.LENGTH_SHORT).show();
             }
-            LogUtils.w("KeyboardFragment", "измерения не введены или null");
+            LogUtils.w("KeyboardFragment", "измерения не введены");
             return;
         }
 
-        //  arraylist для parcelable
-        ArrayList<ConcreteMeasurement> measurements = new ArrayList<>(measurementsList);
-        UnknownQuantity unknown = unknowns.get(0);
-
-
-        String fullUnknownDesignation = unknown.getLogicalDesignation();
-        String subscript = unknown.getSubscript();
-        if (subscript != null && !subscript.isEmpty()) {
-            fullUnknownDesignation += "_" + subscript;
-        }
-
-
-        LogUtils.d("KeyboardFragment", "передача данных в SolutionActivity: measurements=" + measurements.toString() + ", unknown=" + fullUnknownDesignation);
-
+        LogUtils.d("KeyboardFragment", "переход в SolutionActivity, данные будут взяты из БД");
         Intent intent = new Intent(getActivity(), SolutionActivity.class);
-        intent.putParcelableArrayListExtra("measurements", measurements);
-        intent.putExtra("unknown", fullUnknownDesignation);
         startActivity(intent);
     }
 }
