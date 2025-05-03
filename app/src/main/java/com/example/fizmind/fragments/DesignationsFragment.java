@@ -28,17 +28,14 @@ public class DesignationsFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_designations, container, false);
         listView = view.findViewById(R.id.list_view_designations);
 
-
         ImageView backButton = view.findViewById(R.id.backButton);
         backButton.setOnClickListener(v -> getActivity().onBackPressed());
         Typeface stixTypeface = Typeface.createFromAsset(getContext().getAssets(), "fonts/stix_two_text_italic.ttf");
 
         displayManager = new DisplayManager(stixTypeface);
 
-
-        Map<String, PhysicalQuantity> registry = PhysicalQuantityRegistry.registry;
-        List<PhysicalQuantity> quantities = new ArrayList<>(registry.values());
-
+        // получаем список всех физических величин
+        List<PhysicalQuantity> quantities = new ArrayList<>(PhysicalQuantityRegistry.getAllQuantities());
 
         adapter = new DesignationAdapter(getContext(), quantities, displayManager);
         listView.setAdapter(adapter);

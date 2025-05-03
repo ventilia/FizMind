@@ -94,7 +94,7 @@ public class InputController {
                 .allowMainThreadQueries()
                 .build();
         updateDisplay();
-        logUtils.logControllerInitialized("InputController");
+
     }
 
     // установка разрешения ввода неизвестного

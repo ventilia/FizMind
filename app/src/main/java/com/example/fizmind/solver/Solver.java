@@ -3,9 +3,11 @@ package com.example.fizmind.solver;
 import com.example.fizmind.database.AppDatabase;
 import com.example.fizmind.database.ConcreteMeasurementEntity;
 import com.example.fizmind.database.UnknownQuantityEntity;
+import com.example.fizmind.formulas.Formula;
 import com.example.fizmind.formulas.FormulaDatabase;
 import com.example.fizmind.utils.LogUtils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,25 +38,49 @@ public class Solver {
             knownValues.put(measurement.getBaseDesignation(), measurement.getValue());
         }
 
-        // заглушка для логики решения (замените на реальную реализацию)
+        // заглушка для логики решения
         double result = 0.0;
-        String steps = "Решение пока не реализовано";
+        List<Step> steps = new ArrayList<>();
+        // пример шага (заглушка, замените на реальную логику)
+        if (!formulaDatabase.getFormulas().isEmpty()) {
+            Formula exampleFormula = formulaDatabase.getFormulas().get(0);
+            steps.add(new Step(unknownDesignation, exampleFormula, result));
+        }
 
         LogUtils.d("Solver", "Решение для " + unknownDesignation + " с известными значениями: " + knownValues);
         return new SolutionResult(result, steps);
     }
-}
 
-// класс результата решения
-class SolutionResult {
-    private final double result;
-    private final String steps;
+    // внутренний класс для шага решения
+    public static class Step {
+        private final String variable; // переменная шага
+        private final Formula formula; // формула шага
+        private final double value;   // вычисленное значение
 
-    public SolutionResult(double result, String steps) {
-        this.result = result;
-        this.steps = steps;
+        public Step(String variable, Formula formula, double value) {
+            this.variable = variable;
+            this.formula = formula;
+            this.value = value;
+        }
+
+        // геттеры
+        public String getVariable() { return variable; }
+        public Formula getFormula() { return formula; }
+        public double getValue() { return value; }
     }
 
-    public double getResult() { return result; }
-    public String getSteps() { return steps; }
+    // класс результата решения
+    public static class SolutionResult {
+        private final double result;  // итоговый результат
+        private final List<Step> steps; // список шагов
+
+        public SolutionResult(double result, List<Step> steps) {
+            this.result = result;
+            this.steps = steps;
+        }
+
+        // геттеры
+        public double getResult() { return result; }
+        public List<Step> getSteps() { return steps; }
+    }
 }

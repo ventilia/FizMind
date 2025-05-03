@@ -9,12 +9,29 @@ import com.example.fizmind.utils.LogUtils;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Реализация валидатора измерений для проверки и конвертации измерений в систему СИ.
+ */
 public class MeasurementValidatorImpl implements MeasurementValidator {
+    private final SIConverter siConverter;
 
+    /**
+     * Конструктор, принимающий экземпляр SIConverter для выполнения конвертации.
+     * @param siConverter Экземпляр класса SIConverter
+     */
+    public MeasurementValidatorImpl(SIConverter siConverter) {
+        this.siConverter = siConverter;
+    }
+
+    /**
+     * Проверяет, требуют ли измерения конвертации в систему СИ.
+     * @param measurements Список измерений для проверки
+     * @return true, если хотя бы одно измерение требует конвертации, иначе false
+     */
     @Override
     public boolean requiresConversion(List<ConcreteMeasurement> measurements) {
         for (ConcreteMeasurement measurement : measurements) {
-            PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(measurement.getDesignation());
+            PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(measurement.getBaseDesignation());
             if (pq != null && !pq.getSiUnit().equalsIgnoreCase(measurement.getUnit())) {
                 LogUtils.d("MeasurementValidatorImpl", "Измерение требует конвертации: " + measurement);
                 return true;
@@ -24,18 +41,26 @@ public class MeasurementValidatorImpl implements MeasurementValidator {
         return false;
     }
 
+    /**
+     * Конвертирует список измерений в систему СИ, если это необходимо.
+     * @param measurements Список измерений для конвертации
+     * @return Новый список измерений, приведенных к системе СИ
+     */
     @Override
     public List<ConcreteMeasurement> convertToSI(List<ConcreteMeasurement> measurements) {
         List<ConcreteMeasurement> siMeasurements = new ArrayList<>();
         for (ConcreteMeasurement measurement : measurements) {
-            PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(measurement.getDesignation());
+            PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(measurement.getBaseDesignation());
             if (pq != null && !pq.getSiUnit().equalsIgnoreCase(measurement.getUnit())) {
-                Object[] siData = SIConverter.convertToSI(pq, measurement.getValue(), measurement.getUnit());
+                // Извлекаем строковый идентификатор физической величины
+                String designation = pq.getId();
+                // Вызываем метод convertToSI на экземпляре siConverter
+                Object[] siData = siConverter.convertToSI(designation, measurement.getValue(), measurement.getUnit());
                 if (siData != null) {
                     double siValue = (double) siData[0];
                     String siUnit = (String) siData[1];
                     ConcreteMeasurement siMeasurement = new ConcreteMeasurement(
-                            measurement.getDesignation(), siValue, siUnit,
+                            measurement.getBaseDesignation(), siValue, siUnit,
                             measurement.getDesignationOperations(), measurement.getValueOperations(),
                             measurement.getSubscript(), measurement.isConstant(),
                             measurement.getOriginalDisplay(), measurement.getOriginalValue(),

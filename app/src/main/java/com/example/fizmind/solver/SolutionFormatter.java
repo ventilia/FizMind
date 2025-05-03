@@ -7,39 +7,50 @@ import android.text.style.StyleSpan;
 import android.graphics.Typeface;
 
 import com.example.fizmind.SI.SIConverter;
-import com.example.fizmind.quantly.PhysicalQuantity;
-import com.example.fizmind.quantly.PhysicalQuantityRegistry;
 import com.example.fizmind.animation.CustomTypefaceSpan;
+import com.example.fizmind.database.AppDatabase;
+import com.example.fizmind.database.ConcreteMeasurementEntity;
+import com.example.fizmind.database.UnknownQuantityEntity;
 import com.example.fizmind.formulas.Formula;
 import com.example.fizmind.keyboard.DisplayManager;
-import com.example.fizmind.measurement.ConcreteMeasurement;
+import com.example.fizmind.quantly.PhysicalQuantity;
+import com.example.fizmind.quantly.PhysicalQuantityRegistry;
 import com.example.fizmind.utils.LogUtils;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+// класс для форматирования решения задачи
 public class SolutionFormatter {
     private final Typeface montserratAlternatesTypeface;
     private final DisplayManager displayManager;
+    private final AppDatabase database;
 
-    // конструктор с зависимостями
-    public SolutionFormatter(Typeface montserratAlternatesTypeface, DisplayManager displayManager) {
+    // конструктор с подключением к базе данных
+    public SolutionFormatter(Typeface montserratAlternatesTypeface, DisplayManager displayManager, AppDatabase database) {
         this.montserratAlternatesTypeface = montserratAlternatesTypeface;
         this.displayManager = displayManager;
+        this.database = database;
     }
 
-    // форматирование решения задачи
-    public SpannableStringBuilder formatSolution(List<ConcreteMeasurement> originalMeasurements,
-                                                 List<ConcreteMeasurement> siMeasurements,
-                                                 String unknownDesignation, Solver.SolutionResult result) {
+    // форматирование решения на основе данных из базы
+    public SpannableStringBuilder formatSolution(Solver.SolutionResult result) {
+        List<ConcreteMeasurementEntity> measurements = database.measurementDao().getAllMeasurements();
+        List<UnknownQuantityEntity> unknowns = database.unknownQuantityDao().getAllUnknowns();
+
+        if (unknowns.isEmpty()) {
+            throw new IllegalStateException("нет неизвестных величин для решения");
+        }
+
+        String unknownDesignation = unknowns.get(0).getLogicalDesignation();
         SpannableStringBuilder builder = new SpannableStringBuilder();
 
-        // вывод исходных данных
+        // раздел "Дано"
         int start = builder.length();
         builder.append("Дано:\n");
         applyTypeface(builder, start, builder.length());
-        for (ConcreteMeasurement measurement : originalMeasurements) {
+        for (ConcreteMeasurementEntity measurement : measurements) {
             String displayDesignation = displayManager.getDisplayTextFromLogicalId(measurement.getBaseDesignation());
             builder.append(displayDesignation)
                     .append(" = ")
@@ -50,11 +61,11 @@ public class SolutionFormatter {
         }
         builder.append("\n");
 
-        // перевод в си
+        // раздел "Перевод в СИ"
         start = builder.length();
         builder.append("Перевод в СИ:\n");
         applyTypeface(builder, start, builder.length());
-        for (ConcreteMeasurement measurement : siMeasurements) {
+        for (ConcreteMeasurementEntity measurement : measurements) {
             String displayDesignation = displayManager.getDisplayTextFromLogicalId(measurement.getBaseDesignation());
             if (!measurement.isSIUnit()) {
                 builder.append(displayDesignation)
@@ -72,13 +83,15 @@ public class SolutionFormatter {
         }
         builder.append("\n");
 
-        // преобразование измерений в карту известных значений
-        Map<String, Double> knownValues = convertToMap(siMeasurements);
+        // подготовка известных значений
+        Map<String, Double> knownValues = new HashMap<>();
+        for (ConcreteMeasurementEntity measurement : measurements) {
+            knownValues.put(measurement.getBaseDesignation(), measurement.getValue());
+        }
 
-        // промежуточные вычисления (заглушка, так как шаги не реализованы)
+        // промежуточные вычисления
         boolean hasIntermediateSteps = false;
-        List<Solver.Step> steps = result.getStepsAsList();
-        for (Solver.Step step : steps) {
+        for (Solver.Step step : result.getSteps()) {
             if (!step.getVariable().equals(unknownDesignation)) {
                 hasIntermediateSteps = true;
                 break;
@@ -88,10 +101,11 @@ public class SolutionFormatter {
             start = builder.length();
             builder.append("Промежуточные вычисления:\n");
             applyTypeface(builder, start, builder.length());
-            for (Solver.Step step : steps) {
+            for (Solver.Step step : result.getSteps()) {
                 if (!step.getVariable().equals(unknownDesignation)) {
                     Formula formula = step.getFormula();
-                    String displayExpression = displayManager.getDisplayExpression(formula, step.getVariable());
+                    // используем метод из Formula вместо DisplayManager
+                    String displayExpression = formula.getDisplayExpression(step.getVariable());
                     builder.append(Html.fromHtml(displayExpression)).append("\n");
                     String substitution = buildSubstitution(displayExpression, formula, knownValues, step.getVariable());
                     builder.append(Html.fromHtml(substitution)).append("\n");
@@ -107,14 +121,15 @@ public class SolutionFormatter {
             }
         }
 
-        // финальный шаг с формулой (заглушка)
-        Solver.Step finalStep = steps.isEmpty() ? null : steps.get(steps.size() - 1);
+        // финальный шаг
+        Solver.Step finalStep = result.getSteps().isEmpty() ? null : result.getSteps().get(result.getSteps().size() - 1);
         if (finalStep != null && finalStep.getVariable().equals(unknownDesignation)) {
             start = builder.length();
             builder.append("Воспользуемся формулой:\n");
             applyTypeface(builder, start, builder.length());
             Formula formula = finalStep.getFormula();
-            String displayExpression = displayManager.getDisplayExpression(formula, unknownDesignation);
+            // используем метод из Formula вместо DisplayManager
+            String displayExpression = formula.getDisplayExpression(unknownDesignation);
             builder.append(Html.fromHtml(displayExpression)).append("\n\n");
 
             start = builder.length();
@@ -137,7 +152,7 @@ public class SolutionFormatter {
                 .append(unit)
                 .append("\n\n");
 
-        // ответ с округлением
+        // ответ
         start = builder.length();
         builder.append("Ответ: ");
         applyTypeface(builder, start, builder.length());
@@ -182,25 +197,16 @@ public class SolutionFormatter {
         return left + " = " + right;
     }
 
-    // получение единицы измерения из реестра
+    // получение единицы измерения
     private String getUnit(String designation) {
         PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(designation);
         return pq != null ? pq.getSiUnit() : "";
     }
 
-    // применение шрифта к тексту
+    // применение шрифта
     private void applyTypeface(SpannableStringBuilder builder, int start, int end) {
         if (montserratAlternatesTypeface != null) {
             builder.setSpan(new CustomTypefaceSpan(montserratAlternatesTypeface), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
-    }
-
-    // преобразование списка измерений в карту
-    public Map<String, Double> convertToMap(List<ConcreteMeasurement> measurements) {
-        Map<String, Double> knownValues = new HashMap<>();
-        for (ConcreteMeasurement measurement : measurements) {
-            knownValues.put(measurement.getBaseDesignation(), measurement.getValue());
-        }
-        return knownValues;
     }
 }

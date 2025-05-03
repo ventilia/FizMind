@@ -59,21 +59,19 @@ public class FormulaAdapter extends BaseAdapter {
 
         Formula formula = formulas.get(position);
 
-
-        String expression = displayManager.getDisplayExpression(formula, formula.getVariables().get(0));
+        // получаем базовое выражение формулы (предполагаем, что такой метод есть)
+        String expression = formula.getBaseExpression();
         StringBuilder description = new StringBuilder();
-
 
         description.append(expression).append("<br>где:<br>");
 
-
+        // получаем список переменных формулы и их описания
         for (String variable : formula.getVariables()) {
             String displayVar = displayManager.getDisplayTextFromLogicalId(variable);
             PhysicalQuantity quantity = PhysicalQuantityRegistry.getPhysicalQuantity(variable);
-            String quantityDescription = (quantity != null) ? quantity.getDescription() : "описание не найдено";
+            String quantityDescription = (quantity != null) ? quantity.getType() : "описание не найдено";
             description.append("<b>").append(displayVar).append("</b>").append(" - ").append(quantityDescription).append("<br>");
         }
-
 
         formulaTextView.setText(Html.fromHtml(description.toString()));
         return convertView;

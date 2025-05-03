@@ -4,8 +4,10 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import androidx.preference.PreferenceManager;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 // класс для управления реестром физических величин
@@ -153,5 +155,10 @@ public class PhysicalQuantityRegistry {
     // добавление новой физической величины в реестр
     public static void addPhysicalQuantity(String key, PhysicalQuantity quantity) {
         registry.put(key, quantity);
+    }
+
+    // получение списка всех физических величин
+    public static List<PhysicalQuantity> getAllQuantities() {
+        return new ArrayList<>(registry.values());
     }
 }

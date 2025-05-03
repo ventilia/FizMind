@@ -50,10 +50,10 @@ public class DesignationAdapter extends BaseAdapter {
         PhysicalQuantity quantity = quantities.get(position);
 
         SpannableStringBuilder designationText = new SpannableStringBuilder();
-        String displayDesignation = displayManager.getDisplayTextFromLogicalId(quantity.getDesignation());
+        String displayDesignation = displayManager.getDisplayTextFromLogicalId(quantity.getId());
         designationText.append(displayDesignation)
                 .append(" - ")
-                .append(quantity.getDescription())
+                .append(quantity.getType())
                 .append(" (")
                 .append(String.join(", ", quantity.getAllowedUnits()))
                 .append(")");
