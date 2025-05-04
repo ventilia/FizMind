@@ -5,7 +5,6 @@ import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.style.StyleSpan;
 import android.graphics.Typeface;
-
 import com.example.fizmind.SI.SIConverter;
 import com.example.fizmind.animation.CustomTypefaceSpan;
 import com.example.fizmind.database.AppDatabase;
@@ -21,20 +20,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-// класс для форматирования решения задачи
+// форматировщик решения задачи на основе данных из базы данных
 public class SolutionFormatter {
     private final Typeface montserratAlternatesTypeface;
     private final DisplayManager displayManager;
     private final AppDatabase database;
 
-    // конструктор с подключением к базе данных
+    // конструктор
     public SolutionFormatter(Typeface montserratAlternatesTypeface, DisplayManager displayManager, AppDatabase database) {
         this.montserratAlternatesTypeface = montserratAlternatesTypeface;
         this.displayManager = displayManager;
         this.database = database;
     }
 
-    // форматирование решения на основе данных из базы
+    // форматирование решения
     public SpannableStringBuilder formatSolution(Solver.SolutionResult result) {
         List<ConcreteMeasurementEntity> measurements = database.measurementDao().getAllMeasurements();
         List<UnknownQuantityEntity> unknowns = database.unknownQuantityDao().getAllUnknowns();
@@ -86,7 +85,9 @@ public class SolutionFormatter {
         // подготовка известных значений
         Map<String, Double> knownValues = new HashMap<>();
         for (ConcreteMeasurementEntity measurement : measurements) {
-            knownValues.put(measurement.getBaseDesignation(), measurement.getValue());
+            String fullDesignation = measurement.getSubscript().isEmpty() ?
+                    measurement.getBaseDesignation() : measurement.getBaseDesignation() + "_" + measurement.getSubscript();
+            knownValues.put(fullDesignation, measurement.getValue());
         }
 
         // промежуточные вычисления
@@ -104,8 +105,7 @@ public class SolutionFormatter {
             for (Solver.Step step : result.getSteps()) {
                 if (!step.getVariable().equals(unknownDesignation)) {
                     Formula formula = step.getFormula();
-                    // используем метод из Formula вместо DisplayManager
-                    String displayExpression = formula.getDisplayExpression(step.getVariable());
+                    String displayExpression = displayManager.getDisplayExpression(formula, step.getVariable());
                     builder.append(Html.fromHtml(displayExpression)).append("\n");
                     String substitution = buildSubstitution(displayExpression, formula, knownValues, step.getVariable());
                     builder.append(Html.fromHtml(substitution)).append("\n");
@@ -128,8 +128,7 @@ public class SolutionFormatter {
             builder.append("Воспользуемся формулой:\n");
             applyTypeface(builder, start, builder.length());
             Formula formula = finalStep.getFormula();
-            // используем метод из Formula вместо DisplayManager
-            String displayExpression = formula.getDisplayExpression(unknownDesignation);
+            String displayExpression = displayManager.getDisplayExpression(formula, unknownDesignation);
             builder.append(Html.fromHtml(displayExpression)).append("\n\n");
 
             start = builder.length();

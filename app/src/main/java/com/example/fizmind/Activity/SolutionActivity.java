@@ -18,6 +18,7 @@ import com.example.fizmind.solver.SolutionFormatter;
 import com.example.fizmind.solver.Solver;
 import com.example.fizmind.utils.LogUtils;
 
+// активность для отображения решения задачи
 public class SolutionActivity extends AppCompatActivity {
     private TextView solutionTextView;
     private AppDatabase database;
@@ -40,19 +41,18 @@ public class SolutionActivity extends AppCompatActivity {
                 getAssets(), "fonts/MontserratAlternates-Regular.ttf");
         Typeface stixTypeface = Typeface.createFromAsset(getAssets(), "fonts/stix_two_text_italic.ttf");
 
-        displayManager = new DisplayManager(stixTypeface);
+        // инициализация менеджера отображения
+        displayManager = new DisplayManager(stixTypeface, database);
 
         ImageView backButton = findViewById(R.id.backButton);
         backButton.setOnClickListener(v -> finish());
 
         // отображение решения
         displaySolution(montserratAlternatesTypeface);
+        LogUtils.d("SolutionActivity", "активность создана");
     }
 
-    /**
-     * отображает решение задачи
-     * @param typeface шрифт для форматирования решения
-     */
+    // отображает решение задачи
     private void displaySolution(Typeface typeface) {
         FormulaDatabase formulaDatabase = new FormulaDatabase();
         Solver solver = new Solver(formulaDatabase, database);

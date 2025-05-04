@@ -108,13 +108,14 @@ public class KeyboardFragment extends Fragment {
                 requireContext(), keyboardCells, pageNumberView, designationButton,
                 unitsButton, numbersButton, prevPageButton, nextPageButton,
                 buttonScrollDown, editTextDesignations, editTextUnknown,
-                buttonLeft, buttonRight, view
+                buttonLeft, buttonRight, view, database
         );
-        keyboardLogic.setUseStixFont(true);
 
         // инициализация контроллера ввода
-        DisplayManager displayManager = new DisplayManager(keyboardLogic.getStixTypeface());
-        inputController = new InputController(editTextDesignations, editTextUnknown, new ConversionService(), view, displayManager);
+        DisplayManager displayManager = new DisplayManager(keyboardLogic.getStixTypeface(), database);
+        inputController = new InputController(
+                editTextDesignations, editTextUnknown, database, new ConversionService(), view, displayManager
+        );
         inputController.setConversionMode(isConversionMode);
         inputController.setUnknownInputAllowed(isUnknownInputAllowed);
         inputController.setStixTypeface(keyboardLogic.getStixTypeface());

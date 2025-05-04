@@ -2,7 +2,6 @@ package com.example.fizmind.keyboard;
 
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.style.RelativeSizeSpan;
@@ -10,9 +9,6 @@ import android.text.style.StyleSpan;
 import android.text.style.SubscriptSpan;
 import android.view.View;
 import android.widget.TextView;
-
-import androidx.room.Room;
-
 import com.example.fizmind.SI.ConversionService;
 import com.example.fizmind.SI.SIConverter;
 import com.example.fizmind.animation.CustomTypefaceSpan;
@@ -28,13 +24,13 @@ import com.example.fizmind.quantly.PhysicalQuantity;
 import com.example.fizmind.quantly.PhysicalQuantityRegistry;
 import com.example.fizmind.utils.LogUtils;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-// контроллер ввода, работающий с базой данных Room
+// контроллер ввода для управления данными и отображением
 public class InputController {
+
     public enum InputState {
         ENTERING_DESIGNATION,
         ENTERING_VALUE,
@@ -48,74 +44,77 @@ public class InputController {
         MODULE
     }
 
-    private InputState currentState = InputState.ENTERING_DESIGNATION;
-    private FocusState focusState = FocusState.DESIGNATION;
+    private InputState currentState;
+    private FocusState focusState;
+    private final StringBuilder designationBuffer;
+    private final StringBuilder valueBuffer;
+    private final StringBuilder unitBuffer;
+    private final StringBuilder operationBuffer;
+    private final StringBuilder valueOperationBuffer;
     private final TextView designationsView;
     private final TextView unknownView;
     private final View rootView;
-    private final ConversionService conversionService;
-    private final DisplayManager displayManager;
     private final AppDatabase database;
+    private final DisplayManager displayManager;
     private Typeface stixTypeface;
     private KeyboardModeSwitcher keyboardModeSwitcher;
-    private boolean isConversionMode = false;
+    private boolean isCurrentConstant;
+    private final Map<String, String> lastUnitForDesignation;
+    private String currentInputField;
+    private String unknownDisplayDesignation;
+    private String logicalUnknownDesignation;
+    private String currentUnknownDesignation;
+    private Boolean designationUsesStix;
+    private Boolean unknownUsesStix;
+    private String logicalDesignation;
+    private String displayDesignation;
     private boolean isUnknownInputAllowed = true;
-    private String currentInputField = "designations";
-
-    // временные переменные для текущего ввода
-    private String currentDesignation = "";
-    private String currentValue = "";
-    private String currentUnit = "";
-    private String currentOperation = "";
-    private String currentValueOperation = "";
-    private boolean isCurrentConstant = false;
-    private Boolean designationUsesStix = null;
-    private String logicalDesignation = null;
-    private String displayDesignation = null;
-    private InputModule designationSubscriptModule = null;
-    private String unknownDisplayDesignation = null;
-    private String logicalUnknownDesignation = null;
-    private Boolean unknownUsesStix = null;
-    private InputModule unknownSubscriptModule = null;
-    private String currentUnknownDesignation = null;
-    private final Map<String, String> lastUnitForDesignation = new HashMap<>();
+    private InputModule designationSubscriptModule;
+    private InputModule unknownSubscriptModule;
     private long lastDeleteTime = 0;
     private int deleteClickCount = 0;
     private static final long DOUBLE_CLICK_TIME_DELTA = 300;
+    private final ConversionService conversionService;
+    private boolean isConversionMode = false;
 
-    // конструктор
-    public InputController(TextView designationsView, TextView unknownView, ConversionService conversionService, View rootView, DisplayManager displayManager) {
+    // конструктор с подключением к базе данных
+    public InputController(TextView designationsView, TextView unknownView, AppDatabase database,
+                           ConversionService conversionService, View rootView, DisplayManager displayManager) {
         this.designationsView = designationsView;
         this.unknownView = unknownView;
         this.rootView = rootView;
-        this.conversionService = conversionService;
+        this.database = database;
         this.displayManager = displayManager;
-        this.database = Room.databaseBuilder(rootView.getContext(), AppDatabase.class, "fizmind-db")
-                .allowMainThreadQueries()
-                .build();
+        this.conversionService = conversionService;
+        this.currentState = InputState.ENTERING_DESIGNATION;
+        this.focusState = FocusState.DESIGNATION;
+        this.designationBuffer = new StringBuilder();
+        this.valueBuffer = new StringBuilder();
+        this.unitBuffer = new StringBuilder();
+        this.operationBuffer = new StringBuilder();
+        this.valueOperationBuffer = new StringBuilder();
+        this.lastUnitForDesignation = new HashMap<>();
+        this.currentInputField = "designations";
         updateDisplay();
-
+        LogUtils.logControllerInitialized("InputController");
     }
 
-    // установка разрешения ввода неизвестного
+    // сеттеры
     public void setUnknownInputAllowed(boolean allowed) {
-        isUnknownInputAllowed = allowed;
+        this.isUnknownInputAllowed = allowed;
         LogUtils.logPropertySet("InputController", "разрешение ввода неизвестного", allowed);
     }
 
-    // установка шрифта STIX
     public void setStixTypeface(Typeface stixTypeface) {
         this.stixTypeface = stixTypeface;
         LogUtils.logPropertySet("InputController", "шрифт STIX", "установлен");
     }
 
-    // установка переключателя режимов клавиатуры
     public void setKeyboardModeSwitcher(KeyboardModeSwitcher switcher) {
         this.keyboardModeSwitcher = switcher;
         LogUtils.logPropertySet("InputController", "переключатель режимов клавиатуры", "установлен");
     }
 
-    // установка режима конверсии
     public void setConversionMode(boolean isConversionMode) {
         this.isConversionMode = isConversionMode;
         LogUtils.logPropertySet("InputController", "режим", isConversionMode ? "перевод в СИ" : "калькулятор");
@@ -133,10 +132,9 @@ public class InputController {
             focusState = FocusState.DESIGNATION;
             currentState = InputState.ENTERING_DESIGNATION;
             currentUnknownDesignation = null;
-            resetInput();
             LogUtils.d("InputController", "сброшены модули и состояния при смене поля ввода");
         }
-        currentInputField = field;
+        this.currentInputField = field;
         if ("unknown".equals(field) && keyboardModeSwitcher != null) {
             keyboardModeSwitcher.switchToDesignation();
         } else if ("designations".equals(field)) {
@@ -146,32 +144,27 @@ public class InputController {
         LogUtils.d("InputController", "текущее поле ввода установлено: " + field);
     }
 
-    // получение текущего обозначения
     public String getCurrentDesignation() {
         return logicalDesignation;
     }
 
-    // получение текущего поля ввода
     public String getCurrentInputField() {
         return currentInputField;
     }
 
-    // получение текущего неизвестного обозначения
     public String getCurrentUnknownDesignation() {
         return currentUnknownDesignation;
     }
 
-    // проверка наличия индекса
     public boolean hasSubscript() {
         return designationSubscriptModule != null && !designationSubscriptModule.isEmpty();
     }
 
-    // проверка наличия неизвестного индекса
     public boolean hasUnknownSubscript() {
         return unknownSubscriptModule != null && !unknownSubscriptModule.isEmpty();
     }
 
-    // обработка ввода с клавиатуры
+    // обработка ввода
     public void onKeyInput(String input, String sourceKeyboardMode, boolean keyUsesStix, String logicalId) {
         LogUtils.logInputProcessing("InputController", currentState.toString(), focusState.toString(), input, logicalId, isConversionMode ? "СИ" : "калькулятор");
 
@@ -227,7 +220,7 @@ public class InputController {
         updateDisplay();
     }
 
-    // обработка ввода индекса
+    // обработка ввода в фокусе на модуле
     private void handleModuleInput(String input, String logicalId) {
         if (designationSubscriptModule.getType() == ModuleType.SUBSCRIPT && input.matches("[a-zA-Z0-9]")) {
             if (!designationSubscriptModule.apply(input)) {
@@ -247,9 +240,9 @@ public class InputController {
         }
     }
 
-    // обработка ввода обозначения
+    // обработка обозначения
     private void handleDesignationInput(String input, String sourceKeyboardMode, boolean keyUsesStix, String logicalId) {
-        if (currentDesignation.isEmpty()) {
+        if (designationBuffer.length() == 0) {
             if (!"Designation".equals(sourceKeyboardMode)) {
                 LogUtils.wWithSnackbar("InputController", "символ обозначения должен быть из режима 'Designation'", rootView);
                 return;
@@ -259,19 +252,20 @@ public class InputController {
                 return;
             }
             String adjustedLogicalId = "designation_E".equals(logicalId) ? "E_latin" : logicalId;
-            currentDesignation = input;
+            designationBuffer.append(input);
             logicalDesignation = adjustedLogicalId;
             displayDesignation = displayManager.getDisplayTextFromLogicalId(adjustedLogicalId);
             designationUsesStix = keyUsesStix;
-            if (lastUnitForDesignation.containsKey(logicalDesignation) && !currentValue.isEmpty()) {
-                currentUnit = lastUnitForDesignation.get(logicalDesignation);
+            if (lastUnitForDesignation.containsKey(logicalDesignation) && valueBuffer.length() > 0) {
+                unitBuffer.setLength(0);
+                unitBuffer.append(lastUnitForDesignation.get(logicalDesignation));
             } else {
-                currentUnit = "";
+                unitBuffer.setLength(0);
             }
             PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(logicalDesignation);
             if (pq != null && pq.isConstant()) {
-                currentValue = String.valueOf(pq.getConstantValue());
-                currentUnit = pq.getSiUnit();
+                valueBuffer.append(String.valueOf(pq.getConstantValue()));
+                unitBuffer.append(pq.getSiUnit());
                 isCurrentConstant = true;
                 onDownArrowPressed();
             } else {
@@ -318,9 +312,9 @@ public class InputController {
         }
     }
 
-    // обработка ввода значения
+    // обработка значения
     private void handleValueInput(String input, String logicalId) {
-        if (currentDesignation.isEmpty()) {
+        if (designationBuffer.length() == 0) {
             LogUtils.wWithSnackbar("InputController", "нельзя ввести число без обозначения", rootView);
             return;
         }
@@ -355,27 +349,27 @@ public class InputController {
         } else {
             LogUtils.d("InputController", "обработка значения: " + input);
             if (input.matches("[0-9]")) {
-                currentValue += input;
+                valueBuffer.append(input);
             } else if (".".equals(input)) {
-                if (currentValue.isEmpty() || currentValue.equals("-")) {
+                if (valueBuffer.length() == 0 || valueBuffer.toString().equals("-")) {
                     LogUtils.wWithSnackbar("InputController", "число не может начинаться с точки", rootView);
-                } else if (currentValue.contains(".")) {
+                } else if (valueBuffer.indexOf(".") != -1) {
                     LogUtils.wWithSnackbar("InputController", "число уже содержит точку", rootView);
                 } else {
-                    currentValue += input;
+                    valueBuffer.append(input);
                 }
             } else if ("-".equals(input)) {
-                if (!currentValue.isEmpty()) {
+                if (valueBuffer.length() > 0) {
                     LogUtils.wWithSnackbar("InputController", "минус можно вводить только в начале", rootView);
                 } else {
-                    currentValue += input;
+                    valueBuffer.append(input);
                 }
             } else if (logicalId.equals("op_abs_open")) {
-                currentValueOperation += "|";
+                valueOperationBuffer.append("|");
                 updateDisplay();
-            } else if (logicalId.equals("op_abs_close") && currentValueOperation.contains("|")) {
-                currentValueOperation += currentValue + "|";
-                currentValue = "";
+            } else if (logicalId.equals("op_abs_close") && valueOperationBuffer.toString().contains("|")) {
+                valueOperationBuffer.append(valueBuffer).append("|");
+                valueBuffer.setLength(0);
                 updateDisplay();
             } else {
                 currentState = InputState.ENTERING_UNIT;
@@ -387,7 +381,7 @@ public class InputController {
         }
     }
 
-    // обработка ввода единицы измерения
+    // обработка единицы измерения
     private void handleUnitInput(String input, String logicalId) {
         PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(logicalDesignation);
         if (pq == null) {
@@ -395,10 +389,10 @@ public class InputController {
             return;
         }
         int maxAllowedLength = pq.getAllowedUnits().stream().mapToInt(String::length).max().orElse(0);
-        String potentialUnit = currentUnit + input;
+        String potentialUnit = unitBuffer.toString() + input;
         boolean validPrefix = pq.getAllowedUnits().stream().anyMatch(allowed -> allowed.startsWith(potentialUnit));
         if (validPrefix && potentialUnit.length() <= maxAllowedLength) {
-            currentUnit += input;
+            unitBuffer.append(input);
             LogUtils.d("InputController", "добавлена единица измерения: " + input);
         } else {
             LogUtils.wWithSnackbar("InputController", "недопустимая единица измерения: " + potentialUnit, rootView);
@@ -406,7 +400,7 @@ public class InputController {
         updateDisplay();
     }
 
-    // сохранение неизвестной величины
+    // сохранение неизвестного в базу данных
     private void saveUnknown() {
         if (unknownDisplayDesignation != null) {
             if (unknownSubscriptModule != null && unknownSubscriptModule.isActive() && unknownSubscriptModule.isEmpty()) {
@@ -427,17 +421,16 @@ public class InputController {
             }
 
             SpannableStringBuilder displayText = displayManager.buildUnknownText(
-                    getUnknownsAsUnknownQuantity(), unknownDisplayDesignation, unknownUsesStix, unknownSubscriptModule, currentInputField
+                    database.unknownQuantityDao().getAllUnknowns(), unknownDisplayDesignation, unknownUsesStix,
+                    unknownSubscriptModule, currentInputField
             );
-            String serializedDisplayText = Html.toHtml(displayText);
 
             UnknownQuantityEntity unknown = new UnknownQuantityEntity(
                     unknownDisplayDesignation, fullLogicalDesignation, subscript,
-                    unknownUsesStix != null && unknownUsesStix, serializedDisplayText
+                    unknownUsesStix != null && unknownUsesStix, displayText.toString()
             );
             database.unknownQuantityDao().insert(unknown);
             LogUtils.logSaveUnknown("InputController", unknown.toString());
-
             unknownDisplayDesignation = null;
             logicalUnknownDesignation = null;
             currentUnknownDesignation = null;
@@ -448,19 +441,7 @@ public class InputController {
         }
     }
 
-    // проверка, пуст ли ввод
-    private boolean isInputEmpty() {
-        if ("designations".equals(currentInputField)) {
-            return currentDesignation.isEmpty() && currentValue.isEmpty() && currentUnit.isEmpty() &&
-                    currentOperation.isEmpty() && currentValueOperation.isEmpty() &&
-                    designationSubscriptModule == null;
-        } else if ("unknown".equals(currentInputField)) {
-            return unknownDisplayDesignation == null && unknownSubscriptModule == null;
-        }
-        return true;
-    }
-
-    // обработка нажатия кнопки удаления
+    // обработка нажатия клавиши Delete
     public void onDeletePressed() {
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastDeleteTime < DOUBLE_CLICK_TIME_DELTA) {
@@ -479,28 +460,17 @@ public class InputController {
                 unknownSubscriptModule = null;
                 focusState = FocusState.DESIGNATION;
                 LogUtils.d("InputController", "удалено несохраненное обозначение в 'Введите неизвестное'");
-            } else if (!getUnknowns().isEmpty()) {
+            } else {
                 database.unknownQuantityDao().deleteLastUnknown();
                 LogUtils.d("InputController", "удалено последнее сохраненное неизвестное");
-            } else {
-                LogUtils.d("InputController", "нет данных для удаления в 'Введите неизвестное'");
             }
         } else {
             if (deleteClickCount == 2) {
-                deleteLastSavedField();
+                database.measurementDao().deleteLastMeasurement();
                 deleteClickCount = 0;
                 LogUtils.logDeletion("InputController", "выполнено двойное удаление последнего сохраненного поля");
             } else {
-                if (isInputEmpty() && !getMeasurements().isEmpty()) {
-                    ConcreteMeasurementEntity lastMeasurement = getMeasurements().get(getMeasurements().size() - 1);
-                    if (lastMeasurement.isConstant()) {
-                        deleteLastSavedField();
-                    } else {
-                        performSingleDelete();
-                    }
-                } else {
-                    performSingleDelete();
-                }
+                performSingleDelete();
             }
         }
         updateKeyboardMode();
@@ -524,18 +494,18 @@ public class InputController {
                     LogUtils.d("InputController", "модуль удален целиком");
                 }
             } else if (currentState == InputState.ENTERING_UNIT) {
-                currentUnit = "";
+                unitBuffer.setLength(0);
                 currentState = InputState.ENTERING_VALUE;
                 focusState = FocusState.VALUE;
                 LogUtils.d("InputController", "единицы измерения удалены");
             } else if (currentState == InputState.ENTERING_VALUE) {
-                if (!currentValue.isEmpty()) {
-                    currentValue = currentValue.substring(0, currentValue.length() - 1);
+                if (valueBuffer.length() > 0) {
+                    valueBuffer.deleteCharAt(valueBuffer.length() - 1);
                     LogUtils.d("InputController", "удален символ из значения");
-                } else if (!currentValueOperation.isEmpty()) {
-                    currentValueOperation = currentValueOperation.substring(0, currentValueOperation.length() - 1);
+                } else if (valueOperationBuffer.length() > 0) {
+                    valueOperationBuffer.deleteCharAt(valueOperationBuffer.length() - 1);
                     LogUtils.d("InputController", "удален символ из операции");
-                } else if (!currentDesignation.isEmpty()) {
+                } else if (designationBuffer.length() > 0) {
                     if (designationSubscriptModule != null) {
                         designationSubscriptModule = null;
                         LogUtils.d("InputController", "модуль удален");
@@ -544,7 +514,7 @@ public class InputController {
                         LogUtils.d("InputController", "обозначение удалено");
                     }
                 }
-            } else if (currentState == InputState.ENTERING_DESIGNATION && !currentDesignation.isEmpty()) {
+            } else if (currentState == InputState.ENTERING_DESIGNATION && designationBuffer.length() > 0) {
                 if (designationSubscriptModule != null) {
                     designationSubscriptModule = null;
                     LogUtils.d("InputController", "модуль удален");
@@ -556,17 +526,7 @@ public class InputController {
         }
     }
 
-    // удаление последнего сохраненного поля
-    private void deleteLastSavedField() {
-        if ("designations".equals(currentInputField)) {
-            if (!getMeasurements().isEmpty()) {
-                database.measurementDao().deleteLastMeasurement();
-                LogUtils.d("InputController", "удалено последнее измерение");
-            }
-        }
-    }
-
-    // обработка нажатия левой стрелки
+    // обработка нажатия стрелки влево
     public void onLeftArrowPressed() {
         if ("designations".equals(currentInputField)) {
             if (focusState == FocusState.MODULE && designationSubscriptModule != null && designationSubscriptModule.isActive()) {
@@ -577,7 +537,7 @@ public class InputController {
                 focusState = FocusState.VALUE;
                 currentState = InputState.ENTERING_VALUE;
                 LogUtils.d("InputController", "фокус переключен с единицы измерения на значение");
-            } else if (focusState == FocusState.VALUE && !currentDesignation.isEmpty()) {
+            } else if (focusState == FocusState.VALUE && designationBuffer.length() > 0) {
                 if (designationSubscriptModule != null) {
                     designationSubscriptModule.activate();
                     focusState = FocusState.MODULE;
@@ -600,7 +560,7 @@ public class InputController {
         }
     }
 
-    // обработка нажатия правой стрелки
+    // обработка нажатия стрелки вправо
     public void onRightArrowPressed() {
         if ("designations".equals(currentInputField)) {
             if (focusState == FocusState.DESIGNATION) {
@@ -608,13 +568,13 @@ public class InputController {
                     designationSubscriptModule.activate();
                     focusState = FocusState.MODULE;
                     LogUtils.d("InputController", "фокус переключен на индекс");
-                } else if (!currentDesignation.isEmpty()) {
+                } else if (designationBuffer.length() > 0) {
                     focusState = FocusState.VALUE;
                     currentState = InputState.ENTERING_VALUE;
                     LogUtils.d("InputController", "фокус переключен на значение");
                 }
             } else if (focusState == FocusState.VALUE) {
-                if (!currentValue.isEmpty() || !currentValueOperation.isEmpty()) {
+                if (valueBuffer.length() > 0 || valueOperationBuffer.length() > 0) {
                     focusState = FocusState.UNIT;
                     currentState = InputState.ENTERING_UNIT;
                     LogUtils.d("InputController", "фокус переключен на единицу измерения");
@@ -637,7 +597,7 @@ public class InputController {
         }
     }
 
-    // обработка нажатия кнопки сохранения
+    // обработка нажатия стрелки вниз (сохранение)
     public void onDownArrowPressed() {
         if ("designations".equals(currentInputField)) {
             if (designationSubscriptModule != null && designationSubscriptModule.isActive() && designationSubscriptModule.isEmpty()) {
@@ -645,18 +605,18 @@ public class InputController {
                 LogUtils.wWithSnackbar("InputController", "завершите ввод индекса или удалите его перед сохранением", rootView);
                 return;
             }
-            if (currentDesignation.isEmpty()) {
+            if (designationBuffer.length() == 0) {
                 LogUtils.w("InputController", "ошибка сохранения: отсутствует обозначение");
                 LogUtils.wWithSnackbar("InputController", "введите обозначение перед сохранением", rootView);
                 return;
             }
-            if (currentValue.isEmpty() && currentValueOperation.isEmpty()) {
+            if (valueBuffer.length() == 0 && valueOperationBuffer.length() == 0) {
                 LogUtils.w("InputController", "ошибка сохранения: отсутствует числовое значение");
                 LogUtils.wWithSnackbar("InputController", "введите числовое значение перед сохранением", rootView);
                 return;
             }
 
-            String unit = currentUnit;
+            String unit = unitBuffer.toString();
             if (unit.isEmpty()) {
                 PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(logicalDesignation);
                 if (pq == null) {
@@ -674,10 +634,10 @@ public class InputController {
 
             double value;
             try {
-                value = Double.parseDouble(currentValue.isEmpty() ? "0" : currentValue);
+                value = Double.parseDouble(valueBuffer.length() > 0 ? valueBuffer.toString() : "0");
             } catch (NumberFormatException e) {
-                LogUtils.e("InputController", "ошибка сохранения: некорректный формат числа: " + currentValue);
-                LogUtils.eWithSnackbar("InputController", "некорректный формат числа: " + currentValue, rootView);
+                LogUtils.e("InputController", "ошибка сохранения: некорректный формат числа: " + valueBuffer.toString());
+                LogUtils.eWithSnackbar("InputController", "некорректный формат числа: " + valueBuffer.toString(), rootView);
                 return;
             }
 
@@ -694,7 +654,8 @@ public class InputController {
             }
 
             String fullDesignation = subscript.isEmpty() ? baseDesignation : baseDesignation + "_" + subscript;
-            if (!ModuleValidator.isSubscriptUnique(baseDesignation, subscript, getMeasurementsAsConcrete())) {
+            List<ConcreteMeasurement> existingMeasurements = convertEntitiesToMeasurements(database.measurementDao().getAllMeasurements());
+            if (!ModuleValidator.isSubscriptUnique(baseDesignation, subscript, existingMeasurements)) {
                 LogUtils.e("InputController", "ошибка сохранения: индекс '" + subscript + "' уже используется для обозначения: " + baseDesignation);
                 LogUtils.eWithSnackbar("InputController", "этот индекс уже используется для '" + baseDesignation + "'. используйте другой индекс", rootView);
                 return;
@@ -726,8 +687,8 @@ public class InputController {
 
             SpannableStringBuilder historyEntry = new SpannableStringBuilder();
             int start = historyEntry.length();
-            if (!currentOperation.isEmpty()) {
-                historyEntry.append(currentOperation).append("(").append(displayDesignation).append(")");
+            if (operationBuffer.length() > 0) {
+                historyEntry.append(operationBuffer).append("(").append(displayDesignation).append(")");
             } else {
                 historyEntry.append(displayDesignation);
             }
@@ -759,12 +720,10 @@ public class InputController {
                 }
             }
 
-            String serializedHistory = Html.toHtml(historyEntry);
-
             ConcreteMeasurementEntity measurement = new ConcreteMeasurementEntity(
                     baseDesignation, siValue, siUnit,
-                    currentOperation, currentValueOperation,
-                    subscript, isCurrentConstant, serializedHistory,
+                    operationBuffer.toString(), valueOperationBuffer.toString(),
+                    subscript, isCurrentConstant, historyEntry.toString(),
                     value, unit, steps, isSIUnit, isConversionMode
             );
             database.measurementDao().insert(measurement);
@@ -807,23 +766,20 @@ public class InputController {
         }
     }
 
-    // обновление отображения
+    // обновление интерфейса с получением данных из БД
     private void updateDisplay() {
-        List<SpannableStringBuilder> history = new ArrayList<>();
-        for (ConcreteMeasurementEntity m : getMeasurements()) {
-            history.add(new SpannableStringBuilder(Html.fromHtml(m.getOriginalDisplay())));
-        }
+        List<ConcreteMeasurementEntity> measurements = database.measurementDao().getAllMeasurements();
+        List<UnknownQuantityEntity> unknowns = database.unknownQuantityDao().getAllUnknowns();
 
         SpannableStringBuilder designationsText = displayManager.buildDesignationsText(
-                getMeasurementsAsConcrete(), history, new StringBuilder(currentDesignation),
-                new StringBuilder(currentValue), new StringBuilder(currentUnit),
-                new StringBuilder(currentOperation), new StringBuilder(currentValueOperation),
-                displayDesignation, designationUsesStix, designationSubscriptModule, focusState, currentInputField
+                measurements, designationBuffer, valueBuffer, unitBuffer,
+                operationBuffer, valueOperationBuffer, displayDesignation,
+                designationUsesStix, designationSubscriptModule, focusState, currentInputField
         );
         designationsView.setText(designationsText);
 
         SpannableStringBuilder unknownText = displayManager.buildUnknownText(
-                getUnknownsAsUnknownQuantity(), unknownDisplayDesignation, unknownUsesStix, unknownSubscriptModule, currentInputField
+                unknowns, unknownDisplayDesignation, unknownUsesStix, unknownSubscriptModule, currentInputField
         );
         unknownView.setText(unknownText);
 
@@ -839,11 +795,11 @@ public class InputController {
 
     // сброс ввода
     private void resetInput() {
-        currentDesignation = "";
-        currentValue = "";
-        currentUnit = "";
-        currentOperation = "";
-        currentValueOperation = "";
+        designationBuffer.setLength(0);
+        valueBuffer.setLength(0);
+        unitBuffer.setLength(0);
+        operationBuffer.setLength(0);
+        valueOperationBuffer.setLength(0);
         currentState = InputState.ENTERING_DESIGNATION;
         focusState = FocusState.DESIGNATION;
         designationUsesStix = null;
@@ -853,16 +809,14 @@ public class InputController {
         designationSubscriptModule = null;
         updateKeyboardMode();
         updateDisplay();
-        LogUtils.d("InputController", "сброшены все поля ввода");
+        LogUtils.d("InputController", "сброшены все буферы ввода");
     }
 
-    // очистка всех данных
+    // очистка данных в базе данных
     public void clearAll() {
         if ("designations".equals(currentInputField)) {
             resetInput();
-            for (ConcreteMeasurementEntity m : getMeasurements()) {
-                database.measurementDao().delete(m);
-            }
+            database.measurementDao().deleteAll();
             LogUtils.d("InputController", "очищены все данные для 'Введите обозначение'");
         } else if ("unknown".equals(currentInputField)) {
             unknownDisplayDesignation = null;
@@ -871,9 +825,7 @@ public class InputController {
             unknownUsesStix = null;
             unknownSubscriptModule = null;
             focusState = FocusState.DESIGNATION;
-            for (UnknownQuantityEntity u : getUnknowns()) {
-                database.unknownQuantityDao().delete(u);
-            }
+            database.unknownQuantityDao().deleteAll();
             LogUtils.d("InputController", "очищены все данные для 'Введите неизвестное'");
         }
         updateDisplay();
@@ -882,64 +834,43 @@ public class InputController {
         }
     }
 
-    // получение всех измерений
-    public List<ConcreteMeasurementEntity> getMeasurements() {
-        return database.measurementDao().getAllMeasurements();
+    // логирование всех сохраненных данных
+    public void logAllSavedData() {
+        List<ConcreteMeasurementEntity> measurements = database.measurementDao().getAllMeasurements();
+        List<UnknownQuantityEntity> unknowns = database.unknownQuantityDao().getAllUnknowns();
+        StringBuilder logMessage = new StringBuilder("все сохраненные данные:\n");
+        logMessage.append("измерения ('Введите обозначение'):\n");
+        if (measurements.isEmpty()) {
+            logMessage.append("  нет сохраненных измерений\n");
+        } else {
+            for (ConcreteMeasurementEntity m : measurements) {
+                logMessage.append("  ").append(m.toString()).append("\n");
+            }
+        }
+        logMessage.append("неизвестные ('Введите неизвестное'):\n");
+        if (unknowns.isEmpty()) {
+            logMessage.append("  нет сохраненных неизвестных\n");
+        } else {
+            for (UnknownQuantityEntity u : unknowns) {
+                logMessage.append("  ").append(u.toString()).append("\n");
+            }
+        }
+        LogUtils.d("InputController", logMessage.toString());
     }
 
-    // конвертация измерений в объекты ConcreteMeasurement
-    private List<ConcreteMeasurement> getMeasurementsAsConcrete() {
-        List<ConcreteMeasurement> measurements = new ArrayList<>();
-        for (ConcreteMeasurementEntity entity : getMeasurements()) {
+    // конвертация сущностей в объекты измерений для валидации
+    private List<ConcreteMeasurement> convertEntitiesToMeasurements(List<ConcreteMeasurementEntity> entities) {
+        java.util.ArrayList<ConcreteMeasurement> measurements = new java.util.ArrayList<>();
+        for (ConcreteMeasurementEntity entity : entities) {
             measurements.add(new ConcreteMeasurement(
                     entity.getBaseDesignation(), entity.getValue(), entity.getUnit(),
                     entity.getDesignationOperations(), entity.getValueOperations(),
                     entity.getSubscript(), entity.isConstant(),
-                    new SpannableStringBuilder(Html.fromHtml(entity.getOriginalDisplay())),
+                    new SpannableStringBuilder(entity.getOriginalDisplay()),
                     entity.getOriginalValue(), entity.getOriginalUnit(),
                     entity.getConversionSteps(), entity.isSIUnit(), entity.isConversionMode()
             ));
         }
         return measurements;
-    }
-
-    // получение всех неизвестных
-    public List<UnknownQuantityEntity> getUnknowns() {
-        return database.unknownQuantityDao().getAllUnknowns();
-    }
-
-    // конвертация неизвестных в объекты UnknownQuantity
-    private List<UnknownQuantity> getUnknownsAsUnknownQuantity() {
-        List<UnknownQuantity> unknowns = new ArrayList<>();
-        for (UnknownQuantityEntity entity : getUnknowns()) {
-            unknowns.add(new UnknownQuantity(
-                    entity.getDisplayDesignation(), entity.getLogicalDesignation(),
-                    entity.getSubscript(), entity.isUsesStix(),
-                    new SpannableStringBuilder(Html.fromHtml(entity.getDisplayText()))
-            ));
-        }
-        return unknowns;
-    }
-
-    // логирование всех сохраненных данных
-    public void logAllSavedData() {
-        StringBuilder logMessage = new StringBuilder("все сохраненные данные:\n");
-        logMessage.append("измерения ('Введите обозначение'):\n");
-        if (getMeasurements().isEmpty()) {
-            logMessage.append("  нет сохраненных измерений\n");
-        } else {
-            for (ConcreteMeasurementEntity m : getMeasurements()) {
-                logMessage.append("  ").append(m.toString()).append("\n");
-            }
-        }
-        logMessage.append("неизвестные ('Введите неизвестное'):\n");
-        if (getUnknowns().isEmpty()) {
-            logMessage.append("  нет сохраненных неизвестных\n");
-        } else {
-            for (UnknownQuantityEntity u : getUnknowns()) {
-                logMessage.append("  ").append(u.toString()).append("\n");
-            }
-        }
-        LogUtils.d("InputController", logMessage.toString());
     }
 }

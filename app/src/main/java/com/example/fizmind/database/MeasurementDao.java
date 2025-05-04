@@ -25,4 +25,7 @@ public interface MeasurementDao {
 
     @Query("DELETE FROM concrete_measurements WHERE id = (SELECT MAX(id) FROM concrete_measurements)")
     void deleteLastMeasurement();
+
+    @Query("DELETE FROM concrete_measurements")
+    void deleteAll();
 }

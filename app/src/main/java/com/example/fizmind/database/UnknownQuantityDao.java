@@ -25,4 +25,7 @@ public interface UnknownQuantityDao {
 
     @Query("DELETE FROM unknown_quantities WHERE id = (SELECT MAX(id) FROM unknown_quantities)")
     void deleteLastUnknown();
+
+    @Query("DELETE FROM unknown_quantities")
+    void deleteAll();
 }

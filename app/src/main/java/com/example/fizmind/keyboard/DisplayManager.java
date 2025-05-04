@@ -1,87 +1,223 @@
 package com.example.fizmind.keyboard;
 
+import android.graphics.Color;
 import android.graphics.Typeface;
-import android.text.Html;
+import android.text.Spannable;
 import android.text.SpannableStringBuilder;
-
+import android.text.style.ForegroundColorSpan;
+import android.text.style.RelativeSizeSpan;
+import android.text.style.StyleSpan;
+import android.text.style.SubscriptSpan;
 import com.example.fizmind.animation.CustomTypefaceSpan;
-import com.example.fizmind.measurement.ConcreteMeasurement;
-import com.example.fizmind.measurement.UnknownQuantity;
+import com.example.fizmind.database.AppDatabase;
+import com.example.fizmind.database.ConcreteMeasurementEntity;
+import com.example.fizmind.database.UnknownQuantityEntity;
+import com.example.fizmind.formulas.Formula;
 import com.example.fizmind.modules.InputModule;
+import com.example.fizmind.quantly.PhysicalQuantity;
+import com.example.fizmind.quantly.PhysicalQuantityRegistry;
+import com.example.fizmind.utils.LogUtils;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
-// менеджер отображения текста
+// менеджер отображения для преобразования данных в видимый формат
 public class DisplayManager {
+
     private final Typeface stixTypeface;
-    private final Map<String, String> logicalToDisplayMap;
+    private final AppDatabase database;
 
-    // конструктор
-    public DisplayManager(Typeface stixTypeface) {
+    // конструктор с подключением к базе данных
+    public DisplayManager(Typeface stixTypeface, AppDatabase database) {
         this.stixTypeface = stixTypeface;
-        this.logicalToDisplayMap = new HashMap<>();
-        initializeDisplayMap();
+        this.database = database;
+        LogUtils.d("DisplayManager", "инициализирован менеджер отображения");
     }
 
-    // инициализация карты отображения
-    private void initializeDisplayMap() {
-        logicalToDisplayMap.put("E_latin", "E");
-        logicalToDisplayMap.put("E_latin_p", "E_p");
-        logicalToDisplayMap.put("E_latin_k", "E_k");
-        // добавьте другие обозначения по необходимости
-    }
-
-    // получение отображаемого текста по логическому ID
-    public String getDisplayTextFromLogicalId(String logicalId) {
-        return logicalToDisplayMap.getOrDefault(logicalId, logicalId);
-    }
-
-    // построение текста для измерений
+    // построение текста для поля "Введите обозначение"
     public SpannableStringBuilder buildDesignationsText(
-            List<ConcreteMeasurement> measurements, List<SpannableStringBuilder> history,
-            StringBuilder designationBuffer, StringBuilder valueBuffer, StringBuilder unitBuffer,
-            StringBuilder operationBuffer, StringBuilder valueOperationBuffer, String displayDesignation,
-            Boolean designationUsesStix, InputModule designationSubscriptModule, InputController.FocusState focusState,
-            String currentInputField) {
-        SpannableStringBuilder result = new SpannableStringBuilder();
-        for (SpannableStringBuilder entry : history) {
-            result.append(entry).append("\n");
+            List<ConcreteMeasurementEntity> measurements,
+            StringBuilder designationBuffer,
+            StringBuilder valueBuffer,
+            StringBuilder unitBuffer,
+            StringBuilder operationBuffer,
+            StringBuilder valueOperationBuffer,
+            String displayDesignation,
+            Boolean designationUsesStix,
+            InputModule designationSubscriptModule,
+            InputController.FocusState focusState,
+            String currentInputField
+    ) {
+        SpannableStringBuilder designationsText = new SpannableStringBuilder();
+
+        // вывод сохраненных измерений из базы данных
+        for (int i = 0; i < measurements.size(); i++) {
+            designationsText.append(measurements.get(i).getOriginalDisplay());
+            if (i < measurements.size() - 1) {
+                designationsText.append("\n\n");
+            }
         }
-        if ("designations".equals(currentInputField) && (!designationBuffer.toString().isEmpty() || !valueBuffer.toString().isEmpty() || !unitBuffer.toString().isEmpty())) {
-            if (!operationBuffer.toString().isEmpty()) {
-                result.append(operationBuffer).append("(").append(displayDesignation != null ? displayDesignation : "");
+        if (!measurements.isEmpty()) {
+            designationsText.append("\n\n");
+        }
+
+        // рендер текущего ввода или плейсхолдера
+        if (designationBuffer.length() > 0 || valueBuffer.length() > 0 || unitBuffer.length() > 0 || designationSubscriptModule != null) {
+            int start = designationsText.length();
+            if (operationBuffer.length() > 0) {
+                designationsText.append(operationBuffer).append("(").append(displayDesignation).append(")");
             } else {
-                result.append(displayDesignation != null ? displayDesignation : "");
+                designationsText.append(displayDesignation);
             }
+            int end = designationsText.length();
+
             if (designationSubscriptModule != null && !designationSubscriptModule.isEmpty()) {
-                result.append(designationSubscriptModule.getDisplayText());
+                String subscriptText = designationSubscriptModule.getDisplayText().toString();
+                int subscriptStart = designationsText.length();
+                designationsText.append(subscriptText);
+                int subscriptEnd = designationsText.length();
+                designationsText.setSpan(new SubscriptSpan(), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                designationsText.setSpan(new RelativeSizeSpan(0.75f), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
-            if (!valueBuffer.toString().isEmpty() || !valueOperationBuffer.toString().isEmpty()) {
-                result.append(" = ").append(valueOperationBuffer).append(valueBuffer);
+
+            if (designationUsesStix != null && designationUsesStix && stixTypeface != null) {
+                designationsText.setSpan(new CustomTypefaceSpan(stixTypeface), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
-            if (!unitBuffer.toString().isEmpty()) {
-                result.append(" ").append(unitBuffer);
+
+            designationsText.append(" = ");
+            int valueStart = designationsText.length();
+            if (valueOperationBuffer.length() > 0) {
+                designationsText.append(valueOperationBuffer);
+            } else {
+                designationsText.append(valueBuffer);
             }
+            int valueEnd = designationsText.length();
+            int unitPos = designationsText.length();
+            if (unitBuffer.length() > 0) {
+                designationsText.append(" ").append(unitBuffer);
+            } else {
+                designationsText.append(" ?");
+            }
+
+            // подсветка активного элемента
+            if (focusState == InputController.FocusState.MODULE && designationSubscriptModule != null) {
+                int modStart = end;
+                int modEnd = modStart + (designationSubscriptModule.getDisplayText().length());
+                designationsText.setSpan(new StyleSpan(Typeface.BOLD), modStart, modEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            } else if (focusState == InputController.FocusState.DESIGNATION) {
+                designationsText.setSpan(new StyleSpan(Typeface.BOLD), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            } else if (focusState == InputController.FocusState.VALUE && valueStart < valueEnd) {
+                designationsText.setSpan(new StyleSpan(Typeface.BOLD), valueStart, valueEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            } else if (focusState == InputController.FocusState.UNIT && unitPos < designationsText.length()) {
+                designationsText.setSpan(new StyleSpan(Typeface.BOLD), unitPos + 1, designationsText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+        } else {
+            // плейсхолдер
+            int start = designationsText.length();
+            designationsText.append("Введите обозначение");
+            int color = "designations".equals(currentInputField) ? Color.BLACK : Color.GRAY;
+            designationsText.setSpan(new ForegroundColorSpan(color), start, designationsText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
-        return result;
+
+        LogUtils.d("DisplayManager", "построен текст для поля 'Введите обозначение'");
+        return designationsText;
     }
 
-    // построение текста для неизвестных
+    // построение текста для поля "Введите неизвестное"
     public SpannableStringBuilder buildUnknownText(
-            List<UnknownQuantity> unknowns, String unknownDisplayDesignation, Boolean unknownUsesStix,
-            InputModule unknownSubscriptModule, String currentInputField) {
-        SpannableStringBuilder result = new SpannableStringBuilder();
-        for (UnknownQuantity unknown : unknowns) {
-            result.append(Html.fromHtml(unknown.getDisplayText())).append("\n");
-        }
-        if ("unknown".equals(currentInputField) && unknownDisplayDesignation != null) {
-            result.append(unknownDisplayDesignation);
+            List<UnknownQuantityEntity> unknowns,
+            String unknownDisplayDesignation,
+            Boolean unknownUsesStix,
+            InputModule unknownSubscriptModule,
+            String currentInputField
+    ) {
+        SpannableStringBuilder unknownText = new SpannableStringBuilder();
+
+        if (unknownDisplayDesignation != null) {
+            int start = unknownText.length();
+            unknownText.append(unknownDisplayDesignation);
+            int end = unknownText.length();
+            if (unknownUsesStix != null && unknownUsesStix && stixTypeface != null) {
+                unknownText.setSpan(new CustomTypefaceSpan(stixTypeface), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
             if (unknownSubscriptModule != null && !unknownSubscriptModule.isEmpty()) {
-                result.append(unknownSubscriptModule.getDisplayText());
+                String subscriptText = unknownSubscriptModule.getDisplayText().toString();
+                int subscriptStart = unknownText.length();
+                unknownText.append(subscriptText);
+                int subscriptEnd = unknownText.length();
+                unknownText.setSpan(new SubscriptSpan(), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                unknownText.setSpan(new RelativeSizeSpan(0.75f), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+            unknownText.append(" = ?");
+        } else if (!unknowns.isEmpty()) {
+            unknownText.append(unknowns.get(unknowns.size() - 1).getDisplayText());
+        } else {
+            int start = unknownText.length();
+            unknownText.append("Введите неизвестное");
+            int color = "unknown".equals(currentInputField) ? Color.BLACK : Color.GRAY;
+            unknownText.setSpan(new ForegroundColorSpan(color), start, unknownText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+
+        LogUtils.d("DisplayManager", "построен текст для поля 'Введите неизвестное'");
+        return unknownText;
+    }
+
+    // получение отображаемого текста из логического идентификатора
+    public String getDisplayTextFromLogicalId(String logicalId) {
+        if (logicalId == null) return "";
+        String displayText = logicalId.replace("designation_", "")
+                .replace("_latin", "")
+                .replace("_power", "");
+        LogUtils.d("DisplayManager", "получен отображаемый текст: " + displayText + " из " + logicalId);
+        return displayText;
+    }
+
+    // получение отображаемого выражения для формулы
+    public String getDisplayExpression(Formula formula, String targetVariable) {
+        String expression = formula.getExpressionFor(targetVariable);
+        if (expression.contains("/")) {
+            String[] parts = expression.split("=");
+            if (parts.length == 2) {
+                String left = parts[0].trim();
+                String right = parts[1].trim();
+                String[] fraction = right.split("/");
+
+                if (fraction.length == 2) {
+                    left = formatExpression(left);
+                    fraction[0] = formatExpression(fraction[0]);
+                    fraction[1] = formatExpression(fraction[1]);
+                    String result = left + " = <sup>" + fraction[0].trim() + "</sup>/<sub>" + fraction[1].trim() + "</sub>";
+                    LogUtils.d("DisplayManager", "сформировано выражение с дробью: " + result);
+                    return result;
+                }
             }
         }
-        return result;
+        String formatted = formatExpression(expression);
+        LogUtils.d("DisplayManager", "сформировано выражение: " + formatted);
+        return formatted;
+    }
+
+    // форматирование выражения
+    public String formatExpression(String expression) {
+        for (String variable : getVariablesInLine(expression)) {
+            String displayVar = getDisplayTextFromLogicalId(variable);
+            expression = expression.replace(variable, displayVar);
+        }
+        return expression;
+    }
+
+    // извлечение переменных из строки выражения
+    private List<String> getVariablesInLine(String line) {
+        List<String> variables = new ArrayList<>();
+        List<PhysicalQuantity> quantities = PhysicalQuantityRegistry.getAllQuantities();
+        List<String> keys = quantities.stream().map(PhysicalQuantity::getId).collect(Collectors.toList());
+        for (String key : keys) {
+            if (line.contains(key)) {
+                variables.add(key);
+            }
+        }
+        LogUtils.d("DisplayManager", "извлечены переменные из выражения: " + variables);
+        return variables;
     }
 }
