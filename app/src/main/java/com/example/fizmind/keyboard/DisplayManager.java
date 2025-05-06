@@ -28,14 +28,12 @@ public class DisplayManager {
     private final Typeface stixTypeface;
     private final AppDatabase database;
 
-    // конструктор с подключением к базе данных
     public DisplayManager(Typeface stixTypeface, AppDatabase database) {
         this.stixTypeface = stixTypeface;
         this.database = database;
         LogUtils.d("DisplayManager", "инициализирован менеджер отображения");
     }
 
-    // построение текста для поля "Введите обозначение"
     public SpannableStringBuilder buildDesignationsText(
             List<ConcreteMeasurementEntity> measurements,
             StringBuilder designationBuffer,
@@ -51,13 +49,12 @@ public class DisplayManager {
     ) {
         SpannableStringBuilder designationsText = new SpannableStringBuilder();
 
-        // вывод сохраненных измерений из базы данных с восстановлением форматирования
+        // вывод сохраненных измерений из базы
         for (int i = 0; i < measurements.size(); i++) {
             ConcreteMeasurementEntity measurement = measurements.get(i);
             String originalDisplay = measurement.getOriginalDisplay();
             SpannableStringBuilder formattedText = new SpannableStringBuilder(originalDisplay);
 
-            // восстановление шрифта stix для обозначения, если указано
             if (measurement.isUsesStix() && stixTypeface != null) {
                 int designationEnd = originalDisplay.indexOf(" = ");
                 if (designationEnd != -1) {
@@ -65,7 +62,6 @@ public class DisplayManager {
                 }
             }
 
-            // восстановление индексов
             String subscript = measurement.getSubscript();
             if (!subscript.isEmpty()) {
                 String designationPart = measurement.getDesignationOperations().isEmpty() ?
@@ -79,7 +75,6 @@ public class DisplayManager {
                 }
             }
 
-            // восстановление жирного шрифта для результата конверсии
             if (measurement.isConversionMode() && !measurement.isSIUnit() && !measurement.getConversionSteps().isEmpty()) {
                 int lastEqualIndex = originalDisplay.lastIndexOf("= ");
                 if (lastEqualIndex != -1) {
@@ -98,7 +93,6 @@ public class DisplayManager {
             designationsText.append("\n\n");
         }
 
-        // рендер текущего ввода или плейсхолдера
         if (designationBuffer.length() > 0 || valueBuffer.length() > 0 || unitBuffer.length() > 0 || designationSubscriptModule != null) {
             int start = designationsText.length();
             if (operationBuffer.length() > 0) {
@@ -117,7 +111,6 @@ public class DisplayManager {
                 designationsText.setSpan(new RelativeSizeSpan(0.75f), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
 
-            // применение шрифта stix только если designationUsesStix установлен
             if (designationUsesStix != null && designationUsesStix && stixTypeface != null) {
                 designationsText.setSpan(new CustomTypefaceSpan(stixTypeface), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
@@ -137,7 +130,6 @@ public class DisplayManager {
                 designationsText.append(" ?");
             }
 
-            // подсветка активного элемента
             if (focusState == InputController.FocusState.MODULE && designationSubscriptModule != null) {
                 int modStart = end;
                 int modEnd = modStart + (designationSubscriptModule.getDisplayText().length());
@@ -150,7 +142,6 @@ public class DisplayManager {
                 designationsText.setSpan(new StyleSpan(Typeface.BOLD), unitPos + 1, designationsText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
         } else {
-            // плейсхолдер
             int start = designationsText.length();
             designationsText.append("Введите обозначение");
             int color = "designations".equals(currentInputField) ? Color.BLACK : Color.GRAY;
@@ -161,7 +152,6 @@ public class DisplayManager {
         return designationsText;
     }
 
-    // построение текста для поля "Введите неизвестное"
     public SpannableStringBuilder buildUnknownText(
             List<UnknownQuantityEntity> unknowns,
             String unknownDisplayDesignation,
@@ -173,18 +163,15 @@ public class DisplayManager {
         SpannableStringBuilder unknownText = new SpannableStringBuilder();
 
         if (isConversionMode) {
-            // в режиме "перевод в си" показываем только плейсхолдер
             int start = unknownText.length();
             unknownText.append("Введите неизвестное");
             int color = "unknown".equals(currentInputField) ? Color.BLACK : Color.GRAY;
             unknownText.setSpan(new ForegroundColorSpan(color), start, unknownText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         } else {
-            // в режиме "физический калькулятор" отображаем данные
             if (unknownDisplayDesignation != null) {
                 int start = unknownText.length();
                 unknownText.append(unknownDisplayDesignation);
                 int end = unknownText.length();
-                // применение шрифта stix только если unknownUsesStix установлен
                 if (unknownUsesStix != null && unknownUsesStix && stixTypeface != null) {
                     unknownText.setSpan(new CustomTypefaceSpan(stixTypeface), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                 }
@@ -201,7 +188,6 @@ public class DisplayManager {
                 UnknownQuantityEntity lastUnknown = unknowns.get(unknowns.size() - 1);
                 SpannableStringBuilder formattedText = new SpannableStringBuilder(lastUnknown.getDisplayText());
 
-                // восстановление шрифта stix, если указано
                 if (lastUnknown.isUsesStix() && stixTypeface != null) {
                     int designationEnd = formattedText.toString().indexOf(" = ");
                     if (designationEnd != -1) {
@@ -209,7 +195,6 @@ public class DisplayManager {
                     }
                 }
 
-                // восстановление индексов
                 String subscript = lastUnknown.getSubscript();
                 if (!subscript.isEmpty()) {
                     int subscriptStart = formattedText.toString().indexOf(subscript);
@@ -233,7 +218,6 @@ public class DisplayManager {
         return unknownText;
     }
 
-    // получение отображаемого текста из логического идентификатора
     public String getDisplayTextFromLogicalId(String logicalId) {
         if (logicalId == null) return "";
         String displayText = logicalId.replace("designation_", "")
@@ -243,7 +227,6 @@ public class DisplayManager {
         return displayText;
     }
 
-    // получение отображаемого выражения для формулы
     public String getDisplayExpression(Formula formula, String targetVariable) {
         String expression = formula.getExpressionFor(targetVariable);
         if (expression.contains("/")) {
@@ -268,7 +251,6 @@ public class DisplayManager {
         return formatted;
     }
 
-    // форматирование выражения
     public String formatExpression(String expression) {
         for (String variable : getVariablesInLine(expression)) {
             String displayVar = getDisplayTextFromLogicalId(variable);
@@ -277,7 +259,6 @@ public class DisplayManager {
         return expression;
     }
 
-    // извлечение переменных из строки выражения
     private List<String> getVariablesInLine(String line) {
         List<String> variables = new ArrayList<>();
         List<PhysicalQuantity> quantities = PhysicalQuantityRegistry.getAllQuantities();

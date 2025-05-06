@@ -221,7 +221,7 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         }
 
         DisplayManager displayManager = new DisplayManager(stixTypeface, database);
-        inputController = new InputController(designationView, unknownView, database, new ConversionService(), rootView, displayManager);
+        inputController = new InputController(designationView, unknownView, database, rootView, displayManager);
         inputController.setStixTypeface(stixTypeface);
         inputController.setKeyboardModeSwitcher(this);
 

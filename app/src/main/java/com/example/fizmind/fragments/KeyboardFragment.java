@@ -14,7 +14,6 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.room.Room;
 
-import com.example.fizmind.SI.ConversionService;
 import com.example.fizmind.R;
 import com.example.fizmind.Activity.SolutionActivity;
 import com.example.fizmind.database.AppDatabase;
@@ -114,7 +113,7 @@ public class KeyboardFragment extends Fragment {
         // инициализация контроллера ввода
         DisplayManager displayManager = new DisplayManager(keyboardLogic.getStixTypeface(), database);
         inputController = new InputController(
-                editTextDesignations, editTextUnknown, database, new ConversionService(), view, displayManager
+                editTextDesignations, editTextUnknown, database, view, displayManager
         );
         inputController.setConversionMode(isConversionMode);
         inputController.setUnknownInputAllowed(isUnknownInputAllowed);

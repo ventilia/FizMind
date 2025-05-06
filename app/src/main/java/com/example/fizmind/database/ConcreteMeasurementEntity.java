@@ -9,22 +9,22 @@ public class ConcreteMeasurementEntity {
     @PrimaryKey(autoGenerate = true)
     public int id;
 
-    public String baseDesignation; // базовое обозначение (например, "v")
-    public double value; // значение в СИ
-    public String unit; // единица в СИ
-    public String designationOperations; // операции с обозначением
-    public String valueOperations; // операции с значением
-    public String subscript; // нижний индекс
-    public boolean constant; // является ли константой
-    public String originalDisplay; // отображаемый текст (без spans)
-    public double originalValue; // исходное значение
-    public String originalUnit; // исходная единица
-    public String conversionSteps; // шаги преобразования
-    public boolean isSIUnit; // в единицах СИ
-    public boolean isConversionMode; // режим конверсии
-    public boolean usesStix; // флаг использования шрифта STIX для обозначения
+    public String baseDesignation;
+    public double value;
+    public String unit;
+    public String designationOperations;
+    public String valueOperations;
+    public String subscript;
+    public boolean constant;
+    public String originalDisplay;
+    public double originalValue;
+    public String originalUnit;
+    public String conversionSteps;
+    public boolean isSIUnit;
+    public boolean isConversionMode;
+    public boolean usesStix;
 
-    // конструктор по умолчанию для Room
+    // конструктор по умолчанию для room
     public ConcreteMeasurementEntity() {}
 
     // конструктор с параметрами

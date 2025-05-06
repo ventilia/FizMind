@@ -34,11 +34,10 @@ public abstract class AppDatabase extends RoomDatabase {
         return INSTANCE;
     }
 
-    // Миграция от версии 1 к версии 2
+
     static final Migration MIGRATION_1_2 = new Migration(1, 2) {
         @Override
         public void migrate(SupportSQLiteDatabase database) {
-            // Добавляем поле usesStix в таблицу concrete_measurements
             database.execSQL("ALTER TABLE concrete_measurements ADD COLUMN usesStix INTEGER NOT NULL DEFAULT 0");
         }
     };
