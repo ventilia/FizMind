@@ -57,7 +57,7 @@ public class DisplayManager {
             String originalDisplay = measurement.getOriginalDisplay();
             SpannableStringBuilder formattedText = new SpannableStringBuilder(originalDisplay);
 
-            // восстановление шрифта STIX для обозначения
+            // восстановление шрифта stix для обозначения, если указано
             if (measurement.isUsesStix() && stixTypeface != null) {
                 int designationEnd = originalDisplay.indexOf(" = ");
                 if (designationEnd != -1) {
@@ -117,6 +117,7 @@ public class DisplayManager {
                 designationsText.setSpan(new RelativeSizeSpan(0.75f), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
 
+            // применение шрифта stix только если designationUsesStix установлен
             if (designationUsesStix != null && designationUsesStix && stixTypeface != null) {
                 designationsText.setSpan(new CustomTypefaceSpan(stixTypeface), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
@@ -172,17 +173,18 @@ public class DisplayManager {
         SpannableStringBuilder unknownText = new SpannableStringBuilder();
 
         if (isConversionMode) {
-            // в режиме "Перевод в СИ" игнорируем все данные и показываем только плейсхолдер
+            // в режиме "перевод в си" показываем только плейсхолдер
             int start = unknownText.length();
             unknownText.append("Введите неизвестное");
             int color = "unknown".equals(currentInputField) ? Color.BLACK : Color.GRAY;
             unknownText.setSpan(new ForegroundColorSpan(color), start, unknownText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         } else {
-            // в режиме "Физический калькулятор" отображаем данные как раньше
+            // в режиме "физический калькулятор" отображаем данные
             if (unknownDisplayDesignation != null) {
                 int start = unknownText.length();
                 unknownText.append(unknownDisplayDesignation);
                 int end = unknownText.length();
+                // применение шрифта stix только если unknownUsesStix установлен
                 if (unknownUsesStix != null && unknownUsesStix && stixTypeface != null) {
                     unknownText.setSpan(new CustomTypefaceSpan(stixTypeface), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                 }
@@ -199,7 +201,7 @@ public class DisplayManager {
                 UnknownQuantityEntity lastUnknown = unknowns.get(unknowns.size() - 1);
                 SpannableStringBuilder formattedText = new SpannableStringBuilder(lastUnknown.getDisplayText());
 
-                // восстановление шрифта STIX
+                // восстановление шрифта stix, если указано
                 if (lastUnknown.isUsesStix() && stixTypeface != null) {
                     int designationEnd = formattedText.toString().indexOf(" = ");
                     if (designationEnd != -1) {
