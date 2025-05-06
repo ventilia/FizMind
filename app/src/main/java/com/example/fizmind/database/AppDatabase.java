@@ -7,16 +7,16 @@ import androidx.room.migration.Migration;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 import android.content.Context;
 
-// Абстрактный класс базы данных для Room
+// астрактный класс базы для Room
 @Database(entities = {ConcreteMeasurementEntity.class, UnknownQuantityEntity.class}, version = 2, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
-    // DAO для работы с измерениями
+    // DAO
     public abstract MeasurementDao measurementDao();
 
-    // DAO для работы с неизвестными величинами
+    // DAO
     public abstract UnknownQuantityDao unknownQuantityDao();
 
-    // Singleton для базы данных
+
     private static volatile AppDatabase INSTANCE;
 
     public static AppDatabase getDatabase(final Context context) {
@@ -25,8 +25,8 @@ public abstract class AppDatabase extends RoomDatabase {
                 if (INSTANCE == null) {
                     INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
                                     AppDatabase.class, "database-name")
-                            .addMigrations(MIGRATION_1_2) // Добавляем миграцию от 1 к 2
-                            .fallbackToDestructiveMigration() // Оставляем как резервный вариант
+                            .addMigrations(MIGRATION_1_2)
+                            .fallbackToDestructiveMigration()
                             .build();
                 }
             }

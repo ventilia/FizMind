@@ -110,7 +110,7 @@ public class KeyboardFragment extends Fragment {
                 buttonLeft, buttonRight, view, database
         );
 
-        // инициализация контроллера ввода
+
         DisplayManager displayManager = new DisplayManager(keyboardLogic.getStixTypeface(), database);
         inputController = new InputController(
                 editTextDesignations, editTextUnknown, database, view, displayManager
@@ -164,7 +164,7 @@ public class KeyboardFragment extends Fragment {
         });
     }
 
-    // обработка нажатия кнопки перехода к решению
+
     private void handleCycleButtonPress() {
         List<UnknownQuantityEntity> unknowns = database.unknownQuantityDao().getAllUnknowns();
         if (unknowns.isEmpty()) {

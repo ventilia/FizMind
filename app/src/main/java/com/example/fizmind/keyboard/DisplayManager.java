@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-// менеджер отображения для преобразования данных в видимый формат
+
 public class DisplayManager {
 
     private final Typeface stixTypeface;

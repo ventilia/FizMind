@@ -24,10 +24,9 @@ public class ConcreteMeasurementEntity {
     public boolean isConversionMode;
     public boolean usesStix;
 
-    // конструктор по умолчанию для room
     public ConcreteMeasurementEntity() {}
 
-    // конструктор с параметрами
+
     public ConcreteMeasurementEntity(
             String baseDesignation, double value, String unit,
             String designationOperations, String valueOperations,

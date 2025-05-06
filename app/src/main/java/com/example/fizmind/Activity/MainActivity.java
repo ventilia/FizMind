@@ -21,7 +21,7 @@ import java.lang.reflect.Field;
 
 public class MainActivity extends AppCompatActivity {
     private DrawerLayout drawerLayout;
-    private float startX; // Для кастомной обработки свайпа
+    private float startX;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -32,13 +32,13 @@ public class MainActivity extends AppCompatActivity {
 
         drawerLayout = findViewById(R.id.drawer_layout);
 
-        // Установить scrim color (полупрозрачный фон при открытии меню)
+
         drawerLayout.setScrimColor(Color.parseColor("#80000000"));
 
-        // Разрешить свайпы
+
         drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
 
-        // Увеличить область свайпа
+        // увеличить область свайпа
         try {
             Field dragHelperField = DrawerLayout.class.getDeclaredField("mLeftDragger");
             dragHelperField.setAccessible(true);
@@ -52,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
             Log.e("Drawer", "Failed to increase swipe area", e);
         }
 
-        // Добавить слушатель для отладки
+
         drawerLayout.addDrawerListener(new DrawerLayout.DrawerListener() {
             @Override
             public void onDrawerSlide(@NonNull View drawerView, float slideOffset) {
@@ -75,17 +75,16 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Добавить обработку касаний для диагностики и кастомного свайпа
+
         drawerLayout.setOnTouchListener((v, event) -> {
             Log.d("Drawer", "Touch event: action=" + event.getAction() + ", x=" + event.getX() + ", y=" + event.getY());
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
                     startX = event.getX();
-                    return true; // Перехватываем касание
+                    return true;
                 case MotionEvent.ACTION_MOVE:
                     float deltaX = event.getX() - startX;
                     if (deltaX > 50 && startX < 600 && !drawerLayout.isDrawerOpen(GravityCompat.START)) {
-                        // Свайп вправо на 50 пикселей в зоне 600 пикселей
                         drawerLayout.openDrawer(GravityCompat.START);
                         Log.d("Drawer", "Custom swipe detected, opening drawer");
                         return true;
@@ -96,22 +95,22 @@ public class MainActivity extends AppCompatActivity {
                     startX = 0;
                     break;
             }
-            return false; // Передаём событие DrawerLayout для стандартной обработки
+            return false; // передаём событие
         });
 
-        // Меню
+
         ImageView menuIcon = findViewById(R.id.menu_icon);
         menuIcon.setOnClickListener(v -> {
             Log.d("Drawer", "Menu icon clicked");
             drawerLayout.openDrawer(GravityCompat.START);
         });
 
-        // Кнопки
+
         configureButton(R.id.btn_si_conversion, SIConversionActivity.class);
         configureButton(R.id.btn_physics_calculator, PhysicsCalculatorActivity.class);
         configureButton(R.id.btn_theory, TheoryActivity.class);
 
-        // Боковое меню
+
         LinearLayout settingsLayout = findViewById(R.id.settings_layout);
         LinearLayout aboutUsLayout = findViewById(R.id.about_us_layout);
         settingsLayout.setOnClickListener(v -> openActivity(SettingsActivity.class));
@@ -120,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void configureButton(int buttonId, Class<?> targetActivity) {
         CardView button = findViewById(buttonId);
-        if (button != null) { // Проверка на null для безопасности
+        if (button != null) {
             ButtonAnimation.addAnimation(button);
             button.setOnClickListener(v -> openActivity(targetActivity));
         }

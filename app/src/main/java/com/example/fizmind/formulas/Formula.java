@@ -6,8 +6,8 @@ import java.util.function.Function;
 
 
 public class Formula {
-    private final String baseExpression; // базовое выражение, например "F_latin = m_latin * a_latin"
-    private final List<String> variables; // список переменных в формуле
+    private final String baseExpression;
+    private final List<String> variables;
     private final Map<String, Function<Double[], Double>> calculators; // карта функций для вычисления каждой переменной
     private final Map<String, String> expressions; // карта выражений для вычисления каждой переменной
 

@@ -8,7 +8,7 @@ import androidx.room.Update;
 
 import java.util.List;
 
-// интерфейс для операций с неизвестными величинами
+
 @Dao
 public interface UnknownQuantityDao {
     @Insert

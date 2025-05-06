@@ -30,16 +30,15 @@ public class FormulaAdapter extends BaseAdapter {
     private final Typeface montserratTypeface;
     private final Typeface stixTypeface;
 
-    // набор логических идентификаторов, которые должны рендериться курсивом (STIX)
+    //  должны рендериться курсивом (STIX)
     private static final Set<String> ITALIC_IDS = new HashSet<>(Arrays.asList(
             "s_latin", "v_latin", "a_latin", "m_latin", "F_latin",
             "E_latin", "U_latin", "R_latin", "S_latin", "h_latin", "c_latin"
     ));
 
-    /**
-     * адаптер списка формул: математические обозначения из ITALIC_IDS — шрифт STIX,
-     * остальной текст — Montserrat
-     */
+    //ПОТОМ ПОМЕНЯТЬ!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
     public FormulaAdapter(Context context,
                           List<Formula> formulas,
                           DisplayManager displayManager,
@@ -80,12 +79,12 @@ public class FormulaAdapter extends BaseAdapter {
         Formula formula = formulas.get(position);
         SpannableStringBuilder resultBuilder = new SpannableStringBuilder();
 
-        // 1. форматируем само выражение (дроби через HTML)
+        // дроби через HTML
         String exprHtml = displayManager.getDisplayExpression(formula, null);
         Spanned exprSpanned = Html.fromHtml(exprHtml, Html.FROM_HTML_MODE_LEGACY);
         SpannableStringBuilder exprBuilder = new SpannableStringBuilder(exprSpanned);
 
-        // для каждой переменной проверяем, нужно ли применять шрифт STIX
+        //  нужно ли применять шрифт STIX
         for (String varId : formula.getVariables()) {
             if (ITALIC_IDS.contains(varId)) {
                 String displayVar = displayManager.getDisplayTextFromLogicalId(varId);
@@ -102,14 +101,14 @@ public class FormulaAdapter extends BaseAdapter {
         }
         resultBuilder.append(exprBuilder).append("\n\n");
 
-        // 2. раздел "где:" и список переменных
+
         resultBuilder.append("где:\n");
         for (String varId : formula.getVariables()) {
             String displayVar = displayManager.getDisplayTextFromLogicalId(varId);
             PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(varId);
             String desc = (pq != null) ? pq.getType() : "описание не найдено";
 
-            // обозначение: STIX только если ID в наборе
+
             int varStart = resultBuilder.length();
             resultBuilder.append(displayVar);
             if (ITALIC_IDS.contains(varId)) {

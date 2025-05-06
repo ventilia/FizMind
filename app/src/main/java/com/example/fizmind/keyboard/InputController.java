@@ -2,15 +2,11 @@ package com.example.fizmind.keyboard;
 
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.text.Spannable;
+
 import android.text.SpannableStringBuilder;
-import android.text.style.RelativeSizeSpan;
-import android.text.style.StyleSpan;
-import android.text.style.SubscriptSpan;
 import android.view.View;
 import android.widget.TextView;
 import com.example.fizmind.SI.SIConverter;
-import com.example.fizmind.animation.CustomTypefaceSpan;
 import com.example.fizmind.database.AppDatabase;
 import com.example.fizmind.database.ConcreteMeasurementEntity;
 import com.example.fizmind.database.UnknownQuantityEntity;
