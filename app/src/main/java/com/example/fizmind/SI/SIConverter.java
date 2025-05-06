@@ -5,97 +5,115 @@ import com.example.fizmind.quantly.PhysicalQuantity;
 import com.example.fizmind.quantly.PhysicalQuantityRegistry;
 import com.example.fizmind.utils.LogUtils;
 
-// класс для конвертации единиц измерения в систему си
+// Класс для конвертации единиц измерения в систему СИ
 public class SIConverter {
     private final AppDatabase database;
 
-    // конструктор с подключением к базе данных
+    // Конструктор с подключением к базе данных
     public SIConverter(AppDatabase database) {
         this.database = database;
     }
 
-    // конвертация значения в си
+    // Метод для конвертации значения в СИ
     public Object[] convertToSI(String designation, double value, String unit) {
         PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(designation);
         if (pq == null) {
-            LogUtils.d("SIConverter", "физическая величина не найдена: " + designation);
+            LogUtils.e("SIConverter", "Физическая величина не найдена: " + designation);
             return null;
         }
 
         if (pq.isConstant()) {
+            LogUtils.d("SIConverter", "Конвертация не требуется, это константа: " + designation);
             return new Object[]{pq.getConstantValue(), pq.getSiUnit()};
         }
 
         String unitLower = unit.toLowerCase();
         if (!pq.getAllowedUnits().contains(unitLower)) {
-            LogUtils.e("SIConverter", "недопустимая единица для " + designation + ": " + unit);
+            LogUtils.e("SIConverter", "Недопустимая единица измерения для " + designation + ": " + unit);
             return null;
         }
 
-        // обработка температуры
+        // Обработка температуры
         if (designation.equals("designation_T")) {
+            LogUtils.d("SIConverter", "Начало конвертации температуры из " + unitLower);
             if (unitLower.equals("k")) {
+                LogUtils.d("SIConverter", designation + " " + formatValue(value) + " K");
                 return new Object[]{value, "K"};
             } else if (unitLower.equals("°c")) {
                 double kelvin = value + 273.15;
+                LogUtils.d("SIConverter", designation + " " + formatValue(value) + " °C + 273.15 = " + formatValue(kelvin) + " K");
                 return new Object[]{kelvin, "K"};
             } else if (unitLower.equals("°f")) {
                 double kelvin = (value - 32) * 5 / 9 + 273.15;
+                LogUtils.d("SIConverter", designation + " " + formatValue(value) + " °F - 32) × 5/9 + 273.15 = " + formatValue(kelvin) + " K");
                 return new Object[]{kelvin, "K"};
             }
         }
 
         Double factor = pq.getConversionFactor(unitLower);
         if (factor == null) {
-            LogUtils.e("SIConverter", "коэффициент пересчета не найден для единицы: " + unit);
+            LogUtils.e("SIConverter", "Коэффициент пересчета не найден для единицы: " + unit);
             return null;
         }
 
         double siValue = value * factor;
+        LogUtils.d("SIConverter", designation + " " + formatValue(value) + " " + unit + " = " + formatValue(value) + " × " + formatValue(factor) + " = " + formatValue(siValue) + " " + pq.getSiUnit());
         return new Object[]{siValue, pq.getSiUnit()};
     }
 
-    // получение шагов перевода в си
+    // Метод для получения шагов перевода в СИ
     public String getConversionSteps(String designation, double value, String unit) {
         PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(designation);
         if (pq == null) {
-            return "ошибка: физическая величина не найдена";
+            LogUtils.e("SIConverter", "Ошибка в шагах: физическая величина не найдена: " + designation);
+            return "Ошибка: физическая величина не найдена";
         }
 
         if (pq.isConstant()) {
+            LogUtils.d("SIConverter", "Шаги не требуются, это константа: " + designation);
             return "";
         }
 
         String unitLower = unit.toLowerCase();
         if (!pq.getAllowedUnits().contains(unitLower)) {
-            return "ошибка: недопустимая единица измерения " + unit;
+            LogUtils.e("SIConverter", "Ошибка в шагах: недопустимая единица: " + unit);
+            return "Ошибка: недопустимая единица измерения " + unit;
         }
 
-        // обработка температуры
+        // Обработка температуры
         if (designation.equals("designation_T")) {
+            LogUtils.d("SIConverter", "Генерация шагов для температуры из " + unitLower);
             if (unitLower.equals("k")) {
-                return formatValue(value) + " K";
+                String steps = formatValue(value) + " K";
+                LogUtils.d("SIConverter", designation + " " + steps);
+                return steps;
             } else if (unitLower.equals("°c")) {
                 double kelvin = value + 273.15;
-                return formatValue(value) + " °C + 273.15 = " + formatValue(kelvin) + " K";
+                String steps = formatValue(value) + " °C + 273.15 = " + formatValue(kelvin) + " K";
+                LogUtils.d("SIConverter", designation + " " + steps);
+                return steps;
             } else if (unitLower.equals("°f")) {
                 double celsius = (value - 32) * 5 / 9;
                 double kelvin = celsius + 273.15;
-                return "(" + formatValue(value) + " °F - 32) × 5/9 + 273.15 = " + formatValue(kelvin) + " K";
+                String steps = "(" + formatValue(value) + " °F - 32) × 5/9 + 273.15 = " + formatValue(kelvin) + " K";
+                LogUtils.d("SIConverter", designation + " " + steps);
+                return steps;
             }
         }
 
         Double factor = pq.getConversionFactor(unitLower);
         if (factor == null) {
-            return "ошибка: коэффициент пересчета не найден для " + unit;
+            LogUtils.e("SIConverter", "Ошибка в шагах: коэффициент пересчета не найден для " + unit);
+            return "Ошибка: коэффициент пересчета не найден для " + unit;
         }
 
         double siValue = value * factor;
-        return String.format("%s %s × %s = %s %s",
-                formatValue(value), unit, formatValue(factor), formatValue(siValue), pq.getSiUnit());
+        String steps = formatValue(value) + " " + unit + " = " + formatValue(value) + " × " + formatValue(factor) + " = " + formatValue(siValue) + " " + pq.getSiUnit();
+        LogUtils.d("SIConverter", designation + " " + steps);
+        return steps;
     }
 
-    // форматирование числового значения
+    // Метод для форматирования числового значения
     public static String formatValue(double value) {
         if (value == (int) value) {
             return String.valueOf((int) value);
