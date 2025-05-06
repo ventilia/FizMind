@@ -709,7 +709,7 @@ public class InputController {
             if (!subscript.isEmpty()) {
                 displayText.append("_").append(subscript);
             }
-            displayText.append(" = ").append(SIConverter.formatValue(value)).append(unit); // без пробела для компактности
+            displayText.append(" = ").append(SIConverter.formatValue(value)).append(" ").append(unit); // добавлен пробел между числом и единицей
             if (isConversionMode && !isSIUnit && !steps.isEmpty()) {
                 displayText.append(" = ").append(steps);
             }

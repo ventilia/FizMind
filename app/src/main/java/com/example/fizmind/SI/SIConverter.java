@@ -109,7 +109,7 @@ public class SIConverter {
 
         double siValue = value * factor;
         // формируем шаги без начального "value unit =", используем "*"
-        String steps = formatValue(value) + " * " + formatValue(factor) + " = " + formatValue(siValue) + " " + pq.getSiUnit();
+        String steps = formatValue(value) + " × " + formatValue(factor) + " = " + formatValue(siValue) + " " + pq.getSiUnit();
         LogUtils.d("SIConverter", designation + " " + steps);
         return steps;
     }
