@@ -166,55 +166,65 @@ public class DisplayManager {
             String unknownDisplayDesignation,
             Boolean unknownUsesStix,
             InputModule unknownSubscriptModule,
-            String currentInputField
+            String currentInputField,
+            boolean isConversionMode
     ) {
         SpannableStringBuilder unknownText = new SpannableStringBuilder();
 
-        if (unknownDisplayDesignation != null) {
-            int start = unknownText.length();
-            unknownText.append(unknownDisplayDesignation);
-            int end = unknownText.length();
-            if (unknownUsesStix != null && unknownUsesStix && stixTypeface != null) {
-                unknownText.setSpan(new CustomTypefaceSpan(stixTypeface), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            }
-            if (unknownSubscriptModule != null && !unknownSubscriptModule.isEmpty()) {
-                String subscriptText = unknownSubscriptModule.getDisplayText().toString();
-                int subscriptStart = unknownText.length();
-                unknownText.append(subscriptText);
-                int subscriptEnd = unknownText.length();
-                unknownText.setSpan(new SubscriptSpan(), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                unknownText.setSpan(new RelativeSizeSpan(0.75f), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            }
-            unknownText.append(" = ?");
-        } else if (!unknowns.isEmpty()) {
-            UnknownQuantityEntity lastUnknown = unknowns.get(unknowns.size() - 1);
-            SpannableStringBuilder formattedText = new SpannableStringBuilder(lastUnknown.getDisplayText());
-
-            // восстановление шрифта STIX
-            if (lastUnknown.isUsesStix() && stixTypeface != null) {
-                int designationEnd = formattedText.toString().indexOf(" = ");
-                if (designationEnd != -1) {
-                    formattedText.setSpan(new CustomTypefaceSpan(stixTypeface), 0, designationEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                }
-            }
-
-            // восстановление индексов
-            String subscript = lastUnknown.getSubscript();
-            if (!subscript.isEmpty()) {
-                int subscriptStart = formattedText.toString().indexOf(subscript);
-                if (subscriptStart != -1) {
-                    int subscriptEnd = subscriptStart + subscript.length();
-                    formattedText.setSpan(new SubscriptSpan(), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                    formattedText.setSpan(new RelativeSizeSpan(0.75f), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                }
-            }
-
-            unknownText.append(formattedText);
-        } else {
+        if (isConversionMode) {
+            // в режиме "Перевод в СИ" игнорируем все данные и показываем только плейсхолдер
             int start = unknownText.length();
             unknownText.append("Введите неизвестное");
             int color = "unknown".equals(currentInputField) ? Color.BLACK : Color.GRAY;
             unknownText.setSpan(new ForegroundColorSpan(color), start, unknownText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        } else {
+            // в режиме "Физический калькулятор" отображаем данные как раньше
+            if (unknownDisplayDesignation != null) {
+                int start = unknownText.length();
+                unknownText.append(unknownDisplayDesignation);
+                int end = unknownText.length();
+                if (unknownUsesStix != null && unknownUsesStix && stixTypeface != null) {
+                    unknownText.setSpan(new CustomTypefaceSpan(stixTypeface), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+                if (unknownSubscriptModule != null && !unknownSubscriptModule.isEmpty()) {
+                    String subscriptText = unknownSubscriptModule.getDisplayText().toString();
+                    int subscriptStart = unknownText.length();
+                    unknownText.append(subscriptText);
+                    int subscriptEnd = unknownText.length();
+                    unknownText.setSpan(new SubscriptSpan(), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    unknownText.setSpan(new RelativeSizeSpan(0.75f), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+                unknownText.append(" = ?");
+            } else if (!unknowns.isEmpty()) {
+                UnknownQuantityEntity lastUnknown = unknowns.get(unknowns.size() - 1);
+                SpannableStringBuilder formattedText = new SpannableStringBuilder(lastUnknown.getDisplayText());
+
+                // восстановление шрифта STIX
+                if (lastUnknown.isUsesStix() && stixTypeface != null) {
+                    int designationEnd = formattedText.toString().indexOf(" = ");
+                    if (designationEnd != -1) {
+                        formattedText.setSpan(new CustomTypefaceSpan(stixTypeface), 0, designationEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    }
+                }
+
+                // восстановление индексов
+                String subscript = lastUnknown.getSubscript();
+                if (!subscript.isEmpty()) {
+                    int subscriptStart = formattedText.toString().indexOf(subscript);
+                    if (subscriptStart != -1) {
+                        int subscriptEnd = subscriptStart + subscript.length();
+                        formattedText.setSpan(new SubscriptSpan(), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        formattedText.setSpan(new RelativeSizeSpan(0.75f), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    }
+                }
+
+                unknownText.append(formattedText);
+            } else {
+                int start = unknownText.length();
+                unknownText.append("Введите неизвестное");
+                int color = "unknown".equals(currentInputField) ? Color.BLACK : Color.GRAY;
+                unknownText.setSpan(new ForegroundColorSpan(color), start, unknownText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
         }
 
         LogUtils.d("DisplayManager", "построен текст для поля 'Введите неизвестное'");

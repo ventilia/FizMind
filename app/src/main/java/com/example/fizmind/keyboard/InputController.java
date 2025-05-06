@@ -116,6 +116,17 @@ public class InputController {
 
     public void setConversionMode(boolean isConversionMode) {
         this.isConversionMode = isConversionMode;
+        if (isConversionMode) {
+            // сброс текущего ввода в "Введите неизвестное" при переходе в режим "Перевод в СИ"
+            unknownDisplayDesignation = null;
+            logicalUnknownDesignation = null;
+            currentUnknownDesignation = null;
+            unknownUsesStix = null;
+            unknownSubscriptModule = null;
+            focusState = FocusState.DESIGNATION;
+            LogUtils.d("InputController", "сброшены данные 'Введите неизвестное' при переходе в режим 'Перевод в СИ'");
+        }
+        updateDisplay();
         LogUtils.logPropertySet("InputController", "режим", isConversionMode ? "перевод в СИ" : "калькулятор");
     }
 
@@ -178,6 +189,10 @@ public class InputController {
                 handleUnitInput(input, logicalId);
             }
         } else if ("unknown".equals(currentInputField)) {
+            if (isConversionMode) {
+                LogUtils.wWithSnackbar("InputController", "ввод в 'Введите неизвестное' заблокирован в режиме 'Перевод в СИ'", rootView);
+                return;
+            }
             if (focusState == FocusState.MODULE && unknownSubscriptModule != null && unknownSubscriptModule.isActive()) {
                 if (!unknownSubscriptModule.apply(input)) {
                     LogUtils.wWithSnackbar("InputController", "недопустимый символ для индекса: " + input, rootView);
@@ -421,7 +436,7 @@ public class InputController {
 
             SpannableStringBuilder displayText = displayManager.buildUnknownText(
                     database.unknownQuantityDao().getAllUnknowns(), unknownDisplayDesignation, unknownUsesStix,
-                    unknownSubscriptModule, currentInputField
+                    unknownSubscriptModule, currentInputField, isConversionMode
             );
 
             UnknownQuantityEntity unknown = new UnknownQuantityEntity(
@@ -451,6 +466,10 @@ public class InputController {
         lastDeleteTime = currentTime;
 
         if ("unknown".equals(currentInputField)) {
+            if (isConversionMode) {
+                LogUtils.d("InputController", "удаление в 'Введите неизвестное' игнорируется в режиме 'Перевод в СИ'");
+                return;
+            }
             if (unknownDisplayDesignation != null) {
                 unknownDisplayDesignation = null;
                 logicalUnknownDesignation = null;
@@ -550,6 +569,9 @@ public class InputController {
             updateKeyboardMode();
             updateDisplay();
         } else if ("unknown".equals(currentInputField)) {
+            if (isConversionMode) {
+                return;
+            }
             if (focusState == FocusState.MODULE && unknownSubscriptModule != null && unknownSubscriptModule.isActive()) {
                 unknownSubscriptModule.deactivate();
                 focusState = FocusState.DESIGNATION;
@@ -587,6 +609,9 @@ public class InputController {
             updateKeyboardMode();
             updateDisplay();
         } else if ("unknown".equals(currentInputField)) {
+            if (isConversionMode) {
+                return;
+            }
             if (focusState == FocusState.DESIGNATION && unknownSubscriptModule != null) {
                 unknownSubscriptModule.activate();
                 focusState = FocusState.MODULE;
@@ -720,6 +745,10 @@ public class InputController {
             }
             logAllSavedData();
         } else if ("unknown".equals(currentInputField)) {
+            if (isConversionMode) {
+                LogUtils.d("InputController", "сохранение в 'Введите неизвестное' игнорируется в режиме 'Перевод в СИ'");
+                return;
+            }
             saveUnknown();
         }
     }
@@ -760,7 +789,7 @@ public class InputController {
         designationsView.setText(designationsText);
 
         SpannableStringBuilder unknownText = displayManager.buildUnknownText(
-                unknowns, unknownDisplayDesignation, unknownUsesStix, unknownSubscriptModule, currentInputField
+                unknowns, unknownDisplayDesignation, unknownUsesStix, unknownSubscriptModule, currentInputField, isConversionMode
         );
         unknownView.setText(unknownText);
 
@@ -800,14 +829,18 @@ public class InputController {
             database.measurementDao().deleteAll();
             LogUtils.d("InputController", "очищены все данные для 'Введите обозначение'");
         } else if ("unknown".equals(currentInputField)) {
-            unknownDisplayDesignation = null;
-            logicalUnknownDesignation = null;
-            currentUnknownDesignation = null;
-            unknownUsesStix = null;
-            unknownSubscriptModule = null;
-            focusState = FocusState.DESIGNATION;
-            database.unknownQuantityDao().deleteAll();
-            LogUtils.d("InputController", "очищены все данные для 'Введите неизвестное'");
+            if (isConversionMode) {
+                LogUtils.d("InputController", "очистка 'Введите неизвестное' игнорируется в режиме 'Перевод в СИ'");
+            } else {
+                unknownDisplayDesignation = null;
+                logicalUnknownDesignation = null;
+                currentUnknownDesignation = null;
+                unknownUsesStix = null;
+                unknownSubscriptModule = null;
+                focusState = FocusState.DESIGNATION;
+                database.unknownQuantityDao().deleteAll();
+                LogUtils.d("InputController", "очищены все данные для 'Введите неизвестное'");
+            }
         }
         updateDisplay();
         if (keyboardModeSwitcher != null) {
