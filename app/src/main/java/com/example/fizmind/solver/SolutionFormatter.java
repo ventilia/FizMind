@@ -67,10 +67,24 @@ public class SolutionFormatter {
         for (ConcreteMeasurementEntity measurement : measurements) {
             String displayDesignation = displayManager.getDisplayTextFromLogicalId(measurement.getBaseDesignation());
             if (!measurement.isSIUnit()) {
-                builder.append(displayDesignation)
-                        .append(" = ")
-                        .append(measurement.getConversionSteps())
-                        .append("\n");
+                String steps = measurement.getConversionSteps();
+                if (!steps.isEmpty()) {
+                    // формируем строку вида "m = 3g = 3*0.001 = 0.003 kg"
+                    builder.append(displayDesignation)
+                            .append(" = ")
+                            .append(SIConverter.formatValue(measurement.getOriginalValue()))
+                            .append(measurement.getOriginalUnit()) // без пробела для компактности
+                            .append(" = ")
+                            .append(steps)
+                            .append("\n");
+                } else {
+                    builder.append(displayDesignation)
+                            .append(" = ")
+                            .append(SIConverter.formatValue(measurement.getValue()))
+                            .append(" ")
+                            .append(measurement.getUnit())
+                            .append(" (нет шагов конвертации)\n");
+                }
             } else {
                 builder.append(displayDesignation)
                         .append(" = ")

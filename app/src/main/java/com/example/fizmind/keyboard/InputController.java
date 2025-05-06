@@ -607,7 +607,7 @@ public class InputController {
         }
     }
 
-    // сохранение измерения с конвертацией в си
+    // сохранение измерения с конвертацией в СИ
     public void onDownArrowPressed() {
         if ("designations".equals(currentInputField)) {
             if (designationSubscriptModule != null && designationSubscriptModule.isActive() && designationSubscriptModule.isEmpty()) {
@@ -678,7 +678,7 @@ public class InputController {
                 return;
             }
 
-            // конвертация в си если единица не си
+            // конвертация в СИ если единица не СИ
             double siValue = value;
             String siUnit = unit;
             String steps = "";
@@ -709,7 +709,7 @@ public class InputController {
             if (!subscript.isEmpty()) {
                 displayText.append("_").append(subscript);
             }
-            displayText.append(" = ").append(SIConverter.formatValue(value)).append(" ").append(unit);
+            displayText.append(" = ").append(SIConverter.formatValue(value)).append(unit); // без пробела для компактности
             if (isConversionMode && !isSIUnit && !steps.isEmpty()) {
                 displayText.append(" = ").append(steps);
             }
