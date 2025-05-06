@@ -51,9 +51,45 @@ public class DisplayManager {
     ) {
         SpannableStringBuilder designationsText = new SpannableStringBuilder();
 
-        // вывод сохраненных измерений из базы данных
+        // вывод сохраненных измерений из базы данных с восстановлением форматирования
         for (int i = 0; i < measurements.size(); i++) {
-            designationsText.append(measurements.get(i).getOriginalDisplay());
+            ConcreteMeasurementEntity measurement = measurements.get(i);
+            String originalDisplay = measurement.getOriginalDisplay();
+            SpannableStringBuilder formattedText = new SpannableStringBuilder(originalDisplay);
+
+            // восстановление шрифта STIX для обозначения
+            if (measurement.isUsesStix() && stixTypeface != null) {
+                int designationEnd = originalDisplay.indexOf(" = ");
+                if (designationEnd != -1) {
+                    formattedText.setSpan(new CustomTypefaceSpan(stixTypeface), 0, designationEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+            }
+
+            // восстановление индексов
+            String subscript = measurement.getSubscript();
+            if (!subscript.isEmpty()) {
+                String designationPart = measurement.getDesignationOperations().isEmpty() ?
+                        measurement.getBaseDesignation() :
+                        measurement.getDesignationOperations() + "(" + measurement.getBaseDesignation() + ")";
+                int subscriptStart = originalDisplay.indexOf(subscript);
+                if (subscriptStart != -1) {
+                    int subscriptEnd = subscriptStart + subscript.length();
+                    formattedText.setSpan(new SubscriptSpan(), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    formattedText.setSpan(new RelativeSizeSpan(0.75f), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+            }
+
+            // восстановление жирного шрифта для результата конверсии
+            if (measurement.isConversionMode() && !measurement.isSIUnit() && !measurement.getConversionSteps().isEmpty()) {
+                int lastEqualIndex = originalDisplay.lastIndexOf("= ");
+                if (lastEqualIndex != -1) {
+                    int resultStart = lastEqualIndex + 2;
+                    int resultEnd = originalDisplay.length();
+                    formattedText.setSpan(new StyleSpan(Typeface.BOLD), resultStart, resultEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+            }
+
+            designationsText.append(formattedText);
             if (i < measurements.size() - 1) {
                 designationsText.append("\n\n");
             }
@@ -151,7 +187,29 @@ public class DisplayManager {
             }
             unknownText.append(" = ?");
         } else if (!unknowns.isEmpty()) {
-            unknownText.append(unknowns.get(unknowns.size() - 1).getDisplayText());
+            UnknownQuantityEntity lastUnknown = unknowns.get(unknowns.size() - 1);
+            SpannableStringBuilder formattedText = new SpannableStringBuilder(lastUnknown.getDisplayText());
+
+            // восстановление шрифта STIX
+            if (lastUnknown.isUsesStix() && stixTypeface != null) {
+                int designationEnd = formattedText.toString().indexOf(" = ");
+                if (designationEnd != -1) {
+                    formattedText.setSpan(new CustomTypefaceSpan(stixTypeface), 0, designationEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+            }
+
+            // восстановление индексов
+            String subscript = lastUnknown.getSubscript();
+            if (!subscript.isEmpty()) {
+                int subscriptStart = formattedText.toString().indexOf(subscript);
+                if (subscriptStart != -1) {
+                    int subscriptEnd = subscriptStart + subscript.length();
+                    formattedText.setSpan(new SubscriptSpan(), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    formattedText.setSpan(new RelativeSizeSpan(0.75f), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+            }
+
+            unknownText.append(formattedText);
         } else {
             int start = unknownText.length();
             unknownText.append("Введите неизвестное");

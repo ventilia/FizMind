@@ -16,7 +16,6 @@ import com.example.fizmind.database.AppDatabase;
 import com.example.fizmind.database.ConcreteMeasurementEntity;
 import com.example.fizmind.database.UnknownQuantityEntity;
 import com.example.fizmind.measurement.ConcreteMeasurement;
-import com.example.fizmind.measurement.UnknownQuantity;
 import com.example.fizmind.modules.InputModule;
 import com.example.fizmind.modules.ModuleType;
 import com.example.fizmind.modules.ModuleValidator;
@@ -685,46 +684,28 @@ public class InputController {
                 }
             }
 
-            SpannableStringBuilder historyEntry = new SpannableStringBuilder();
-            int start = historyEntry.length();
+            // создание отображаемого текста без spans для хранения в базе
+            StringBuilder displayText = new StringBuilder();
             if (operationBuffer.length() > 0) {
-                historyEntry.append(operationBuffer).append("(").append(displayDesignation).append(")");
+                displayText.append(operationBuffer).append("(").append(displayDesignation).append(")");
             } else {
-                historyEntry.append(displayDesignation);
+                displayText.append(displayDesignation);
             }
-            int designationEnd = historyEntry.length();
-
-            if (designationSubscriptModule != null && !designationSubscriptModule.isEmpty()) {
-                String subscriptText = designationSubscriptModule.getDisplayText().toString();
-                int subscriptStart = historyEntry.length();
-                historyEntry.append(subscriptText);
-                int subscriptEnd = historyEntry.length();
-                historyEntry.setSpan(new SubscriptSpan(), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                historyEntry.setSpan(new RelativeSizeSpan(0.75f), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            if (!subscript.isEmpty()) {
+                displayText.append("_").append(subscript); // индекс сохраняется как часть строки
             }
-
-            if (designationUsesStix != null && designationUsesStix && stixTypeface != null) {
-                historyEntry.setSpan(new CustomTypefaceSpan(stixTypeface), start, designationEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            }
-
-            historyEntry.append(" = ").append(SIConverter.formatValue(value)).append(" ").append(unit);
-
+            displayText.append(" = ").append(SIConverter.formatValue(value)).append(" ").append(unit);
             if (isConversionMode && !isSIUnit && !steps.isEmpty()) {
-                int stepsStart = historyEntry.length();
-                historyEntry.append(" = ").append(steps);
-                int lastEqualIndex = historyEntry.toString().lastIndexOf("= ");
-                if (lastEqualIndex != -1) {
-                    int resultStart = lastEqualIndex + 2;
-                    int resultEnd = historyEntry.length();
-                    historyEntry.setSpan(new StyleSpan(Typeface.BOLD), resultStart, resultEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                }
+                displayText.append(" = ").append(steps);
             }
 
+            // сохранение в базу с учетом флага usesStix
             ConcreteMeasurementEntity measurement = new ConcreteMeasurementEntity(
                     baseDesignation, siValue, siUnit,
                     operationBuffer.toString(), valueOperationBuffer.toString(),
-                    subscript, isCurrentConstant, historyEntry.toString(),
-                    value, unit, steps, isSIUnit, isConversionMode
+                    subscript, isCurrentConstant, displayText.toString(),
+                    value, unit, steps, isSIUnit, isConversionMode,
+                    designationUsesStix != null && designationUsesStix
             );
             database.measurementDao().insert(measurement);
             LogUtils.logSaveMeasurement("InputController", measurement.toString());

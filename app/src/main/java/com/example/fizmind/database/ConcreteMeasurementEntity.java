@@ -16,12 +16,13 @@ public class ConcreteMeasurementEntity {
     public String valueOperations; // операции с значением
     public String subscript; // нижний индекс
     public boolean constant; // является ли константой
-    public String originalDisplay; // отображаемый текст (сериализованный SpannableStringBuilder)
+    public String originalDisplay; // отображаемый текст (без spans)
     public double originalValue; // исходное значение
     public String originalUnit; // исходная единица
     public String conversionSteps; // шаги преобразования
     public boolean isSIUnit; // в единицах СИ
     public boolean isConversionMode; // режим конверсии
+    public boolean usesStix; // флаг использования шрифта STIX для обозначения
 
     // конструктор по умолчанию для Room
     public ConcreteMeasurementEntity() {}
@@ -32,7 +33,7 @@ public class ConcreteMeasurementEntity {
             String designationOperations, String valueOperations,
             String subscript, boolean constant, String originalDisplay,
             double originalValue, String originalUnit, String conversionSteps,
-            boolean isSIUnit, boolean isConversionMode) {
+            boolean isSIUnit, boolean isConversionMode, boolean usesStix) {
         this.baseDesignation = baseDesignation;
         this.value = value;
         this.unit = unit;
@@ -46,6 +47,7 @@ public class ConcreteMeasurementEntity {
         this.conversionSteps = conversionSteps;
         this.isSIUnit = isSIUnit;
         this.isConversionMode = isConversionMode;
+        this.usesStix = usesStix;
     }
 
     // геттеры
@@ -63,6 +65,7 @@ public class ConcreteMeasurementEntity {
     public String getConversionSteps() { return conversionSteps; }
     public boolean isSIUnit() { return isSIUnit; }
     public boolean isConversionMode() { return isConversionMode; }
+    public boolean isUsesStix() { return usesStix; }
 
     // сеттеры
     public void setId(int id) { this.id = id; }
@@ -79,4 +82,26 @@ public class ConcreteMeasurementEntity {
     public void setConversionSteps(String conversionSteps) { this.conversionSteps = conversionSteps; }
     public void setSIUnit(boolean isSIUnit) { this.isSIUnit = isSIUnit; }
     public void setConversionMode(boolean isConversionMode) { this.isConversionMode = isConversionMode; }
+    public void setUsesStix(boolean usesStix) { this.usesStix = usesStix; }
+
+    @Override
+    public String toString() {
+        return "ConcreteMeasurementEntity{" +
+                "id=" + id +
+                ", baseDesignation='" + baseDesignation + '\'' +
+                ", value=" + value +
+                ", unit='" + unit + '\'' +
+                ", designationOperations='" + designationOperations + '\'' +
+                ", valueOperations='" + valueOperations + '\'' +
+                ", subscript='" + subscript + '\'' +
+                ", constant=" + constant +
+                ", originalDisplay='" + originalDisplay + '\'' +
+                ", originalValue=" + originalValue +
+                ", originalUnit='" + originalUnit + '\'' +
+                ", conversionSteps='" + conversionSteps + '\'' +
+                ", isSIUnit=" + isSIUnit +
+                ", isConversionMode=" + isConversionMode +
+                ", usesStix=" + usesStix +
+                '}';
+    }
 }
