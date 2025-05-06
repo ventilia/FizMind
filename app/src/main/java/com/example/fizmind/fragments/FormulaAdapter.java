@@ -17,7 +17,10 @@ import com.example.fizmind.keyboard.DisplayManager;
 import com.example.fizmind.quantly.PhysicalQuantity;
 import com.example.fizmind.quantly.PhysicalQuantityRegistry;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class FormulaAdapter extends BaseAdapter {
 
@@ -27,9 +30,15 @@ public class FormulaAdapter extends BaseAdapter {
     private final Typeface montserratTypeface;
     private final Typeface stixTypeface;
 
+    // набор логических идентификаторов, которые должны рендериться курсивом (STIX)
+    private static final Set<String> ITALIC_IDS = new HashSet<>(Arrays.asList(
+            "s_latin", "v_latin", "a_latin", "m_latin", "F_latin",
+            "E_latin", "U_latin", "R_latin", "S_latin", "h_latin", "c_latin"
+    ));
+
     /**
-     * адаптер для списка формул, где математические обозначения (v, m, etc.) рендерятся шрифтом STIX,
-     * а весь остальной текст — Montserrat
+     * адаптер списка формул: математические обозначения из ITALIC_IDS — шрифт STIX,
+     * остальной текст — Montserrat
      */
     public FormulaAdapter(Context context,
                           List<Formula> formulas,
@@ -66,52 +75,55 @@ public class FormulaAdapter extends BaseAdapter {
         }
 
         TextView formulaTextView = convertView.findViewById(R.id.text_formula);
-        // по умолчанию весь текст Montserrat
         formulaTextView.setTypeface(montserratTypeface);
 
         Formula formula = formulas.get(position);
-        SpannableStringBuilder builder = new SpannableStringBuilder();
+        SpannableStringBuilder resultBuilder = new SpannableStringBuilder();
 
-        // 1. математическое выражение
+        // 1. форматируем само выражение (дроби через HTML)
         String exprHtml = displayManager.getDisplayExpression(formula, null);
-        // преобразуем HTML (sup/sub) в Spanned
-        Spanned spanExpr = Html.fromHtml(exprHtml, Html.FROM_HTML_MODE_LEGACY);
-        SpannableStringBuilder spanBuilder = new SpannableStringBuilder(spanExpr);
-        // выделяем каждую переменную шрифтом STIX
-        for (String logicalId : formula.getVariables()) {
-            String displayVar = displayManager.getDisplayTextFromLogicalId(logicalId);
-            int index = spanBuilder.toString().indexOf(displayVar);
-            if (index >= 0) {
-                spanBuilder.setSpan(
+        Spanned exprSpanned = Html.fromHtml(exprHtml, Html.FROM_HTML_MODE_LEGACY);
+        SpannableStringBuilder exprBuilder = new SpannableStringBuilder(exprSpanned);
+
+        // для каждой переменной проверяем, нужно ли применять шрифт STIX
+        for (String varId : formula.getVariables()) {
+            if (ITALIC_IDS.contains(varId)) {
+                String displayVar = displayManager.getDisplayTextFromLogicalId(varId);
+                String text = exprBuilder.toString();
+                int start = text.indexOf(displayVar);
+                if (start >= 0) {
+                    exprBuilder.setSpan(
+                            new CustomTypefaceSpan(stixTypeface),
+                            start, start + displayVar.length(),
+                            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                    );
+                }
+            }
+        }
+        resultBuilder.append(exprBuilder).append("\n\n");
+
+        // 2. раздел "где:" и список переменных
+        resultBuilder.append("где:\n");
+        for (String varId : formula.getVariables()) {
+            String displayVar = displayManager.getDisplayTextFromLogicalId(varId);
+            PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(varId);
+            String desc = (pq != null) ? pq.getType() : "описание не найдено";
+
+            // обозначение: STIX только если ID в наборе
+            int varStart = resultBuilder.length();
+            resultBuilder.append(displayVar);
+            if (ITALIC_IDS.contains(varId)) {
+                resultBuilder.setSpan(
                         new CustomTypefaceSpan(stixTypeface),
-                        index, index + displayVar.length(),
+                        varStart, resultBuilder.length(),
                         Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
                 );
             }
-        }
-        builder.append(spanBuilder).append("\n\n");
-
-        // 2. описание: 'где:' + список
-        builder.append("где:\n");
-        for (String logicalId : formula.getVariables()) {
-            String displayVar = displayManager.getDisplayTextFromLogicalId(logicalId);
-            PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(logicalId);
-            String desc = (pq != null) ? pq.getType() : "описание не найдено";
-
-            // переменная: STIX
-            int varStart = builder.length();
-            builder.append(displayVar);
-            builder.setSpan(
-                    new CustomTypefaceSpan(stixTypeface),
-                    varStart, builder.length(),
-                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-            );
-            // разделитель и описание: Montserrat по умолчанию
-            builder.append(" — ");
-            builder.append(desc).append("\n");
+            // остальной текст — Montserrat
+            resultBuilder.append(" — ").append(desc).append("\n");
         }
 
-        formulaTextView.setText(builder);
+        formulaTextView.setText(resultBuilder);
         return convertView;
     }
 }
