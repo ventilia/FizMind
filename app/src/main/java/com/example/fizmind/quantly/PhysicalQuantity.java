@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-// класс для представления физической величины
+
 public class PhysicalQuantity {
     private final String id;
     private final String type;
@@ -14,7 +14,7 @@ public class PhysicalQuantity {
     private final double constantValue;
     private final Map<String, Double> conversionFactors;
 
-    // конструктор
+
     public PhysicalQuantity(String id, String type, String siUnit, List<String> allowedUnits, boolean isConstant, double constantValue) {
         this.id = id;
         this.type = type;
@@ -132,7 +132,7 @@ public class PhysicalQuantity {
         }
     }
 
-    // геттеры
+
     public String getId() { return id; }
     public String getType() { return type; }
     public String getSiUnit() { return siUnit; }

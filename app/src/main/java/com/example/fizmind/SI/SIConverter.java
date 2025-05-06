@@ -5,16 +5,15 @@ import com.example.fizmind.quantly.PhysicalQuantity;
 import com.example.fizmind.quantly.PhysicalQuantityRegistry;
 import com.example.fizmind.utils.LogUtils;
 
-// класс для конвертации единиц измерения в систему СИ
 public class SIConverter {
     private final AppDatabase database;
 
-    // конструктор с подключением к базе данных
+
     public SIConverter(AppDatabase database) {
         this.database = database;
     }
 
-    // метод для конвертации значения в СИ
+
     public Object[] convertToSI(String designation, double value, String unit) {
         PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(designation);
         if (pq == null) {
@@ -108,13 +107,13 @@ public class SIConverter {
         }
 
         double siValue = value * factor;
-        // формируем шаги без начального "value unit =", используем "*"
+
         String steps = formatValue(value) + " × " + formatValue(factor) + " = " + formatValue(siValue) + " " + pq.getSiUnit();
         LogUtils.d("SIConverter", designation + " " + steps);
         return steps;
     }
 
-    // метод для форматирования числового значения
+
     public static String formatValue(double value) {
         if (value == (int) value) {
             return String.valueOf((int) value);

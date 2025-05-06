@@ -5,20 +5,20 @@ import android.text.SpannableStringBuilder;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.SubscriptSpan;
 
-// модуль для обработки индексов
+
 public class InputModule {
     private final ModuleType type;
     private final StringBuilder content;
     private boolean isActive;
 
-    // конструктор
+
     public InputModule(ModuleType type) {
         this.type = type;
         this.content = new StringBuilder();
         this.isActive = false;
     }
 
-    // применение ввода
+
     public boolean apply(String input) {
         if (type == ModuleType.SUBSCRIPT && input.matches("[a-zA-Z0-9]")) {
             content.append(input);

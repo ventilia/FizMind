@@ -99,7 +99,7 @@
                             new SymbolKey("m_latin", "m", true),
                             new SymbolKey("F_latin", "F", true),
                             new SymbolKey("designation_P", "P", false),
-                            new SymbolKey("designation_ρ", "ρ", false), // STIX for Greek rho
+                            new SymbolKey("designation_ρ", "ρ", false),
                             new SymbolKey("designation_p", "p", false),
                             new SymbolKey("designation_A", "A", false),
                             new SymbolKey("designation_N", "N", false),
@@ -111,7 +111,7 @@
                             new SymbolKey("R_latin", "R", true),
                             new SymbolKey("P_power", "P", false),
                             new SymbolKey("designation_c", "c", false),
-                            new SymbolKey("designation_λ", "λ", false), // STIX for Greek lambda
+                            new SymbolKey("designation_λ", "λ", false),
                             new SymbolKey("designation_f", "f", false)
                     ),
                     Arrays.asList(
