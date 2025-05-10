@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
 public class DisplayManager {
 
     private final Typeface stixTypeface;
@@ -49,7 +48,7 @@ public class DisplayManager {
     ) {
         SpannableStringBuilder designationsText = new SpannableStringBuilder();
 
-        // вывод сохраненных измерений из базы
+        // вывод сохраненных измерений
         for (int i = 0; i < measurements.size(); i++) {
             ConcreteMeasurementEntity measurement = measurements.get(i);
             String originalDisplay = measurement.getOriginalDisplay();
@@ -270,5 +269,9 @@ public class DisplayManager {
         }
         LogUtils.d("DisplayManager", "извлечены переменные из выражения: " + variables);
         return variables;
+    }
+
+    public Typeface getStixTypeface() {
+        return stixTypeface;
     }
 }

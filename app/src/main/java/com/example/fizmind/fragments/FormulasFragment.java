@@ -25,7 +25,6 @@ public class FormulasFragment extends Fragment {
     private DisplayManager displayManager;
     private AppDatabase database;
     private Typeface montserratTypeface;
-    private Typeface stixTypeface;
 
     @Override
     public View onCreateView(LayoutInflater inflater,
@@ -39,11 +38,7 @@ public class FormulasFragment extends Fragment {
         ImageView backButton = view.findViewById(R.id.backButton);
         backButton.setOnClickListener(v -> requireActivity().onBackPressed());
 
-        // загружаем шрифты из assets
-        stixTypeface = Typeface.createFromAsset(
-                requireContext().getAssets(),
-                "fonts/stix_two_text_italic.ttf"
-        );
+
         montserratTypeface = Typeface.createFromAsset(
                 requireContext().getAssets(),
                 "fonts/MontserratAlternates-Regular.ttf"
@@ -58,20 +53,19 @@ public class FormulasFragment extends Fragment {
                 .allowMainThreadQueries()
                 .build();
 
-        // создаём DisplayManager для форматирования формул
-        displayManager = new DisplayManager(stixTypeface, database);
 
-        // получаем список всех формул из собственной БД FormulaDatabase
+        displayManager = new DisplayManager(montserratTypeface, database);
+
+
         FormulaDatabase formulaDatabase = new FormulaDatabase();
         List<Formula> formulas = formulaDatabase.getFormulas();
 
-        // настраиваем адаптер с передачей обоих шрифтов
+
         adapter = new FormulaAdapter(
                 requireContext(),
                 formulas,
                 displayManager,
-                montserratTypeface,
-                stixTypeface
+                montserratTypeface
         );
         listView.setAdapter(adapter);
 

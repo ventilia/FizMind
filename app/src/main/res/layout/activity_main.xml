@@ -177,6 +177,7 @@
             android:fontFamily="@font/montserrat_alternates"/>
 
         <TextView
+            android:id="@+id/emailTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="fizmindd@gmail.com"
