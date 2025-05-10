@@ -1,19 +1,23 @@
 package com.example.fizmind.database;
 
-import androidx.room.Database;
-import androidx.room.RoomDatabase;
-import androidx.room.Room;
-import androidx.room.migration.Migration;
-import androidx.sqlite.db.SupportSQLiteDatabase;
 import android.content.Context;
 
-// астрактный класс базы для Room
-@Database(entities = {ConcreteMeasurementEntity.class, UnknownQuantityEntity.class}, version = 2, exportSchema = false)
-public abstract class AppDatabase extends RoomDatabase {
-    // DAO
-    public abstract MeasurementDao measurementDao();
+import androidx.room.Database;
+import androidx.room.Room;
+import androidx.room.RoomDatabase;
 
-    // DAO
+@Database(
+        entities = {
+                ConcreteMeasurementEntity.class,
+                UnknownQuantityEntity.class
+        },
+        version = 2,
+        exportSchema = false
+)
+public abstract class AppDatabase extends RoomDatabase {
+
+    // DAOs
+    public abstract MeasurementDao measurementDao();
     public abstract UnknownQuantityDao unknownQuantityDao();
 
 
@@ -23,9 +27,12 @@ public abstract class AppDatabase extends RoomDatabase {
         if (INSTANCE == null) {
             synchronized (AppDatabase.class) {
                 if (INSTANCE == null) {
-                    INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
-                                    AppDatabase.class, "database-name")
-                            .addMigrations(MIGRATION_1_2)
+                    INSTANCE = Room.databaseBuilder(
+                                    context.getApplicationContext(),
+                                    AppDatabase.class,
+                                    "database-name"
+                            )
+
                             .fallbackToDestructiveMigration()
                             .build();
                 }
@@ -33,12 +40,4 @@ public abstract class AppDatabase extends RoomDatabase {
         }
         return INSTANCE;
     }
-
-
-    static final Migration MIGRATION_1_2 = new Migration(1, 2) {
-        @Override
-        public void migrate(SupportSQLiteDatabase database) {
-            database.execSQL("ALTER TABLE concrete_measurements ADD COLUMN usesStix INTEGER NOT NULL DEFAULT 0");
-        }
-    };
 }
