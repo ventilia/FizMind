@@ -100,11 +100,15 @@ public class MainActivity extends AppCompatActivity {
             ClipData clip = ClipData.newPlainText("email", emailText.getText().toString());
             if (clipboard != null) {
                 clipboard.setPrimaryClip(clip);
-                Snackbar.make(drawerLayout, "Скопировано в буфер обмена", Snackbar.LENGTH_SHORT).show();
+
+                if (LogUtils.isSnackbarEnabled()) {
+                    Snackbar.make(drawerLayout, "Скопировано в буфер обмена", Snackbar.LENGTH_SHORT).show();
+                }
                 LogUtils.logButtonPressed(TAG, "копирование e-mail");
             }
         });
     }
+
 
     private void configureButton(int buttonId, Class<?> targetActivity) {
         CardView button = findViewById(buttonId);
@@ -114,9 +118,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
     private void openActivity(Class<?> targetActivity) {
         startActivity(new Intent(this, targetActivity));
     }
+
 
     @Override
     public void onBackPressed() {

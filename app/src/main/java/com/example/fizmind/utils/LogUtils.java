@@ -8,12 +8,11 @@ import androidx.preference.PreferenceManager;
 import com.example.fizmind.modules.ModuleType;
 import com.google.android.material.snackbar.Snackbar;
 
-
 public class LogUtils {
-    private static boolean LOG_ENABLED = true; // Флаг для управления логами
-    private static boolean SNACKBAR_ENABLED = true; // Флаг для управления Snackbar
+    private static boolean LOG_ENABLED = true; // флаг для управления логами
+    private static boolean SNACKBAR_ENABLED = true; // флаг для управления snackbar
 
-
+    // обновление настроек из shared preferences
     public static void updateSettings(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         boolean debugEnabled = prefs.getBoolean("enable_debug_features", true);
@@ -22,6 +21,10 @@ public class LogUtils {
         Log.d("LogUtils", "Настройки обновлены: LOG_ENABLED=" + LOG_ENABLED + ", SNACKBAR_ENABLED=" + SNACKBAR_ENABLED);
     }
 
+    // проверка, включены ли snackbar
+    public static boolean isSnackbarEnabled() {
+        return SNACKBAR_ENABLED;
+    }
 
     public static void d(String tag, String message) {
         if (LOG_ENABLED) {
@@ -53,7 +56,7 @@ public class LogUtils {
         }
     }
 
-    // Методы с отображением Snackbar
+    // методы с отображением snackbar
     public static void wWithSnackbar(String tag, String message, View view) {
         w(tag, message);
         if (SNACKBAR_ENABLED) {
@@ -68,7 +71,7 @@ public class LogUtils {
         }
     }
 
-
+    // отображение snackbar
     private static void showSnackbar(View view, String message) {
         if (view != null) {
             Snackbar.make(view, message, Snackbar.LENGTH_LONG).show();
@@ -77,7 +80,7 @@ public class LogUtils {
         }
     }
 
-    // Специальные методы для часто используемых логов
+    // специальные методы для часто используемых логов
     public static void logActivityStarted(String tag, String activityName) {
         d(tag, activityName + " запущена");
     }
