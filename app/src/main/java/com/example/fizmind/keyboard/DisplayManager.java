@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-// менеджер отображения текста
+// менеджер отображения текста в интерфейсе
 public class DisplayManager {
 
     private final Typeface stixTypeface;
@@ -78,10 +78,12 @@ public class DisplayManager {
 
             designationsText.append(formattedText);
             if (i < measurements.size() - 1) {
-                designationsText.append("\n\n");
+                designationsText.append("\n\n"); // два перехода между сохраненными измерениями
             }
         }
-        if (!measurements.isEmpty()) {
+
+        // добавляем переход только если есть текущий ввод
+        if (!measurements.isEmpty() && (designationBuffer.length() > 0 || valueBuffer.length() > 0 || unitBuffer.length() > 0 || designationSubscriptModule != null)) {
             designationsText.append("\n\n");
         }
 
@@ -142,7 +144,7 @@ public class DisplayManager {
             designationsText.setSpan(new ForegroundColorSpan(color), start, designationsText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
 
-        LogUtils.d("DisplayManager", "построен текст для поля 'Введите обозначение'");
+        LogUtils.d("DisplayManager", "построен текст для поля 'введите обозначение'");
         return designationsText;
     }
 
@@ -200,7 +202,7 @@ public class DisplayManager {
             }
         }
 
-        LogUtils.d("DisplayManager", "построен текст для поля 'Введите неизвестное'");
+        LogUtils.d("DisplayManager", "построен текст для поля 'введите неизвестное'");
         return unknownText;
     }
 
