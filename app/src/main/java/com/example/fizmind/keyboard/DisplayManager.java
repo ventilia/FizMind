@@ -142,11 +142,18 @@ public class DisplayManager {
             }
             String subscript = measurement.getSubscript();
             if (!subscript.isEmpty()) {
-                int subscriptStart = displayText.indexOf("_" + subscript);
+                int subscriptStart = displayText.indexOf(subscript);
+                if (subscriptStart == -1) {
+                    // если индекс не найден в тексте напрямую, ищем его после символа подчеркивания
+                    subscriptStart = displayText.indexOf("_" + subscript);
+                    if (subscriptStart != -1) {
+                        subscriptStart += 1; // пропускаем символ подчеркивания
+                    }
+                }
                 if (subscriptStart != -1) {
-                    int subscriptEnd = subscriptStart + subscript.length() + 1;
-                    formattedText.setSpan(new SubscriptSpan(), subscriptStart + 1, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                    formattedText.setSpan(new RelativeSizeSpan(0.75f), subscriptStart + 1, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    int subscriptEnd = subscriptStart + subscript.length();
+                    formattedText.setSpan(new SubscriptSpan(), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    formattedText.setSpan(new RelativeSizeSpan(0.75f), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                 }
             }
             if (measurement.isConversionMode() && !measurement.isSIUnit() && !measurement.getConversionSteps().isEmpty()) {
