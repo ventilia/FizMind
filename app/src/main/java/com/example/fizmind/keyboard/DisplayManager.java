@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+
 public class DisplayManager {
 
     private final Typeface stixTypeface;
@@ -48,7 +49,6 @@ public class DisplayManager {
     ) {
         SpannableStringBuilder designationsText = new SpannableStringBuilder();
 
-        // отображаем сохраненные измерения
         for (int i = 0; i < measurements.size(); i++) {
             ConcreteMeasurementEntity measurement = measurements.get(i);
             String originalDisplay = measurement.getOriginalDisplay();
@@ -58,21 +58,17 @@ public class DisplayManager {
 
             designationsText.append(formattedText);
             if (i < measurements.size() - 1) {
-                designationsText.append("\n\n"); // двойной перенос между измерениями
+                designationsText.append("\n\n"); // Двойной перенос между измерениями
             }
         }
-
-        // проверяем, есть ли текущий ввод
         boolean hasCurrentInput = designationBuffer.length() > 0 || valueBuffer.length() > 0 ||
                 unitBuffer.length() > 0 || designationSubscriptModule != null;
 
-        // если есть сохраненные измерения, добавляем перенос строки перед следующим текстом
         if (!measurements.isEmpty()) {
             designationsText.append("\n\n");
         }
 
         if (hasCurrentInput) {
-            // отображаем текущий ввод
             int start = designationsText.length();
             if (operationBuffer.length() > 0) {
                 designationsText.append(operationBuffer).append("(").append(displayDesignation).append(")");
@@ -109,7 +105,6 @@ public class DisplayManager {
                 designationsText.append(" ?");
             }
 
-            // применяем стили в зависимости от фокуса
             if (focusState == InputController.FocusState.MODULE && designationSubscriptModule != null) {
                 int modStart = end;
                 int modEnd = modStart + (designationSubscriptModule.getDisplayText().length());
@@ -122,7 +117,6 @@ public class DisplayManager {
                 designationsText.setSpan(new StyleSpan(Typeface.BOLD), unitPos + 1, designationsText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
         } else {
-            // отображаем плейсхолдер
             int start = designationsText.length();
             designationsText.append("Введите обозначение");
             int color = "designations".equals(currentInputField) ? Color.BLACK : Color.GRAY;
@@ -137,24 +131,17 @@ public class DisplayManager {
         String displayText = formattedText.toString();
         int designationEnd = displayText.indexOf(" = ");
         if (designationEnd != -1) {
+            String designationPart = displayText.substring(0, designationEnd);
+            int underscoreIndex = designationPart.indexOf("_");
+            if (underscoreIndex != -1) {
+                int subscriptStart = underscoreIndex + 1;
+                int subscriptEnd = designationEnd;
+                formattedText.setSpan(new SubscriptSpan(), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                formattedText.setSpan(new RelativeSizeSpan(0.75f), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                formattedText.delete(underscoreIndex, underscoreIndex + 1);
+            }
             if (measurement.isUsesStix() && stixTypeface != null) {
                 formattedText.setSpan(new CustomTypefaceSpan(stixTypeface), 0, designationEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            }
-            String subscript = measurement.getSubscript();
-            if (!subscript.isEmpty()) {
-                int subscriptStart = displayText.indexOf(subscript);
-                if (subscriptStart == -1) {
-                    // если индекс не найден в тексте напрямую, ищем его после символа подчеркивания
-                    subscriptStart = displayText.indexOf("_" + subscript);
-                    if (subscriptStart != -1) {
-                        subscriptStart += 1; // пропускаем символ подчеркивания
-                    }
-                }
-                if (subscriptStart != -1) {
-                    int subscriptEnd = subscriptStart + subscript.length();
-                    formattedText.setSpan(new SubscriptSpan(), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                    formattedText.setSpan(new RelativeSizeSpan(0.75f), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                }
             }
             if (measurement.isConversionMode() && !measurement.isSIUnit() && !measurement.getConversionSteps().isEmpty()) {
                 int lastEqualIndex = displayText.lastIndexOf("= ");
@@ -166,6 +153,7 @@ public class DisplayManager {
             }
         }
     }
+
 
     public SpannableStringBuilder buildUnknownText(
             List<UnknownQuantityEntity> unknowns,
@@ -223,20 +211,21 @@ public class DisplayManager {
         String displayText = formattedText.toString();
         int designationEnd = displayText.indexOf(" = ");
         if (designationEnd != -1) {
+            String designationPart = displayText.substring(0, designationEnd);
+            int underscoreIndex = designationPart.indexOf("_");
+            if (underscoreIndex != -1) {
+                int subscriptStart = underscoreIndex + 1;
+                int subscriptEnd = designationEnd;
+                formattedText.setSpan(new SubscriptSpan(), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                formattedText.setSpan(new RelativeSizeSpan(0.75f), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                formattedText.delete(underscoreIndex, underscoreIndex + 1);
+            }
             if (unknown.isUsesStix() && stixTypeface != null) {
                 formattedText.setSpan(new CustomTypefaceSpan(stixTypeface), 0, designationEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
-            String subscript = unknown.getSubscript();
-            if (!subscript.isEmpty()) {
-                int subscriptStart = displayText.indexOf("_" + subscript);
-                if (subscriptStart != -1) {
-                    int subscriptEnd = subscriptStart + subscript.length() + 1;
-                    formattedText.setSpan(new SubscriptSpan(), subscriptStart + 1, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                    formattedText.setSpan(new RelativeSizeSpan(0.75f), subscriptStart + 1, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                }
-            }
         }
     }
+
 
     public String getDisplayTextFromLogicalId(String logicalId) {
         if (logicalId == null) return "";
@@ -271,6 +260,7 @@ public class DisplayManager {
         return formatted;
     }
 
+
     public String formatExpression(String expression) {
         for (String variable : getVariablesInLine(expression)) {
             String displayVar = getDisplayTextFromLogicalId(variable);
@@ -278,6 +268,7 @@ public class DisplayManager {
         }
         return expression;
     }
+
 
     private List<String> getVariablesInLine(String line) {
         List<String> variables = new ArrayList<>();
