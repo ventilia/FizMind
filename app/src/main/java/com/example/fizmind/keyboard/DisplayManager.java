@@ -48,6 +48,7 @@ public class DisplayManager {
     ) {
         SpannableStringBuilder designationsText = new SpannableStringBuilder();
 
+        // отображаем сохраненные измерения
         for (int i = 0; i < measurements.size(); i++) {
             ConcreteMeasurementEntity measurement = measurements.get(i);
             String originalDisplay = measurement.getOriginalDisplay();
@@ -57,15 +58,21 @@ public class DisplayManager {
 
             designationsText.append(formattedText);
             if (i < measurements.size() - 1) {
-                designationsText.append("\n\n");
+                designationsText.append("\n\n"); // двойной перенос между измерениями
             }
         }
 
-        if (!measurements.isEmpty() && (designationBuffer.length() > 0 || valueBuffer.length() > 0 || unitBuffer.length() > 0 || designationSubscriptModule != null)) {
+        // проверяем, есть ли текущий ввод
+        boolean hasCurrentInput = designationBuffer.length() > 0 || valueBuffer.length() > 0 ||
+                unitBuffer.length() > 0 || designationSubscriptModule != null;
+
+        // если есть сохраненные измерения, добавляем перенос строки перед следующим текстом
+        if (!measurements.isEmpty()) {
             designationsText.append("\n\n");
         }
 
-        if (designationBuffer.length() > 0 || valueBuffer.length() > 0 || unitBuffer.length() > 0 || designationSubscriptModule != null) {
+        if (hasCurrentInput) {
+            // отображаем текущий ввод
             int start = designationsText.length();
             if (operationBuffer.length() > 0) {
                 designationsText.append(operationBuffer).append("(").append(displayDesignation).append(")");
@@ -102,6 +109,7 @@ public class DisplayManager {
                 designationsText.append(" ?");
             }
 
+            // применяем стили в зависимости от фокуса
             if (focusState == InputController.FocusState.MODULE && designationSubscriptModule != null) {
                 int modStart = end;
                 int modEnd = modStart + (designationSubscriptModule.getDisplayText().length());
@@ -114,6 +122,7 @@ public class DisplayManager {
                 designationsText.setSpan(new StyleSpan(Typeface.BOLD), unitPos + 1, designationsText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
         } else {
+            // отображаем плейсхолдер
             int start = designationsText.length();
             designationsText.append("Введите обозначение");
             int color = "designations".equals(currentInputField) ? Color.BLACK : Color.GRAY;
