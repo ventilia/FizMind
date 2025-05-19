@@ -61,7 +61,7 @@ public class PhysicalQuantityRegistry {
         // температура
         registry.put("designation_T", new PhysicalQuantity("designation_T", "температура", "K",
                 Arrays.asList("°c", "k", "°f"), false, 0.0));
-        // количество теплоты
+        // количество теплотыЫ
         registry.put("designation_Q", new PhysicalQuantity("designation_Q", "количество теплоты", "J",
                 Arrays.asList("j", "kj", "cal"), false, 0.0));
         // электрический ток
