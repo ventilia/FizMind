@@ -2,10 +2,8 @@ package com.example.fizmind.keyboard;
 
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.text.Html;
+
 import android.text.SpannableStringBuilder;
-import android.text.style.SubscriptSpan;
-import android.text.style.RelativeSizeSpan;
 import android.view.View;
 import android.widget.TextView;
 import com.example.fizmind.SI.SIConverter;
@@ -73,7 +71,6 @@ public class InputController {
     private static final long DOUBLE_CLICK_TIME_DELTA = 300;
     private boolean isConversionMode = false;
 
-    // конструктор контроллера
     public InputController(TextView designationsView, TextView unknownView, AppDatabase database,
                            View rootView, DisplayManager displayManager) {
         this.designationsView = designationsView;
@@ -95,25 +92,21 @@ public class InputController {
         LogUtils.logControllerInitialized("InputController");
     }
 
-    // установка разрешения ввода неизвестного
     public void setUnknownInputAllowed(boolean allowed) {
         this.isUnknownInputAllowed = allowed;
         LogUtils.logPropertySet("InputController", "разрешение ввода неизвестного", allowed);
     }
 
-    // установка шрифта stix
     public void setStixTypeface(Typeface stixTypeface) {
         this.stixTypeface = stixTypeface;
         LogUtils.logPropertySet("InputController", "шрифт STIX", "установлен");
     }
 
-    // установка переключателя режимов клавиатуры
     public void setKeyboardModeSwitcher(KeyboardModeSwitcher switcher) {
         this.keyboardModeSwitcher = switcher;
         LogUtils.logPropertySet("InputController", "переключатель режимов клавиатуры", "установлен");
     }
 
-    // установка режима перевода в си
     public void setConversionMode(boolean isConversionMode) {
         this.isConversionMode = isConversionMode;
         if (isConversionMode) {
@@ -129,7 +122,6 @@ public class InputController {
         LogUtils.logPropertySet("InputController", "режим", isConversionMode ? "перевод в СИ" : "калькулятор");
     }
 
-    // установка текущего поля ввода
     public void setCurrentInputField(String field) {
         if ("unknown".equals(field) && !isUnknownInputAllowed) {
             LogUtils.wWithSnackbar("InputController", "переключение на 'Введите неизвестное' заблокировано", rootView);
@@ -173,7 +165,7 @@ public class InputController {
         return unknownSubscriptModule != null && !unknownSubscriptModule.isEmpty();
     }
 
-    // обработка ввода с клавиатуры
+    // обработка ввода
     public void onKeyInput(String input, String sourceKeyboardMode, boolean keyUsesStix, String logicalId) {
         LogUtils.logInputProcessing("InputController", currentState.toString(), focusState.toString(), input, logicalId, isConversionMode ? "СИ" : "калькулятор");
 
@@ -409,7 +401,6 @@ public class InputController {
         updateDisplay();
     }
 
-    // сохранение неизвестного в базе данных
     private void saveUnknown() {
         if (unknownDisplayDesignation != null) {
             if (unknownSubscriptModule != null && unknownSubscriptModule.isActive() && unknownSubscriptModule.isEmpty()) {
@@ -434,12 +425,9 @@ public class InputController {
                     unknownSubscriptModule, currentInputField, isConversionMode
             );
 
-            // преобразуем в html для сохранения форматирования
-            String htmlDisplayText = Html.toHtml(displayText);
-
             UnknownQuantityEntity unknown = new UnknownQuantityEntity(
                     unknownDisplayDesignation, fullLogicalDesignation, subscript,
-                    unknownUsesStix != null && unknownUsesStix, htmlDisplayText
+                    unknownUsesStix != null && unknownUsesStix, displayText.toString()
             );
             database.unknownQuantityDao().insert(unknown);
             LogUtils.logSaveUnknown("InputController", unknown.toString());
@@ -453,7 +441,6 @@ public class InputController {
         }
     }
 
-    // обработка нажатия кнопки удаления
     public void onDeletePressed() {
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastDeleteTime < DOUBLE_CLICK_TIME_DELTA) {
@@ -541,7 +528,6 @@ public class InputController {
         }
     }
 
-    // обработка нажатия стрелки влево
     public void onLeftArrowPressed() {
         if ("designations".equals(currentInputField)) {
             if (focusState == FocusState.MODULE && designationSubscriptModule != null && designationSubscriptModule.isActive()) {
@@ -578,7 +564,6 @@ public class InputController {
         }
     }
 
-    // обработка нажатия стрелки вправо
     public void onRightArrowPressed() {
         if ("designations".equals(currentInputField)) {
             if (focusState == FocusState.DESIGNATION) {
@@ -618,7 +603,7 @@ public class InputController {
         }
     }
 
-    // сохранение измерения с конвертацией в си
+    // сохранение измерения с конвертацией в СИ
     public void onDownArrowPressed() {
         if ("designations".equals(currentInputField)) {
             if (designationSubscriptModule != null && designationSubscriptModule.isActive() && designationSubscriptModule.isEmpty()) {
@@ -689,7 +674,7 @@ public class InputController {
                 return;
             }
 
-            // конвертация в си, если единица не си
+            // конвертация в СИ если единица не СИ
             double siValue = value;
             String siUnit = unit;
             String steps = "";
@@ -710,33 +695,26 @@ public class InputController {
                 steps = siConverter.getConversionSteps(baseDesignation, value, unit);
             }
 
-            // создание отформатированного текста с нижним индексом
-            SpannableStringBuilder displayText = new SpannableStringBuilder();
+            // создание отображаемого текста
+            StringBuilder displayText = new StringBuilder();
             if (operationBuffer.length() > 0) {
                 displayText.append(operationBuffer).append("(").append(displayDesignation).append(")");
             } else {
                 displayText.append(displayDesignation);
             }
             if (!subscript.isEmpty()) {
-                int subscriptStart = displayText.length();
-                displayText.append(subscript);
-                int subscriptEnd = displayText.length();
-                displayText.setSpan(new SubscriptSpan(), subscriptStart, subscriptEnd, SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
-                displayText.setSpan(new RelativeSizeSpan(0.75f), subscriptStart, subscriptEnd, SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
+                displayText.append("_").append(subscript);
             }
-            displayText.append(" = ").append(SIConverter.formatValue(value)).append(" ").append(unit);
+            displayText.append(" = ").append(SIConverter.formatValue(value)).append(" ").append(unit); // добавлен пробел между числом и единицей
             if (isConversionMode && !isSIUnit && !steps.isEmpty()) {
                 displayText.append(" = ").append(steps);
             }
 
-            // сохранение как html для сохранения форматирования
-            String htmlDisplayText = Html.toHtml(displayText);
-
-            // сохранение в базу данных
+            // сохранение в базу
             ConcreteMeasurementEntity measurement = new ConcreteMeasurementEntity(
                     baseDesignation, siValue, siUnit,
                     operationBuffer.toString(), valueOperationBuffer.toString(),
-                    subscript, isCurrentConstant, htmlDisplayText,
+                    subscript, isCurrentConstant, displayText.toString(),
                     value, unit, steps, isSIUnit, isConversionMode,
                     designationUsesStix != null && designationUsesStix
             );
@@ -761,7 +739,6 @@ public class InputController {
         }
     }
 
-    // обновление режима клавиатуры
     private void updateKeyboardMode() {
         if (keyboardModeSwitcher != null) {
             if ("designations".equals(currentInputField)) {
@@ -784,7 +761,6 @@ public class InputController {
         }
     }
 
-    // обновление отображения интерфейса
     private void updateDisplay() {
         List<ConcreteMeasurementEntity> measurements = database.measurementDao().getAllMeasurements();
         List<UnknownQuantityEntity> unknowns = database.unknownQuantityDao().getAllUnknowns();
@@ -811,7 +787,6 @@ public class InputController {
         LogUtils.d("InputController", "обновлен интерфейс отображения");
     }
 
-    // сброс ввода
     private void resetInput() {
         designationBuffer.setLength(0);
         valueBuffer.setLength(0);
@@ -830,7 +805,6 @@ public class InputController {
         LogUtils.d("InputController", "сброшены все буферы ввода");
     }
 
-    // очистка всех данных
     public void clearAll() {
         if ("designations".equals(currentInputField)) {
             resetInput();
@@ -856,7 +830,6 @@ public class InputController {
         }
     }
 
-    // логирование всех сохраненных данных
     public void logAllSavedData() {
         List<ConcreteMeasurementEntity> measurements = database.measurementDao().getAllMeasurements();
         List<UnknownQuantityEntity> unknowns = database.unknownQuantityDao().getAllUnknowns();
@@ -880,7 +853,6 @@ public class InputController {
         LogUtils.d("InputController", logMessage.toString());
     }
 
-    // преобразование сущностей в измерения
     private List<ConcreteMeasurement> convertEntitiesToMeasurements(List<ConcreteMeasurementEntity> entities) {
         java.util.ArrayList<ConcreteMeasurement> measurements = new java.util.ArrayList<>();
         for (ConcreteMeasurementEntity entity : entities) {
@@ -888,7 +860,7 @@ public class InputController {
                     entity.getBaseDesignation(), entity.getValue(), entity.getUnit(),
                     entity.getDesignationOperations(), entity.getValueOperations(),
                     entity.getSubscript(), entity.isConstant(),
-                    new SpannableStringBuilder(Html.fromHtml(entity.getOriginalDisplay())),
+                    new SpannableStringBuilder(entity.getOriginalDisplay()),
                     entity.getOriginalValue(), entity.getOriginalUnit(),
                     entity.getConversionSteps(), entity.isSIUnit(), entity.isConversionMode()
             ));
