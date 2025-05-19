@@ -8,6 +8,8 @@ import android.text.style.ForegroundColorSpan;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
 import android.text.style.SubscriptSpan;
+
+import com.example.fizmind.SI.SIConverter;
 import com.example.fizmind.animation.CustomTypefaceSpan;
 import com.example.fizmind.database.AppDatabase;
 import com.example.fizmind.database.ConcreteMeasurementEntity;
@@ -34,7 +36,7 @@ public class DisplayManager {
         LogUtils.d("DisplayManager", "инициализирован менеджер отображения");
     }
 
-    // построение текста для поля "Введите обозначение"
+    // построение текста для поля "Введите обозначение" с корректным отображением сохранённых Ep и Ek
     public SpannableStringBuilder buildDesignationsText(
             List<ConcreteMeasurementEntity> measurements,
             StringBuilder designationBuffer,
@@ -53,16 +55,34 @@ public class DisplayManager {
         // вывод сохраненных измерений
         for (int i = 0; i < measurements.size(); i++) {
             ConcreteMeasurementEntity measurement = measurements.get(i);
-            String originalDisplay = measurement.getOriginalDisplay();
-            String designationPart = extractDesignation(originalDisplay);
-            SpannableStringBuilder formattedDesignation = formatDesignation(designationPart, measurement.isUsesStix());
-            int equalIndex = originalDisplay.indexOf(" = ");
-            if (equalIndex != -1) {
-                String valuePart = originalDisplay.substring(equalIndex);
-                designationsText.append(formattedDesignation).append(valuePart);
-            } else {
-                designationsText.append(formattedDesignation);
+            String baseDesignation = measurement.getBaseDesignation();
+            String subscript = measurement.getSubscript();
+            boolean usesStix = measurement.isUsesStix();
+
+            // форматируем обозначение с учетом подстрочного индекса
+            int start = designationsText.length();
+            designationsText.append(getDisplayTextFromLogicalId(baseDesignation));
+            int baseEnd = designationsText.length();
+
+            if (!subscript.isEmpty()) {
+                int subscriptStart = designationsText.length();
+                designationsText.append(subscript);
+                int subscriptEnd = designationsText.length();
+                designationsText.setSpan(new SubscriptSpan(), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                designationsText.setSpan(new RelativeSizeSpan(0.75f), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            } else if (baseDesignation.equals("E_latin_p") || baseDesignation.equals("E_latin_k")) {
+                int subscriptStart = designationsText.length();
+                designationsText.append(baseDesignation.endsWith("_p") ? "p" : "k");
+                int subscriptEnd = designationsText.length();
+                designationsText.setSpan(new SubscriptSpan(), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                designationsText.setSpan(new RelativeSizeSpan(0.75f), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
+
+            if (usesStix && stixTypeface != null) {
+                designationsText.setSpan(new CustomTypefaceSpan(stixTypeface), start, designationsText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+
+            designationsText.append(" = ").append(SIConverter.formatValue(measurement.getOriginalValue())).append(" ").append(measurement.getOriginalUnit());
             if (i < measurements.size() - 1) {
                 designationsText.append("\n\n");
             }
@@ -200,14 +220,16 @@ public class DisplayManager {
     // форматирование обозначения с подстрочным индексом
     public SpannableStringBuilder formatDesignation(String designation, boolean usesStix) {
         SpannableStringBuilder builder = new SpannableStringBuilder();
-        String[] parts = designation.split("_", 2);
-        builder.append(parts[0]);
-        if (parts.length == 2) {
+        if (designation.contains("_")) {
+            String[] parts = designation.split("_", 2);
+            builder.append(parts[0]);
             int start = builder.length();
             builder.append(parts[1]);
             int end = builder.length();
             builder.setSpan(new SubscriptSpan(), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             builder.setSpan(new RelativeSizeSpan(0.75f), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        } else {
+            builder.append(designation);
         }
         if (usesStix && stixTypeface != null) {
             builder.setSpan(new CustomTypefaceSpan(stixTypeface), 0, builder.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -220,7 +242,9 @@ public class DisplayManager {
         if (logicalId == null) return "";
         String displayText = logicalId.replace("designation_", "")
                 .replace("_latin", "")
-                .replace("_power", "");
+                .replace("_power", "")
+                .replace("_p", "") // убираем _p для отображения только E
+                .replace("_k", ""); // убираем _k для отображения только E
         LogUtils.d("DisplayManager", "получен отображаемый текст: " + displayText + " из " + logicalId);
         return displayText;
     }
