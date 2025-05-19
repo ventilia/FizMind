@@ -164,7 +164,7 @@ public class InputController {
         return unknownSubscriptModule != null && !unknownSubscriptModule.isEmpty();
     }
 
-    // обработка ввода
+    // обработка ввода с поддержкой прямого ввода p и k после E
     public void onKeyInput(String input, String sourceKeyboardMode, boolean keyUsesStix, String logicalId) {
         LogUtils.logInputProcessing("InputController", currentState.toString(), focusState.toString(), input, logicalId, isConversionMode ? "СИ" : "калькулятор");
 
@@ -178,24 +178,21 @@ public class InputController {
             } else if (currentState == InputState.ENTERING_UNIT) {
                 handleUnitInput(input, logicalId);
             }
-            // обработка 'p' и 'k' для 'E' без '_'
-            if (focusState == FocusState.DESIGNATION && (logicalId.equals("mod_subscript_p") || logicalId.equals("mod_subscript_k"))) {
-                if (designationBuffer.toString().equals("E")) {
-                    if (designationSubscriptModule != null) {
-                        LogUtils.wWithSnackbar("InputController", "нельзя добавить 'p' или 'k', если уже есть индекс", rootView);
-                        return;
-                    }
-                    ModuleType type = logicalId.equals("mod_subscript_p") ? ModuleType.SUBSCRIPT_P : ModuleType.SUBSCRIPT_K;
-                    designationSubscriptModule = new InputModule(type);
-                    designationSubscriptModule.apply(input);
-                    focusState = FocusState.DESIGNATION;
-                    updateKeyboardMode();
-                    updateDisplay();
-                    return;
-                } else {
-                    LogUtils.wWithSnackbar("InputController", "'p' и 'k' можно добавлять только к 'E'", rootView);
+            // прямой ввод p или k после E без _
+            if (focusState == FocusState.DESIGNATION && designationBuffer.toString().equals("E") &&
+                    (logicalId.equals("mod_subscript_p") || logicalId.equals("mod_subscript_k"))) {
+                if (designationSubscriptModule != null) {
+                    LogUtils.wWithSnackbar("InputController", "индекс уже есть, нельзя добавить p или k", rootView);
                     return;
                 }
+                ModuleType type = logicalId.equals("mod_subscript_p") ? ModuleType.SUBSCRIPT_P : ModuleType.SUBSCRIPT_K;
+                designationSubscriptModule = new InputModule(type);
+                designationSubscriptModule.apply(input);
+                focusState = FocusState.DESIGNATION;
+                updateKeyboardMode();
+                updateDisplay();
+                LogUtils.d("InputController", "добавлен модуль " + input + " к E без _");
+                return;
             }
         } else if ("unknown".equals(currentInputField)) {
             if (isConversionMode) {
