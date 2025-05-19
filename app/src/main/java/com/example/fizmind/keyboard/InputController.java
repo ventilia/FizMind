@@ -2,7 +2,6 @@ package com.example.fizmind.keyboard;
 
 import android.graphics.Color;
 import android.graphics.Typeface;
-
 import android.text.SpannableStringBuilder;
 import android.view.View;
 import android.widget.TextView;
@@ -178,6 +177,25 @@ public class InputController {
                 handleValueInput(input, logicalId);
             } else if (currentState == InputState.ENTERING_UNIT) {
                 handleUnitInput(input, logicalId);
+            }
+            // обработка 'p' и 'k' для 'E' без '_'
+            if (focusState == FocusState.DESIGNATION && (logicalId.equals("mod_subscript_p") || logicalId.equals("mod_subscript_k"))) {
+                if (designationBuffer.toString().equals("E")) {
+                    if (designationSubscriptModule != null) {
+                        LogUtils.wWithSnackbar("InputController", "нельзя добавить 'p' или 'k', если уже есть индекс", rootView);
+                        return;
+                    }
+                    ModuleType type = logicalId.equals("mod_subscript_p") ? ModuleType.SUBSCRIPT_P : ModuleType.SUBSCRIPT_K;
+                    designationSubscriptModule = new InputModule(type);
+                    designationSubscriptModule.apply(input);
+                    focusState = FocusState.DESIGNATION;
+                    updateKeyboardMode();
+                    updateDisplay();
+                    return;
+                } else {
+                    LogUtils.wWithSnackbar("InputController", "'p' и 'k' можно добавлять только к 'E'", rootView);
+                    return;
+                }
             }
         } else if ("unknown".equals(currentInputField)) {
             if (isConversionMode) {
@@ -705,7 +723,7 @@ public class InputController {
             if (!subscript.isEmpty()) {
                 displayText.append("_").append(subscript);
             }
-            displayText.append(" = ").append(SIConverter.formatValue(value)).append(" ").append(unit); // добавлен пробел между числом и единицей
+            displayText.append(" = ").append(SIConverter.formatValue(value)).append(" ").append(unit);
             if (isConversionMode && !isSIUnit && !steps.isEmpty()) {
                 displayText.append(" = ").append(steps);
             }
