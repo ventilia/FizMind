@@ -49,19 +49,19 @@ public class PhysicalQuantityRegistry {
         // мощность
         registry.put("designation_N", new PhysicalQuantity("designation_N", "мощность", "W",
                 Arrays.asList("w", "kw", "mw"), false, 0.0));
-        // энергияя
+        // энергия
         registry.put("E_latin", new PhysicalQuantity("E_latin", "энергия", "J",
-                Arrays.asList("j", "kJ", "cal"), false, 0.0));
+                Arrays.asList("j", "kj", "cal"), false, 0.0));
         // потенциальная энергия
         registry.put("E_latin_p", new PhysicalQuantity("E_latin_p", "потенциальная энергия", "J",
-                Arrays.asList("j", "kJ", "cal"), false, 0.0));
+                Arrays.asList("j", "kj", "cal"), false, 0.0));
         // кинетическая энергия
         registry.put("E_latin_k", new PhysicalQuantity("E_latin_k", "кинетическая энергия", "J",
-                Arrays.asList("j", "kJ", "cal"), false, 0.0));
+                Arrays.asList("j", "kj", "cal"), false, 0.0));
         // температура
         registry.put("designation_T", new PhysicalQuantity("designation_T", "температура", "K",
                 Arrays.asList("°c", "k", "°f"), false, 0.0));
-        // количество теплотыЫ
+        // количество теплоты
         registry.put("designation_Q", new PhysicalQuantity("designation_Q", "количество теплоты", "J",
                 Arrays.asList("j", "kj", "cal"), false, 0.0));
         // электрический ток

@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 public class PhysicalQuantity {
     private final String id;
     private final String type;
@@ -13,7 +12,6 @@ public class PhysicalQuantity {
     private final boolean isConstant;
     private final double constantValue;
     private final Map<String, Double> conversionFactors;
-
 
     public PhysicalQuantity(String id, String type, String siUnit, List<String> allowedUnits, boolean isConstant, double constantValue) {
         this.id = id;
@@ -63,9 +61,9 @@ public class PhysicalQuantity {
                 break;
             case "F_latin":
             case "designation_P":
-                conversionFactors.put("N", 1.0);
+                conversionFactors.put("n", 1.0);
                 conversionFactors.put("dyne", 1e-5);
-                conversionFactors.put("kN", 1000.0);
+                conversionFactors.put("kn", 1000.0);
                 break;
             case "designation_ρ":
                 conversionFactors.put("kg/m³", 1.0);
@@ -73,8 +71,8 @@ public class PhysicalQuantity {
                 conversionFactors.put("t/m³", 1000.0);
                 break;
             case "designation_p":
-                conversionFactors.put("Pa", 1.0);
-                conversionFactors.put("mmHg", 133.322);
+                conversionFactors.put("pa", 1.0);
+                conversionFactors.put("mmhg", 133.322);
                 conversionFactors.put("atm", 101325.0);
                 break;
             case "designation_A":
@@ -82,42 +80,42 @@ public class PhysicalQuantity {
             case "E_latin":
             case "E_latin_p":
             case "E_latin_k":
-                conversionFactors.put("J", 1.0);
+                conversionFactors.put("j", 1.0);
                 conversionFactors.put("erg", 1e-7);
-                conversionFactors.put("kJ", 1000.0);
+                conversionFactors.put("kj", 1000.0);
                 conversionFactors.put("cal", 4.184);
                 break;
             case "designation_N":
             case "P_power":
-                conversionFactors.put("W", 1.0);
+                conversionFactors.put("w", 1.0);
                 conversionFactors.put("erg/s", 1e-7);
-                conversionFactors.put("kW", 1000.0);
-                conversionFactors.put("mW", 0.001);
+                conversionFactors.put("kw", 1000.0);
+                conversionFactors.put("mw", 0.001);
                 break;
             case "designation_I":
-                conversionFactors.put("A", 1.0);
-                conversionFactors.put("mA", 0.001);
-                conversionFactors.put("kA", 1000.0);
+                conversionFactors.put("a", 1.0);
+                conversionFactors.put("ma", 0.001);
+                conversionFactors.put("ka", 1000.0);
                 break;
             case "U_latin":
-                conversionFactors.put("V", 1.0);
-                conversionFactors.put("mV", 0.001);
-                conversionFactors.put("kV", 1000.0);
+                conversionFactors.put("v", 1.0);
+                conversionFactors.put("mv", 0.001);
+                conversionFactors.put("kv", 1000.0);
                 break;
             case "R_latin":
-                conversionFactors.put("Ω", 1.0);
-                conversionFactors.put("mΩ", 0.001);
-                conversionFactors.put("kΩ", 1000.0);
+                conversionFactors.put("ω", 1.0);
+                conversionFactors.put("mω", 0.001);
+                conversionFactors.put("kω", 1000.0);
                 break;
             case "designation_f":
-                conversionFactors.put("Hz", 1.0);
-                conversionFactors.put("mHz", 0.001);
-                conversionFactors.put("kHz", 1000.0);
+                conversionFactors.put("hz", 1.0);
+                conversionFactors.put("mhz", 0.001);
+                conversionFactors.put("khz", 1000.0);
                 break;
             case "designation_V":
                 conversionFactors.put("m³", 1.0);
                 conversionFactors.put("cm³", 1e-6);
-                conversionFactors.put("L", 0.001);
+                conversionFactors.put("l", 0.001);
                 break;
             case "S_latin":
                 conversionFactors.put("m²", 1.0);
@@ -131,7 +129,6 @@ public class PhysicalQuantity {
                 break;
         }
     }
-
 
     public String getId() { return id; }
     public String getType() { return type; }

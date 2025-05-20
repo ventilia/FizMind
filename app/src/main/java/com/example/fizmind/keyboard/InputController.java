@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-// контроллер ввода для управления данными и отображением
 public class InputController {
 
     public enum InputState {
@@ -164,7 +163,6 @@ public class InputController {
         return unknownSubscriptModule != null && !unknownSubscriptModule.isEmpty();
     }
 
-    // обработка ввода с поддержкой прямого ввода p и k после E
     public void onKeyInput(String input, String sourceKeyboardMode, boolean keyUsesStix, String logicalId) {
         LogUtils.logInputProcessing("InputController", currentState.toString(), focusState.toString(), input, logicalId, isConversionMode ? "СИ" : "калькулятор");
 
@@ -178,7 +176,6 @@ public class InputController {
             } else if (currentState == InputState.ENTERING_UNIT) {
                 handleUnitInput(input, logicalId);
             }
-            // прямой ввод p или k после E без _
             if (focusState == FocusState.DESIGNATION && designationBuffer.toString().equals("E") &&
                     (logicalId.equals("mod_subscript_p") || logicalId.equals("mod_subscript_k"))) {
                 if (designationSubscriptModule != null) {
@@ -398,6 +395,7 @@ public class InputController {
         }
     }
 
+    // обработка ввода единицы измерения
     private void handleUnitInput(String input, String logicalId) {
         PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(logicalDesignation);
         if (pq == null) {
@@ -405,7 +403,7 @@ public class InputController {
             return;
         }
         int maxAllowedLength = pq.getAllowedUnits().stream().mapToInt(String::length).max().orElse(0);
-        String potentialUnit = unitBuffer.toString() + input;
+        String potentialUnit = (unitBuffer.toString() + input).toLowerCase(); // приводим к нижнему регистру
         boolean validPrefix = pq.getAllowedUnits().stream().anyMatch(allowed -> allowed.startsWith(potentialUnit));
         if (validPrefix && potentialUnit.length() <= maxAllowedLength) {
             unitBuffer.append(input);
@@ -618,7 +616,6 @@ public class InputController {
         }
     }
 
-    // сохранение измерения с конвертацией в СИ
     public void onDownArrowPressed() {
         if ("designations".equals(currentInputField)) {
             if (designationSubscriptModule != null && designationSubscriptModule.isActive() && designationSubscriptModule.isEmpty()) {
@@ -689,7 +686,6 @@ public class InputController {
                 return;
             }
 
-            // конвертация в СИ если единица не СИ
             double siValue = value;
             String siUnit = unit;
             String steps = "";
@@ -710,7 +706,6 @@ public class InputController {
                 steps = siConverter.getConversionSteps(baseDesignation, value, unit);
             }
 
-            // создание отображаемого текста
             StringBuilder displayText = new StringBuilder();
             if (operationBuffer.length() > 0) {
                 displayText.append(operationBuffer).append("(").append(displayDesignation).append(")");
@@ -725,7 +720,6 @@ public class InputController {
                 displayText.append(" = ").append(steps);
             }
 
-            // сохранение в базу
             ConcreteMeasurementEntity measurement = new ConcreteMeasurementEntity(
                     baseDesignation, siValue, siUnit,
                     operationBuffer.toString(), valueOperationBuffer.toString(),

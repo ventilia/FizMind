@@ -8,12 +8,11 @@ import com.example.fizmind.utils.LogUtils;
 public class SIConverter {
     private final AppDatabase database;
 
-
     public SIConverter(AppDatabase database) {
         this.database = database;
     }
 
-
+    // конвертация значения в единицы СИ
     public Object[] convertToSI(String designation, double value, String unit) {
         PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(designation);
         if (pq == null) {
@@ -60,7 +59,7 @@ public class SIConverter {
         return new Object[]{siValue, pq.getSiUnit()};
     }
 
-    // метод для получения шагов перевода в СИ
+    // получение шагов перевода в СИ
     public String getConversionSteps(String designation, double value, String unit) {
         PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(designation);
         if (pq == null) {
@@ -107,13 +106,12 @@ public class SIConverter {
         }
 
         double siValue = value * factor;
-
         String steps = formatValue(value) + " × " + formatValue(factor) + " = " + formatValue(siValue) + " " + pq.getSiUnit();
         LogUtils.d("SIConverter", designation + " " + steps);
         return steps;
     }
 
-
+    // форматирование числового значения
     public static String formatValue(double value) {
         if (value == (int) value) {
             return String.valueOf((int) value);
