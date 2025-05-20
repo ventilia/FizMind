@@ -24,46 +24,49 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-// менеджер отображения текста
+// менеджер отображения текста в интерфейсе
 public class DisplayManager {
 
-    private final Typeface stixTypeface;
-    private final AppDatabase database;
+    private final Typeface stixTypeface; // шрифт STIX для математических символов
+    private final AppDatabase database;  // база данных приложения
 
+    // конструктор с инициализацией шрифта и базы данных
     public DisplayManager(Typeface stixTypeface, AppDatabase database) {
         this.stixTypeface = stixTypeface;
         this.database = database;
         LogUtils.d("DisplayManager", "инициализирован менеджер отображения");
     }
 
-    // построение текста для поля "Введите обозначение" с корректным отображением сохранённых Ep и Ek
+    // построение текста для поля "Введите обозначение" с форматированием
     public SpannableStringBuilder buildDesignationsText(
-            List<ConcreteMeasurementEntity> measurements,
-            StringBuilder designationBuffer,
-            StringBuilder valueBuffer,
-            StringBuilder unitBuffer,
-            StringBuilder operationBuffer,
-            StringBuilder valueOperationBuffer,
-            String displayDesignation,
-            Boolean designationUsesStix,
-            InputModule designationSubscriptModule,
-            InputController.FocusState focusState,
-            String currentInputField
+            List<ConcreteMeasurementEntity> measurements,      // список сохранённых измерений
+            StringBuilder designationBuffer,                   // буфер текущего обозначения
+            StringBuilder valueBuffer,                         // буфер текущего значения
+            StringBuilder unitBuffer,                          // буфер текущих единиц
+            StringBuilder operationBuffer,                     // буфер операции (если есть)
+            StringBuilder valueOperationBuffer,                // буфер операции над значением
+            String displayDesignation,                         // отображаемое обозначение
+            Boolean designationUsesStix,                       // использовать ли STIX для обозначения
+            InputModule designationSubscriptModule,            // модуль подстрочного индекса
+            InputController.FocusState focusState,             // состояние фокуса ввода
+            String currentInputField                           // текущее поле ввода
     ) {
         SpannableStringBuilder designationsText = new SpannableStringBuilder();
 
-        // вывод сохраненных измерений
+        // отображение сохранённых измерений с форматированием
         for (int i = 0; i < measurements.size(); i++) {
             ConcreteMeasurementEntity measurement = measurements.get(i);
-            String baseDesignation = measurement.getBaseDesignation();
-            String subscript = measurement.getSubscript();
-            boolean usesStix = measurement.isUsesStix();
+            String baseDesignation = measurement.getBaseDesignation(); // базовое обозначение (например, "E")
+            String subscript = measurement.getSubscript();             // подстрочный индекс (например, "p")
+            boolean usesStix = measurement.isUsesStix();               // использовать ли STIX
+            String displayText = measurement.getOriginalDisplay();     // полный текст измерения
 
-            // форматируем обозначение с учетом подстрочного индекса
+            // форматируем обозначение
             int start = designationsText.length();
             designationsText.append(getDisplayTextFromLogicalId(baseDesignation));
             int baseEnd = designationsText.length();
 
+            // добавляем подстрочный индекс, если он есть
             if (!subscript.isEmpty()) {
                 int subscriptStart = designationsText.length();
                 designationsText.append(subscript);
@@ -71,6 +74,7 @@ public class DisplayManager {
                 designationsText.setSpan(new SubscriptSpan(), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                 designationsText.setSpan(new RelativeSizeSpan(0.75f), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             } else if (baseDesignation.equals("E_latin_p") || baseDesignation.equals("E_latin_k")) {
+                // специальные случаи для E_p и E_k
                 int subscriptStart = designationsText.length();
                 designationsText.append(baseDesignation.endsWith("_p") ? "p" : "k");
                 int subscriptEnd = designationsText.length();
@@ -78,11 +82,19 @@ public class DisplayManager {
                 designationsText.setSpan(new RelativeSizeSpan(0.75f), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
 
+            // применяем шрифт STIX, если нужно
             if (usesStix && stixTypeface != null) {
                 designationsText.setSpan(new CustomTypefaceSpan(stixTypeface), start, designationsText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
 
-            designationsText.append(" = ").append(SIConverter.formatValue(measurement.getOriginalValue())).append(" ").append(measurement.getOriginalUnit());
+            // добавляем значение и единицы из originalDisplay
+            int equalIndex = displayText.indexOf(" = ");
+            if (equalIndex != -1) {
+                String valuePart = displayText.substring(equalIndex);
+                designationsText.append(valuePart);
+            }
+
+            // добавляем перенос строки между измерениями
             if (i < measurements.size() - 1) {
                 designationsText.append("\n\n");
             }
@@ -91,7 +103,7 @@ public class DisplayManager {
             designationsText.append("\n\n");
         }
 
-        // вывод текущего ввода
+        // отображение текущего ввода
         if (designationBuffer.length() > 0 || valueBuffer.length() > 0 || unitBuffer.length() > 0 || designationSubscriptModule != null) {
             int start = designationsText.length();
             if (operationBuffer.length() > 0) {
@@ -101,6 +113,7 @@ public class DisplayManager {
             }
             int end = designationsText.length();
 
+            // добавляем подстрочный индекс для текущего ввода
             if (designationSubscriptModule != null && !designationSubscriptModule.isEmpty()) {
                 String subscriptText = designationSubscriptModule.getDisplayText().toString();
                 int subscriptStart = designationsText.length();
@@ -110,10 +123,12 @@ public class DisplayManager {
                 designationsText.setSpan(new RelativeSizeSpan(0.75f), subscriptStart, subscriptEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
 
+            // применяем STIX для текущего ввода
             if (designationUsesStix != null && designationUsesStix && stixTypeface != null) {
                 designationsText.setSpan(new CustomTypefaceSpan(stixTypeface), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
 
+            // добавляем значение и единицы
             designationsText.append(" = ");
             int valueStart = designationsText.length();
             if (valueOperationBuffer.length() > 0) {
@@ -129,9 +144,10 @@ public class DisplayManager {
                 designationsText.append(" ?");
             }
 
+            // применяем стили для активного поля ввода
             if (focusState == InputController.FocusState.MODULE && designationSubscriptModule != null) {
                 int modStart = end;
-                int modEnd = modStart + (designationSubscriptModule.getDisplayText().length());
+                int modEnd = modStart + designationSubscriptModule.getDisplayText().length();
                 designationsText.setSpan(new StyleSpan(Typeface.BOLD), modStart, modEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             } else if (focusState == InputController.FocusState.DESIGNATION) {
                 designationsText.setSpan(new StyleSpan(Typeface.BOLD), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -141,6 +157,7 @@ public class DisplayManager {
                 designationsText.setSpan(new StyleSpan(Typeface.BOLD), unitPos + 1, designationsText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
         } else {
+            // placeholder, если ничего не введено
             int start = designationsText.length();
             designationsText.append("Введите обозначение");
             int color = "designations".equals(currentInputField) ? Color.BLACK : Color.GRAY;
@@ -153,12 +170,12 @@ public class DisplayManager {
 
     // построение текста для поля "Введите неизвестное"
     public SpannableStringBuilder buildUnknownText(
-            List<UnknownQuantityEntity> unknowns,
-            String unknownDisplayDesignation,
-            Boolean unknownUsesStix,
-            InputModule unknownSubscriptModule,
-            String currentInputField,
-            boolean isConversionMode
+            List<UnknownQuantityEntity> unknowns,       // список неизвестных величин
+            String unknownDisplayDesignation,           // отображаемое обозначение неизвестного
+            Boolean unknownUsesStix,                    // использовать ли STIX
+            InputModule unknownSubscriptModule,         // модуль подстрочного индекса
+            String currentInputField,                   // текущее поле ввода
+            boolean isConversionMode                    // режим перевода в СИ
     ) {
         SpannableStringBuilder unknownText = new SpannableStringBuilder();
 

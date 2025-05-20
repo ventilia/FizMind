@@ -5,10 +5,8 @@ import com.example.fizmind.quantly.PhysicalQuantity;
 import java.util.HashMap;
 import java.util.Map;
 
-
 public class ConversionService {
     private final Map<String, Map<String, Double>> conversionFactors;
-
 
     public ConversionService() {
         conversionFactors = new HashMap<>();
@@ -21,14 +19,11 @@ public class ConversionService {
         lengthFactors.put("km", 1000.0);
         lengthFactors.put("cm", 0.01);
         conversionFactors.put("length", lengthFactors);
-
     }
-
 
     public boolean isSiUnit(PhysicalQuantity pq, String unit) {
         return pq.getSiUnit().equals(unit);
     }
-
 
     public String getSteps(PhysicalQuantity pq, double value, String unit) {
         return "Конверсия: " + value + " " + unit + " -> СИ";

@@ -12,7 +12,6 @@ public class SIConverter {
         this.database = database;
     }
 
-    // конвертация значения в единицы СИ
     public Object[] convertToSI(String designation, double value, String unit) {
         PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(designation);
         if (pq == null) {
@@ -31,7 +30,6 @@ public class SIConverter {
             return null;
         }
 
-        // обработка температуры
         if (designation.equals("designation_T")) {
             LogUtils.d("SIConverter", "начало конвертации температуры из " + unitLower);
             if (unitLower.equals("k")) {
@@ -59,7 +57,6 @@ public class SIConverter {
         return new Object[]{siValue, pq.getSiUnit()};
     }
 
-    // получение шагов перевода в СИ
     public String getConversionSteps(String designation, double value, String unit) {
         PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(designation);
         if (pq == null) {
@@ -78,7 +75,6 @@ public class SIConverter {
             return "Ошибка: недопустимая единица измерения " + unit;
         }
 
-        // обработка температуры
         if (designation.equals("designation_T")) {
             LogUtils.d("SIConverter", "генерация шагов для температуры из " + unitLower);
             if (unitLower.equals("k")) {
@@ -111,7 +107,6 @@ public class SIConverter {
         return steps;
     }
 
-    // форматирование числового значения
     public static String formatValue(double value) {
         if (value == (int) value) {
             return String.valueOf((int) value);

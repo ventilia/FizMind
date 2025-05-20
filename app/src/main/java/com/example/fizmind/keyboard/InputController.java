@@ -395,7 +395,6 @@ public class InputController {
         }
     }
 
-    // обработка ввода единицы измерения
     private void handleUnitInput(String input, String logicalId) {
         PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(logicalDesignation);
         if (pq == null) {
@@ -403,7 +402,7 @@ public class InputController {
             return;
         }
         int maxAllowedLength = pq.getAllowedUnits().stream().mapToInt(String::length).max().orElse(0);
-        String potentialUnit = (unitBuffer.toString() + input).toLowerCase(); // приводим к нижнему регистру
+        String potentialUnit = (unitBuffer.toString() + input).toLowerCase();
         boolean validPrefix = pq.getAllowedUnits().stream().anyMatch(allowed -> allowed.startsWith(potentialUnit));
         if (validPrefix && potentialUnit.length() <= maxAllowedLength) {
             unitBuffer.append(input);
