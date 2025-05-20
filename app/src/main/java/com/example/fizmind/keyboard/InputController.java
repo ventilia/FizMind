@@ -188,13 +188,18 @@ public class InputController {
 
     // обработка ввода в модуль
     private void handleModuleInput(String input, String logicalId) {
+        // запрет ввода "p" и "k" в обычный SUBSCRIPT
+        if (designationSubscriptModule.getType() == ModuleType.SUBSCRIPT && (input.equals("p") || input.equals("k"))) {
+            LogUtils.wWithSnackbar("InputController", "символы 'p' и 'k' можно использовать только в специальных модулях", rootView);
+            return;
+        }
         if (ModuleValidator.canApplyInput(designationSubscriptModule.getType(), designationSubscriptModule.getContent(), input)) {
             designationSubscriptModule.apply(input);
         } else {
             LogUtils.wWithSnackbar("InputController", "нельзя добавить символ '" + input + "' к модулю", rootView);
             return;
         }
-        // если ввод завершен, переключаем фокус
+        // если ввод завершён, переключаем фокус
         if (!input.matches("[a-zA-Z0-9]")) {
             designationSubscriptModule.deactivate();
             switchFocusAfterModule(input, logicalId);
@@ -394,6 +399,11 @@ public class InputController {
             return;
         }
         if (focusState == FocusState.MODULE && unknownSubscriptModule != null && unknownSubscriptModule.isActive()) {
+            // запрет ввода "p" и "k" в обычный SUBSCRIPT для неизвестного
+            if (unknownSubscriptModule.getType() == ModuleType.SUBSCRIPT && (input.equals("p") || input.equals("k"))) {
+                LogUtils.wWithSnackbar("InputController", "символы 'p' и 'k' можно использовать только в специальных модулях", rootView);
+                return;
+            }
             if (ModuleValidator.canApplyInput(unknownSubscriptModule.getType(), unknownSubscriptModule.getContent(), input)) {
                 unknownSubscriptModule.apply(input);
             } else {
@@ -413,7 +423,7 @@ public class InputController {
     // добавление подстрочного индекса для неизвестного
     private void addSubscriptModuleForUnknown() {
         if (unknownSubscriptModule != null) {
-            LogUtils.wWithSnackbar("InputController", "индекс уже введен", rootView);
+            LogUtils.wWithSnackbar("InputController", "индекс уже введён", rootView);
             return;
         }
         unknownSubscriptModule = new InputModule(ModuleType.SUBSCRIPT);
@@ -514,19 +524,22 @@ public class InputController {
         }
         if (unknownDisplayDesignation != null) {
             resetUnknownInput();
-            LogUtils.d("InputController", "удалено несохраненное обозначение в 'Введите неизвестное'");
+            LogUtils.d("InputController", "удалено несохранённое обозначение в 'Введите неизвестное'");
         } else {
             database.unknownQuantityDao().deleteLastUnknown();
-            LogUtils.d("InputController", "удалено последнее сохраненное неизвестное");
+            LogUtils.d("InputController", "удалено последнее сохранённое неизвестное");
         }
     }
 
     // обработка удаления для designations
     private void handleDesignationsDeletion() {
-        if (deleteClickCount == 2) {
+        // если фокус на модуле, выполняем только одиночное удаление
+        if (focusState == FocusState.MODULE) {
+            performSingleDelete();
+        } else if (deleteClickCount == 2) {
             database.measurementDao().deleteLastMeasurement();
             deleteClickCount = 0;
-            LogUtils.logDeletion("InputController", "выполнено двойное удаление последнего сохраненного поля");
+            LogUtils.logDeletion("InputController", "выполнено двойное удаление последнего сохранённого поля");
         } else {
             performSingleDelete();
         }
@@ -538,7 +551,7 @@ public class InputController {
             if (designationSubscriptModule.deleteChar()) {
                 designationSubscriptModule = null;
                 focusState = FocusState.DESIGNATION;
-                LogUtils.d("InputController", "индекс удален полностью");
+                LogUtils.d("InputController", "индекс удалён полностью");
             }
         } else if (currentState == InputState.ENTERING_UNIT) {
             unitBuffer.setLength(0);
@@ -556,10 +569,10 @@ public class InputController {
     private void deleteFromValueOrOperation() {
         if (valueBuffer.length() > 0) {
             valueBuffer.deleteCharAt(valueBuffer.length() - 1);
-            LogUtils.d("InputController", "удален символ из значения");
+            LogUtils.d("InputController", "удалён символ из значения");
         } else if (valueOperationBuffer.length() > 0) {
             valueOperationBuffer.deleteCharAt(valueOperationBuffer.length() - 1);
-            LogUtils.d("InputController", "удален символ из операции");
+            LogUtils.d("InputController", "удалён символ из операции");
         } else if (designationBuffer.length() > 0) {
             deleteDesignationOrModule();
         }
@@ -569,7 +582,7 @@ public class InputController {
     private void deleteDesignationOrModule() {
         if (designationSubscriptModule != null) {
             designationSubscriptModule = null;
-            LogUtils.d("InputController", "модуль удален");
+            LogUtils.d("InputController", "модуль удалён");
         } else {
             resetInput();
             LogUtils.d("InputController", "обозначение удалено");
@@ -872,7 +885,7 @@ public class InputController {
         unknownView.setText(unknownText);
 
         updateTextColors();
-        LogUtils.d("InputController", "обновлен интерфейс отображения");
+        LogUtils.d("InputController", "обновлён интерфейс отображения");
     }
 
     // обновление цветов текста
@@ -939,16 +952,16 @@ public class InputController {
         if (keyboardModeSwitcher != null) keyboardModeSwitcher.switchToDesignation();
     }
 
-    // логирование всех сохраненных данных
+    // логирование всех сохранённых данных
     public void logAllSavedData() {
         List<ConcreteMeasurementEntity> measurements = database.measurementDao().getAllMeasurements();
         List<UnknownQuantityEntity> unknowns = database.unknownQuantityDao().getAllUnknowns();
-        StringBuilder logMessage = new StringBuilder("все сохраненные данные:\n");
+        StringBuilder logMessage = new StringBuilder("все сохранённые данные:\n");
         logMessage.append("измерения ('Введите обозначение'):\n");
-        logMessage.append(measurements.isEmpty() ? "  нет сохраненных измерений\n" : measurements.stream()
+        logMessage.append(measurements.isEmpty() ? "  нет сохранённых измерений\n" : measurements.stream()
                 .map(m -> "  " + m.toString() + "\n").reduce("", String::concat));
         logMessage.append("неизвестные ('Введите неизвестное'):\n");
-        logMessage.append(unknowns.isEmpty() ? "  нет сохраненных неизвестных\n" : unknowns.stream()
+        logMessage.append(unknowns.isEmpty() ? "  нет сохранённых неизвестных\n" : unknowns.stream()
                 .map(u -> "  " + u.toString() + "\n").reduce("", String::concat));
         LogUtils.d("InputController", logMessage.toString());
     }
