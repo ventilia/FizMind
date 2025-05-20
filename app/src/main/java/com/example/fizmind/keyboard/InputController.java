@@ -185,10 +185,10 @@ public class InputController {
                 ModuleType type = logicalId.equals("mod_subscript_p") ? ModuleType.SUBSCRIPT_P : ModuleType.SUBSCRIPT_K;
                 designationSubscriptModule = new InputModule(type);
                 designationSubscriptModule.apply(input);
-                focusState = FocusState.DESIGNATION;
+                focusState = FocusState.DESIGNATION; // остаемся на обозначении после добавления модуля
                 updateKeyboardMode();
                 updateDisplay();
-                LogUtils.d("InputController", "добавлен модуль " + input + " к E без _");
+                LogUtils.d("InputController", "добавлен фиксированный модуль " + input + " к E");
                 return;
             }
         } else if ("unknown".equals(currentInputField)) {
@@ -220,6 +220,7 @@ public class InputController {
                 }
                 ModuleType type = logicalId.equals("mod_subscript_p") ? ModuleType.SUBSCRIPT_P : ModuleType.SUBSCRIPT_K;
                 unknownSubscriptModule = new InputModule(type);
+                unknownSubscriptModule.apply(input); // добавляем "p" или "k"
                 focusState = FocusState.DESIGNATION;
                 updateKeyboardMode();
             } else if (unknownDisplayDesignation == null) {
@@ -242,6 +243,10 @@ public class InputController {
             if (!designationSubscriptModule.apply(input)) {
                 LogUtils.wWithSnackbar("InputController", "недопустимый символ для индекса: " + input, rootView);
             }
+        } else if (designationSubscriptModule.getType() == ModuleType.SUBSCRIPT_P ||
+                designationSubscriptModule.getType() == ModuleType.SUBSCRIPT_K) {
+            LogUtils.wWithSnackbar("InputController", "нельзя добавлять символы к фиксированному модулю 'p' или 'k'", rootView);
+            return; // блокируем ввод для фиксированных модулей
         } else {
             designationSubscriptModule.deactivate();
             if (input.matches("[0-9]") || ".".equals(input) || "-".equals(input)) {
@@ -309,6 +314,7 @@ public class InputController {
                     return;
                 }
                 designationSubscriptModule = new InputModule(ModuleType.SUBSCRIPT_P);
+                designationSubscriptModule.apply("p");
                 focusState = FocusState.VALUE;
                 currentState = InputState.ENTERING_VALUE;
                 updateKeyboardMode();
@@ -318,6 +324,7 @@ public class InputController {
                     return;
                 }
                 designationSubscriptModule = new InputModule(ModuleType.SUBSCRIPT_K);
+                designationSubscriptModule.apply("k");
                 focusState = FocusState.VALUE;
                 currentState = InputState.ENTERING_VALUE;
                 updateKeyboardMode();
@@ -348,6 +355,7 @@ public class InputController {
                 return;
             }
             designationSubscriptModule = new InputModule(ModuleType.SUBSCRIPT_P);
+            designationSubscriptModule.apply("p");
             focusState = FocusState.VALUE;
             updateKeyboardMode();
             updateDisplay();
@@ -357,6 +365,7 @@ public class InputController {
                 return;
             }
             designationSubscriptModule = new InputModule(ModuleType.SUBSCRIPT_K);
+            designationSubscriptModule.apply("k");
             focusState = FocusState.VALUE;
             updateKeyboardMode();
             updateDisplay();
@@ -495,17 +504,10 @@ public class InputController {
     private void performSingleDelete() {
         if ("designations".equals(currentInputField)) {
             if (focusState == FocusState.MODULE && designationSubscriptModule != null && designationSubscriptModule.isActive()) {
-                if (designationSubscriptModule.getType() == ModuleType.SUBSCRIPT && designationSubscriptModule.getContent().length() > 1) {
-                    if (designationSubscriptModule.deleteChar()) {
-                        designationSubscriptModule = null;
-                        focusState = FocusState.DESIGNATION;
-                        LogUtils.d("InputController", "индекс удален полностью");
-                    }
-                } else {
-                    designationSubscriptModule.deleteEntire();
+                if (designationSubscriptModule.deleteChar()) {
                     designationSubscriptModule = null;
                     focusState = FocusState.DESIGNATION;
-                    LogUtils.d("InputController", "модуль удален целиком");
+                    LogUtils.d("InputController", "индекс удален полностью");
                 }
             } else if (currentState == InputState.ENTERING_UNIT) {
                 unitBuffer.setLength(0);
