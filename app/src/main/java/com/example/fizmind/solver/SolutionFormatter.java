@@ -19,7 +19,10 @@ import com.example.fizmind.utils.LogUtils;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+// форматировщик решения задачи на основе данных из базы данных
 public class SolutionFormatter {
     private final Typeface montserratAlternatesTypeface;
     private final DisplayManager displayManager;
@@ -30,6 +33,24 @@ public class SolutionFormatter {
         this.montserratAlternatesTypeface = montserratAlternatesTypeface;
         this.displayManager = displayManager;
         this.database = database;
+    }
+
+    // метод для сокращения дроби
+    private String simplifyFraction(int numerator, int denominator) {
+        if (denominator == 0) return numerator + "/" + denominator; // избежание деления на ноль
+        int gcd = Solver.gcd(numerator, denominator);
+        int simplifiedNumerator = numerator / gcd;
+        int simplifiedDenominator = denominator / gcd;
+        // если знаменатель стал 1, возвращаем целое число
+        if (simplifiedDenominator == 1) {
+            return String.valueOf(simplifiedNumerator);
+        }
+        return simplifiedNumerator + "/" + simplifiedDenominator;
+    }
+
+    // метод для удаления HTML-тегов из строки
+    private String stripHtmlTags(String html) {
+        return html.replaceAll("<[^>]+>", "");
     }
 
     // форматирование решения
@@ -105,7 +126,7 @@ public class SolutionFormatter {
         // промежуточные вычисления
         boolean hasIntermediateSteps = false;
         for (Solver.Step step : result.getSteps()) {
-            if ("variable".equals(step.getType()) && !step.getVariable().equals(unknownDesignation)) {
+            if (!step.getVariable().equals(unknownDesignation)) {
                 hasIntermediateSteps = true;
                 break;
             }
@@ -115,7 +136,7 @@ public class SolutionFormatter {
             builder.append("Промежуточные вычисления:\n");
             applyTypeface(builder, start, builder.length());
             for (Solver.Step step : result.getSteps()) {
-                if ("variable".equals(step.getType()) && !step.getVariable().equals(unknownDesignation)) {
+                if (!step.getVariable().equals(unknownDesignation)) {
                     Formula formula = step.getFormula();
                     String displayExpression = displayManager.getDisplayExpression(formula, step.getVariable());
                     builder.append(Html.fromHtml(displayExpression)).append("\n");
@@ -133,55 +154,9 @@ public class SolutionFormatter {
             }
         }
 
-        // шаги обработки дробей
-        boolean hasFractionSteps = false;
-        for (Solver.Step step : result.getSteps()) {
-            if ("fraction".equals(step.getType())) {
-                hasFractionSteps = true;
-                break;
-            }
-        }
-        if (hasFractionSteps) {
-            start = builder.length();
-            builder.append("Сокращение дробей:\n");
-            applyTypeface(builder, start, builder.length());
-            for (Solver.Step step : result.getSteps()) {
-                if ("fraction".equals(step.getType())) {
-                    builder.append(step.getExpression()).append("\n");
-                }
-            }
-            builder.append("\n");
-        }
-
-        // шаги обработки степеней
-        boolean hasPowerSteps = false;
-        for (Solver.Step step : result.getSteps()) {
-            if ("power".equals(step.getType())) {
-                hasPowerSteps = true;
-                break;
-            }
-        }
-        if (hasPowerSteps) {
-            start = builder.length();
-            builder.append("Вычисление степеней:\n");
-            applyTypeface(builder, start, builder.length());
-            for (Solver.Step step : result.getSteps()) {
-                if ("power".equals(step.getType())) {
-                    builder.append(step.getExpression()).append("\n");
-                }
-            }
-            builder.append("\n");
-        }
-
         // финальный шаг
-        Solver.Step finalStep = null;
-        for (Solver.Step step : result.getSteps()) {
-            if ("variable".equals(step.getType()) && step.getVariable().equals(unknownDesignation)) {
-                finalStep = step;
-                break;
-            }
-        }
-        if (finalStep != null) {
+        Solver.Step finalStep = result.getSteps().isEmpty() ? null : result.getSteps().get(result.getSteps().size() - 1);
+        if (finalStep != null && finalStep.getVariable().equals(unknownDesignation)) {
             start = builder.length();
             builder.append("Воспользуемся формулой:\n");
             applyTypeface(builder, start, builder.length());
@@ -226,7 +201,7 @@ public class SolutionFormatter {
         return builder;
     }
 
-    // построение подстановки значений в формулу
+    // построение подстановки значений в формулу с сокращением
     private String buildSubstitution(String displayExpression, Formula formula, Map<String, Double> knownValues, String targetVariable) {
         String[] parts = displayExpression.split("=");
         if (parts.length != 2) return "ошибка в формуле";
@@ -240,6 +215,7 @@ public class SolutionFormatter {
             displayToFullMap.put(base, fullVar);
         }
 
+        // подстановка значений
         for (String displayVar : displayToFullMap.keySet()) {
             if (!displayVar.equals(left)) {
                 String fullVar = displayToFullMap.get(displayVar);
@@ -251,7 +227,29 @@ public class SolutionFormatter {
             }
         }
 
-        return left + " = " + right;
+        String substitution = left + " = " + right;
+        LogUtils.d("SolutionFormatter", "подстановка: " + substitution);
+
+        // удаление HTML-тегов для анализа дроби
+        String cleanRight = stripHtmlTags(right);
+        LogUtils.d("SolutionFormatter", "очищенное выражение: " + cleanRight);
+
+        // поиск и сокращение дроби
+        Pattern fractionPattern = Pattern.compile("(\\d+)\\s*/\\s*(\\d+)");
+        Matcher matcher = fractionPattern.matcher(cleanRight);
+        if (matcher.find()) {
+            int numerator = Integer.parseInt(matcher.group(1));
+            int denominator = Integer.parseInt(matcher.group(2));
+            String fraction = numerator + "/" + denominator;
+            String simplified = simplifyFraction(numerator, denominator);
+            LogUtils.d("SolutionFormatter", "найдена дробь: " + fraction + " → сокращена до: " + simplified);
+            // добавляем сокращённую дробь в подстановку
+            substitution += " = " + left + " = " + simplified;
+        } else {
+            LogUtils.d("SolutionFormatter", "дробь в выражении не найдена");
+        }
+
+        return substitution;
     }
 
     // получение единицы измерения
