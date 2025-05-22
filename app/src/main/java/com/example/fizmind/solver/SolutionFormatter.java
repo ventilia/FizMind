@@ -20,7 +20,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-// форматировщик решения задачи на основе данных из базы данных
 public class SolutionFormatter {
     private final Typeface montserratAlternatesTypeface;
     private final DisplayManager displayManager;
@@ -69,11 +68,10 @@ public class SolutionFormatter {
             if (!measurement.isSIUnit()) {
                 String steps = measurement.getConversionSteps();
                 if (!steps.isEmpty()) {
-                    // формируем строку вида "m = 3g = 3*0.001 = 0.003 kg"
                     builder.append(displayDesignation)
                             .append(" = ")
                             .append(SIConverter.formatValue(measurement.getOriginalValue()))
-                            .append(measurement.getOriginalUnit()) // без пробела для компактности
+                            .append(measurement.getOriginalUnit())
                             .append(" = ")
                             .append(steps)
                             .append("\n");
@@ -107,7 +105,7 @@ public class SolutionFormatter {
         // промежуточные вычисления
         boolean hasIntermediateSteps = false;
         for (Solver.Step step : result.getSteps()) {
-            if (!step.getVariable().equals(unknownDesignation)) {
+            if ("variable".equals(step.getType()) && !step.getVariable().equals(unknownDesignation)) {
                 hasIntermediateSteps = true;
                 break;
             }
@@ -117,7 +115,7 @@ public class SolutionFormatter {
             builder.append("Промежуточные вычисления:\n");
             applyTypeface(builder, start, builder.length());
             for (Solver.Step step : result.getSteps()) {
-                if (!step.getVariable().equals(unknownDesignation)) {
+                if ("variable".equals(step.getType()) && !step.getVariable().equals(unknownDesignation)) {
                     Formula formula = step.getFormula();
                     String displayExpression = displayManager.getDisplayExpression(formula, step.getVariable());
                     builder.append(Html.fromHtml(displayExpression)).append("\n");
@@ -135,9 +133,55 @@ public class SolutionFormatter {
             }
         }
 
+        // шаги обработки дробей
+        boolean hasFractionSteps = false;
+        for (Solver.Step step : result.getSteps()) {
+            if ("fraction".equals(step.getType())) {
+                hasFractionSteps = true;
+                break;
+            }
+        }
+        if (hasFractionSteps) {
+            start = builder.length();
+            builder.append("Сокращение дробей:\n");
+            applyTypeface(builder, start, builder.length());
+            for (Solver.Step step : result.getSteps()) {
+                if ("fraction".equals(step.getType())) {
+                    builder.append(step.getExpression()).append("\n");
+                }
+            }
+            builder.append("\n");
+        }
+
+        // шаги обработки степеней
+        boolean hasPowerSteps = false;
+        for (Solver.Step step : result.getSteps()) {
+            if ("power".equals(step.getType())) {
+                hasPowerSteps = true;
+                break;
+            }
+        }
+        if (hasPowerSteps) {
+            start = builder.length();
+            builder.append("Вычисление степеней:\n");
+            applyTypeface(builder, start, builder.length());
+            for (Solver.Step step : result.getSteps()) {
+                if ("power".equals(step.getType())) {
+                    builder.append(step.getExpression()).append("\n");
+                }
+            }
+            builder.append("\n");
+        }
+
         // финальный шаг
-        Solver.Step finalStep = result.getSteps().isEmpty() ? null : result.getSteps().get(result.getSteps().size() - 1);
-        if (finalStep != null && finalStep.getVariable().equals(unknownDesignation)) {
+        Solver.Step finalStep = null;
+        for (Solver.Step step : result.getSteps()) {
+            if ("variable".equals(step.getType()) && step.getVariable().equals(unknownDesignation)) {
+                finalStep = step;
+                break;
+            }
+        }
+        if (finalStep != null) {
             start = builder.length();
             builder.append("Воспользуемся формулой:\n");
             applyTypeface(builder, start, builder.length());
