@@ -48,9 +48,15 @@ public class SolutionFormatter {
         return simplifiedNumerator + "/" + simplifiedDenominator;
     }
 
-    // метод для удаления HTML-тегов из строки
-    private String stripHtmlTags(String html) {
-        return html.replaceAll("<[^>]+>", "");
+    // метод для формирования HTML-строки сокращённой дроби
+    private String formatSimplifiedFraction(String simplified, String originalRight) {
+        // если simplified — целое число, возвращаем его в <sup>
+        if (!simplified.contains("/")) {
+            return "<sup>" + simplified + "</sup>";
+        }
+        // иначе, разбиваем на числитель и знаменатель
+        String[] parts = simplified.split("/");
+        return "<sup>" + parts[0] + "</sup>/<sub>" + parts[1] + "</sub>";
     }
 
     // форматирование решения
@@ -230,23 +236,35 @@ public class SolutionFormatter {
         String substitution = left + " = " + right;
         LogUtils.d("SolutionFormatter", "подстановка: " + substitution);
 
-        // удаление HTML-тегов для анализа дроби
-        String cleanRight = stripHtmlTags(right);
-        LogUtils.d("SolutionFormatter", "очищенное выражение: " + cleanRight);
-
-        // поиск и сокращение дроби
-        Pattern fractionPattern = Pattern.compile("(\\d+)\\s*/\\s*(\\d+)");
-        Matcher matcher = fractionPattern.matcher(cleanRight);
+        // поиск HTML-форматированной дроби: <sup>число</sup>/<sub>число</sub>
+        Pattern fractionPattern = Pattern.compile("<sup>(\\d+)</sup>\\s*/\\s*<sub>(\\d+)</sub>");
+        Matcher matcher = fractionPattern.matcher(right);
         if (matcher.find()) {
             int numerator = Integer.parseInt(matcher.group(1));
             int denominator = Integer.parseInt(matcher.group(2));
             String fraction = numerator + "/" + denominator;
             String simplified = simplifyFraction(numerator, denominator);
             LogUtils.d("SolutionFormatter", "найдена дробь: " + fraction + " → сокращена до: " + simplified);
-            // добавляем сокращённую дробь в подстановку
-            substitution += " = " + left + " = " + simplified;
+            // формируем HTML для сокращённой дроби
+            String simplifiedHtml = formatSimplifiedFraction(simplified, right);
+            // добавляем сокращённую дробь в подстановку с HTML
+            substitution = left + " = " + right + "\n" + left + " = " + simplifiedHtml;
         } else {
-            LogUtils.d("SolutionFormatter", "дробь в выражении не найдена");
+            // если HTML-форматированная дробь не найдена, проверяем обычную дробь
+            Pattern plainFractionPattern = Pattern.compile("(\\d+)\\s*/\\s*(\\d+)");
+            Matcher plainMatcher = plainFractionPattern.matcher(right);
+            if (plainMatcher.find()) {
+                int numerator = Integer.parseInt(plainMatcher.group(1));
+                int denominator = Integer.parseInt(plainMatcher.group(2));
+                String fraction = numerator + "/" + denominator;
+                String simplified = simplifyFraction(numerator, denominator);
+                LogUtils.d("SolutionFormatter", "найдена обычная дробь: " + fraction + " → сокращена до: " + simplified);
+                // формируем HTML для сокращённой дроби даже для обычного текста
+                String simplifiedHtml = formatSimplifiedFraction(simplified, right);
+                substitution = left + " = " + right + "\n" + left + " = " + simplifiedHtml;
+            } else {
+                LogUtils.d("SolutionFormatter", "дробь в выражении не найдена");
+            }
         }
 
         return substitution;
