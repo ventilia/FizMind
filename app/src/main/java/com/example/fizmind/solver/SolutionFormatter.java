@@ -242,13 +242,15 @@ public class SolutionFormatter {
         if (matcher.find()) {
             int numerator = Integer.parseInt(matcher.group(1));
             int denominator = Integer.parseInt(matcher.group(2));
-            String fraction = numerator + "/" + denominator;
+            int gcd = Solver.gcd(numerator, denominator);
             String simplified = simplifyFraction(numerator, denominator);
-            LogUtils.d("SolutionFormatter", "найдена дробь: " + fraction + " → сокращена до: " + simplified);
+            LogUtils.d("SolutionFormatter", "найдена дробь: " + numerator + "/" + denominator + " → сокращена до: " + simplified);
             // формируем HTML для сокращённой дроби
             String simplifiedHtml = formatSimplifiedFraction(simplified, right);
-            // добавляем сокращённую дробь в подстановку с HTML
-            substitution = left + " = " + right + "\n" + left + " = " + simplifiedHtml;
+            // добавляем строку "Сократим на (НОД)"
+            String reductionStep = "Сократим на " + gcd;
+            // формируем итоговую подстановку с <br> для переносов строк
+            substitution = left + " = " + right + "<br>" + reductionStep + "<br>" + left + " = " + simplifiedHtml;
         } else {
             // если HTML-форматированная дробь не найдена, проверяем обычную дробь
             Pattern plainFractionPattern = Pattern.compile("(\\d+)\\s*/\\s*(\\d+)");
@@ -256,12 +258,15 @@ public class SolutionFormatter {
             if (plainMatcher.find()) {
                 int numerator = Integer.parseInt(plainMatcher.group(1));
                 int denominator = Integer.parseInt(plainMatcher.group(2));
-                String fraction = numerator + "/" + denominator;
+                int gcd = Solver.gcd(numerator, denominator);
                 String simplified = simplifyFraction(numerator, denominator);
-                LogUtils.d("SolutionFormatter", "найдена обычная дробь: " + fraction + " → сокращена до: " + simplified);
-                // формируем HTML для сокращённой дроби даже для обычного текста
+                LogUtils.d("SolutionFormatter", "найдена обычная дробь: " + numerator + "/" + denominator + " → сокращена до: " + simplified);
+                // формируем HTML для сокращённой дроби
                 String simplifiedHtml = formatSimplifiedFraction(simplified, right);
-                substitution = left + " = " + right + "\n" + left + " = " + simplifiedHtml;
+                // добавляем строку "Сократим на (НОД)"
+                String reductionStep = "Сократим на " + gcd;
+                // формируем итоговую подстановку с <br> для переносов строк
+                substitution = left + " = " + right + "<br>" + reductionStep + "<br>" + left + " = " + simplifiedHtml;
             } else {
                 LogUtils.d("SolutionFormatter", "дробь в выражении не найдена");
             }
