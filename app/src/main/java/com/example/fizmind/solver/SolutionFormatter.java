@@ -4,6 +4,7 @@ import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.style.StyleSpan;
+import android.text.style.UnderlineSpan;
 import android.graphics.Typeface;
 import com.example.fizmind.SI.SIConverter;
 import com.example.fizmind.animation.CustomTypefaceSpan;
@@ -200,8 +201,13 @@ public class SolutionFormatter {
                 .append(SIConverter.formatValue(roundedResult))
                 .append(" ")
                 .append(unit);
+        // применение стиля полужирного шрифта к тексту после "Ответ: "
         int boldStart = start + "Ответ: ".length();
         builder.setSpan(new StyleSpan(Typeface.BOLD), boldStart, builder.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        // применение подчеркивания ко всему блоку "Ответ"
+        int answerStart = start;
+        int answerEnd = builder.length();
+        builder.setSpan(new UnderlineSpan(), answerStart, answerEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
         LogUtils.d("SolutionFormatter", "решение:\n" + builder.toString());
         return builder;
