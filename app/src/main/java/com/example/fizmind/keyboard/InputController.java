@@ -168,7 +168,7 @@ public class InputController {
         if ("designations".equals(currentInputField)) {
             handleDesignationsInput(input, sourceKeyboardMode, keyUsesStix, logicalId);
         } else if ("unknown".equals(currentInputField)) {
-            handleUnknownInput(input, keyUsesStix, logicalId);
+            handleUnknownInput(input, sourceKeyboardMode, keyUsesStix, logicalId);
         }
         updateDisplay();
     }
@@ -393,11 +393,22 @@ public class InputController {
     }
 
     // обработка ввода для поля "unknown"
-    private void handleUnknownInput(String input, boolean keyUsesStix, String logicalId) {
+    private void handleUnknownInput(String input, String sourceKeyboardMode, boolean keyUsesStix, String logicalId) {
         if (isConversionMode) {
             LogUtils.wWithSnackbar("InputController", "ввод в 'Введите неизвестное' заблокирован в режиме 'Перевод в СИ'", rootView);
             return;
         }
+
+        // проверка на числа и единицы измерения
+        if ("Numbers_and_operations".equals(sourceKeyboardMode) && !"_".equals(input) && focusState != FocusState.MODULE) {
+            LogUtils.wWithSnackbar("InputController", "числа нельзя вводить в 'Введите неизвестное'", rootView);
+            return;
+        }
+        if ("Units_of_measurement".equals(sourceKeyboardMode)) {
+            LogUtils.wWithSnackbar("InputController", "единицы измерения нельзя вводить в 'Введите неизвестное'", rootView);
+            return;
+        }
+
         if (focusState == FocusState.MODULE && unknownSubscriptModule != null && unknownSubscriptModule.isActive()) {
             // запрет ввода "p" и "k" в обычный SUBSCRIPT для неизвестного
             if (unknownSubscriptModule.getType() == ModuleType.SUBSCRIPT && (input.equals("p") || input.equals("k"))) {
@@ -406,6 +417,7 @@ public class InputController {
             }
             if (ModuleValidator.canApplyInput(unknownSubscriptModule.getType(), unknownSubscriptModule.getContent(), input)) {
                 unknownSubscriptModule.apply(input);
+                LogUtils.d("InputController", "добавлен символ в индекс неизвестного: " + input);
             } else {
                 LogUtils.wWithSnackbar("InputController", "недопустимый символ для индекса: " + input, rootView);
             }
@@ -426,10 +438,15 @@ public class InputController {
             LogUtils.wWithSnackbar("InputController", "индекс уже введён", rootView);
             return;
         }
+        if (unknownDisplayDesignation == null) {
+            LogUtils.wWithSnackbar("InputController", "сначала введите обозначение перед добавлением индекса", rootView);
+            return;
+        }
         unknownSubscriptModule = new InputModule(ModuleType.SUBSCRIPT);
         unknownSubscriptModule.activate();
         focusState = FocusState.MODULE;
         updateKeyboardMode();
+        LogUtils.d("InputController", "добавлен подстрочный индекс для неизвестного");
     }
 
     // добавление фиксированного модуля для неизвестного
@@ -447,6 +464,7 @@ public class InputController {
         unknownSubscriptModule.apply(input);
         focusState = FocusState.DESIGNATION;
         updateKeyboardMode();
+        LogUtils.d("InputController", "добавлен фиксированный модуль '" + input + "' для неизвестного");
     }
 
     // установка первого неизвестного обозначения
