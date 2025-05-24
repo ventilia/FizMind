@@ -242,14 +242,14 @@ public class SolutionFormatter {
         String substitution = left + " = " + right;
         LogUtils.d("SolutionFormatter", "подстановка: " + substitution);
 
-        // поиск html-форматированной дроби: <sup>число</sup>/<sub>число</sub>
+
         Pattern fractionPattern = Pattern.compile("<sup>(\\d+)</sup>\\s*/\\s*<sub>(\\d+)</sub>");
         Matcher matcher = fractionPattern.matcher(right);
         if (matcher.find()) {
             int numerator = Integer.parseInt(matcher.group(1));
             int denominator = Integer.parseInt(matcher.group(2));
             int gcd = Solver.gcd(numerator, denominator);
-            if (gcd > 1) { // шаги сокращения отображаются только если есть что сокращать
+            if (gcd > 1) {
                 String simplified = simplifyFraction(numerator, denominator);
                 LogUtils.d("SolutionFormatter", "найдена дробь: " + numerator + "/" + denominator + " → сокращена до: " + simplified);
                 String simplifiedHtml = formatSimplifiedFraction(simplified);
