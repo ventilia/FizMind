@@ -22,6 +22,7 @@ import com.example.fizmind.database.UnknownQuantityEntity;
 import com.example.fizmind.keyboard.DisplayManager;
 import com.example.fizmind.keyboard.InputController;
 import com.example.fizmind.keyboard.KeyboardLogic;
+import com.example.fizmind.fragments.PressAnimation;
 import com.example.fizmind.utils.LogUtils;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -74,7 +75,24 @@ public class KeyboardFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // инициализация элементов интерфейса
+        // находим и анимируем верхние кнопки
+        ImageButton buttonSave = view.findViewById(R.id.button_save);
+        ImageButton buttonLeft = view.findViewById(R.id.button_left);
+        ImageButton buttonRight = view.findViewById(R.id.button_right);
+        ImageButton buttonClear = view.findViewById(R.id.button_clear);
+        ImageButton buttonCycle = view.findViewById(R.id.button_cycle);
+
+        PressAnimation.apply(buttonSave);
+        PressAnimation.apply(buttonLeft);
+        PressAnimation.apply(buttonRight);
+        PressAnimation.apply(buttonClear);
+        PressAnimation.apply(buttonCycle);
+
+        // инициализация остальных view
+        editTextDesignations = view.findViewById(R.id.editText_designations);
+        editTextUnknown = view.findViewById(R.id.editText_unknown);
+        editTextDesignations.setMovementMethod(new ScrollingMovementMethod());
+
         List<TextView> keyboardCells = Arrays.asList(
                 view.findViewById(R.id.key_1), view.findViewById(R.id.key_2), view.findViewById(R.id.key_3),
                 view.findViewById(R.id.key_4), view.findViewById(R.id.key_5), view.findViewById(R.id.key_6),
@@ -84,7 +102,6 @@ public class KeyboardFragment extends Fragment {
                 view.findViewById(R.id.key_16), view.findViewById(R.id.key_17), view.findViewById(R.id.key_18),
                 view.findViewById(R.id.key_19), view.findViewById(R.id.key_20), view.findViewById(R.id.key_21)
         );
-
         TextView pageNumberView = view.findViewById(R.id.page_number);
         TextView designationButton = view.findViewById(R.id.Designation);
         TextView unitsButton = view.findViewById(R.id.Units_of_measurement);
@@ -92,15 +109,6 @@ public class KeyboardFragment extends Fragment {
         ImageButton prevPageButton = view.findViewById(R.id.button_prev_page);
         ImageButton nextPageButton = view.findViewById(R.id.button_next_page);
         ImageButton buttonScrollDown = view.findViewById(R.id.button_scroll_down);
-        editTextDesignations = view.findViewById(R.id.editText_designations);
-        editTextUnknown = view.findViewById(R.id.editText_unknown);
-        ImageButton buttonLeft = view.findViewById(R.id.button_left);
-        ImageButton buttonRight = view.findViewById(R.id.button_right);
-        ImageButton buttonSave = view.findViewById(R.id.button_save);
-        ImageButton buttonClear = view.findViewById(R.id.button_clear);
-        ImageButton buttonCycle = view.findViewById(R.id.button_cycle);
-
-        editTextDesignations.setMovementMethod(new ScrollingMovementMethod());
 
         // инициализация логики клавиатуры
         keyboardLogic = new KeyboardLogic(
@@ -109,7 +117,6 @@ public class KeyboardFragment extends Fragment {
                 buttonScrollDown, editTextDesignations, editTextUnknown,
                 buttonLeft, buttonRight, view, database
         );
-
 
         DisplayManager displayManager = new DisplayManager(keyboardLogic.getStixTypeface(), database);
         inputController = new InputController(
@@ -121,50 +128,44 @@ public class KeyboardFragment extends Fragment {
         inputController.setKeyboardModeSwitcher(keyboardLogic);
         keyboardLogic.setInputController(inputController);
 
-        // установка обработчиков событий
+        // установка обработчиков кликов (анимация уже подключена)
         buttonSave.setOnClickListener(v -> {
             LogUtils.logButtonPressed("KeyboardFragment", "SAVE");
             inputController.onDownArrowPressed();
         });
-
         buttonLeft.setOnClickListener(v -> {
             LogUtils.logButtonPressed("KeyboardFragment", "LEFT");
             inputController.onLeftArrowPressed();
         });
-
         buttonRight.setOnClickListener(v -> {
             LogUtils.logButtonPressed("KeyboardFragment", "RIGHT");
             inputController.onRightArrowPressed();
         });
-
         buttonClear.setOnClickListener(v -> {
             LogUtils.logButtonPressed("KeyboardFragment", "DELETE");
             inputController.onDeletePressed();
         });
-
         buttonClear.setOnLongClickListener(v -> {
             LogUtils.d("KeyboardFragment", "длительное нажатие на DELETE");
             inputController.clearAll();
             return true;
+        });
+        buttonCycle.setOnClickListener(v -> {
+            LogUtils.logButtonPressed("KeyboardFragment", "CYCLE");
+            handleCycleButtonPress();
         });
 
         editTextDesignations.setOnClickListener(v -> {
             inputController.setCurrentInputField("designations");
             LogUtils.d("KeyboardFragment", "фокус на 'Введите обозначение'");
         });
-
         editTextUnknown.setOnClickListener(v -> {
             inputController.setCurrentInputField("unknown");
             LogUtils.d("KeyboardFragment", "фокус на 'Введите неизвестное'");
         });
-
-        buttonCycle.setOnClickListener(v -> {
-            LogUtils.logButtonPressed("KeyboardFragment", "CYCLE");
-            handleCycleButtonPress();
-        });
     }
 
-
+    // обработка нажатия на кнопку перехода к решению
     private void handleCycleButtonPress() {
         List<UnknownQuantityEntity> unknowns = database.unknownQuantityDao().getAllUnknowns();
         if (unknowns.isEmpty()) {
@@ -174,7 +175,6 @@ public class KeyboardFragment extends Fragment {
             LogUtils.w("KeyboardFragment", "неизвестное не введено");
             return;
         }
-
         List<ConcreteMeasurementEntity> measurementsList = database.measurementDao().getAllMeasurements();
         if (measurementsList.isEmpty()) {
             if (getView() != null) {
@@ -183,7 +183,6 @@ public class KeyboardFragment extends Fragment {
             LogUtils.w("KeyboardFragment", "измерения не введены");
             return;
         }
-
         LogUtils.d("KeyboardFragment", "переход в SolutionActivity, данные будут взяты из БД");
         Intent intent = new Intent(getActivity(), SolutionActivity.class);
         startActivity(intent);
