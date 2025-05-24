@@ -13,6 +13,7 @@ import com.example.fizmind.R;
 import com.example.fizmind.database.AppDatabase;
 import com.example.fizmind.formulas.Formula;
 import com.example.fizmind.formulas.FormulaDatabase;
+import com.example.fizmind.fragments.adapter.FormulaAdapter;
 import com.example.fizmind.keyboard.DisplayManager;
 import com.example.fizmind.utils.LogUtils;
 

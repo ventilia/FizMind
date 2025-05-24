@@ -1,4 +1,4 @@
-package com.example.fizmind.fragments;
+package com.example.fizmind.fragments.adapter;
 
 import android.content.Context;
 import android.text.SpannableStringBuilder;

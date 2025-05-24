@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment;
 import androidx.room.Room;
 import com.example.fizmind.R;
 import com.example.fizmind.database.AppDatabase;
+import com.example.fizmind.fragments.adapter.DesignationAdapter;
 import com.example.fizmind.quantly.PhysicalQuantity;
 import com.example.fizmind.quantly.PhysicalQuantityRegistry;
 import com.example.fizmind.keyboard.DisplayManager;
