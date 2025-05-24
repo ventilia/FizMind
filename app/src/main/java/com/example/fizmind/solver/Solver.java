@@ -93,48 +93,79 @@ public class Solver {
 
         String unknownDesignation = unknowns.get(0).getLogicalDesignation();
         Map<String, Double> knownValues = new HashMap<>();
+
+        // формируем известные значения с учётом корректных ключей
         for (ConcreteMeasurementEntity measurement : measurements) {
-            String fullDesignation = measurement.getSubscript().isEmpty() ?
-                    measurement.getBaseDesignation() : measurement.getBaseDesignation() + "_" + measurement.getSubscript();
+            String baseDesignation = measurement.getBaseDesignation();
+            String subscript = measurement.getSubscript();
+            String fullDesignation;
+
+            // проверяем, включён ли subscript уже в baseDesignation
+            if (baseDesignation.endsWith("_" + subscript) && !subscript.isEmpty()) {
+                fullDesignation = baseDesignation; // не добавляем повторно subscript
+            } else {
+                fullDesignation = subscript.isEmpty() ? baseDesignation : baseDesignation + "_" + subscript;
+            }
             knownValues.put(fullDesignation, measurement.getValue());
         }
 
+        LogUtils.d("Solver", "начало решения для " + unknownDesignation + " с известными значениями: " + knownValues);
         Map<String, Double> computedValues = new HashMap<>(knownValues);
         List<Step> steps = new ArrayList<>();
         Set<String> visited = new HashSet<>();
         double result = computeVariable(unknownDesignation, computedValues, steps, visited);
 
-        LogUtils.d("Solver", "решение для " + unknownDesignation + " с известными значениями: " + knownValues);
+        LogUtils.d("Solver", "решение завершено: " + unknownDesignation + " = " + result);
         return new SolutionResult(result, steps);
     }
 
     // рекурсивное вычисление переменной
     private double computeVariable(String variable, Map<String, Double> computedValues, List<Step> steps, Set<String> visited) {
+        // если значение уже вычислено или известно, возвращаем его
         if (computedValues.containsKey(variable)) {
+            LogUtils.d("Solver", "значение " + variable + " уже известно: " + computedValues.get(variable));
             return computedValues.get(variable);
         }
 
+        // проверка на циклическую зависимость
         if (visited.contains(variable)) {
             throw new IllegalArgumentException("обнаружен цикл в зависимостях для переменной: " + variable);
         }
         visited.add(variable);
 
+        // получаем список формул для вычисления переменмой
         List<Formula> possibleFormulas = formulaDatabase.getAdjacencyList().getOrDefault(variable, new ArrayList<>());
         if (possibleFormulas.isEmpty()) {
             throw new IllegalArgumentException("нет формул для вычисления " + variable);
         }
 
+        LogUtils.d("Solver", "доступные формулы для " + variable + ": " + possibleFormulas.size());
+
+        // первый проход: ищем формулу, для которой все зависимости известны
         for (Formula formula : possibleFormulas) {
             List<String> variables = formula.getVariables();
             boolean canCompute = true;
+            List<String> missingVars = new ArrayList<>();
 
+            // проверяем наличие всех переменных, кроме целевой
             for (String var : variables) {
-                if (!var.equals(variable) && !computedValues.containsKey(var)) {
-                    canCompute = false;
-                    break;
+                if (!var.equals(variable)) {
+                    if (!computedValues.containsKey(var)) {
+                        canCompute = false;
+                        missingVars.add(var);
+                    }
                 }
             }
 
+            // логируем, можем ли использовать формулу
+            if (canCompute) {
+                LogUtils.d("Solver", "можно вычислить " + variable + " по формуле " + formula.getBaseExpression());
+            } else {
+                LogUtils.d("Solver", "нельзя вычислить " + variable + " по формуле " + formula.getBaseExpression() +
+                        ", отсутствуют: " + missingVars);
+            }
+
+            // если все данные есть, вычисляем
             if (canCompute) {
                 Double[] values = new Double[variables.size()];
                 for (int i = 0; i < variables.size(); i++) {
@@ -153,11 +184,15 @@ public class Solver {
             }
         }
 
+        // второй проход: пытаемся вычислить недостающие переменные рекурсивно
         for (Formula formula : possibleFormulas) {
             List<String> variables = formula.getVariables();
+
+            // рекурсивно вычисляем недостающие переменные
             for (String var : variables) {
                 if (!var.equals(variable) && !computedValues.containsKey(var)) {
                     try {
+                        LogUtils.d("Solver", "попытка рекурсивно вычислить " + var);
                         computeVariable(var, computedValues, steps, visited);
                     } catch (IllegalArgumentException e) {
                         LogUtils.w("Solver", "не удалось вычислить промежуточную величину " + var + ": " + e.getMessage());
@@ -165,6 +200,7 @@ public class Solver {
                 }
             }
 
+            // проверяем, можем ли теперь вычислить
             boolean canCompute = true;
             for (String var : variables) {
                 if (!var.equals(variable) && !computedValues.containsKey(var)) {
@@ -185,12 +221,13 @@ public class Solver {
                 }
                 computedValues.put(variable, result);
                 steps.add(new Step(variable, result, formula));
-                LogUtils.d("Solver", "вычислено: " + variable + " = " + result + " по формуле " + formula.getBaseExpression());
+                LogUtils.d("Solver", "вычислено после рекурсии: " + variable + " = " + result + " по формуле " + formula.getBaseExpression());
                 visited.remove(variable);
                 return result;
             }
         }
 
+        // если вычислить не удалось, выбрасываем исключение
         throw new IllegalArgumentException("невозможно вычислить " + variable + ": недостаточно данных");
     }
 }
