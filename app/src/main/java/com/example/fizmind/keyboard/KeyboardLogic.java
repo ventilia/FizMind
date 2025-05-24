@@ -11,6 +11,7 @@ import android.widget.TextView;
 import com.example.fizmind.R;
 import com.example.fizmind.SI.ConversionService;
 import com.example.fizmind.animation.KeyboardAnimation;
+import com.example.fizmind.animation.PressAnimation; // добавлен импорт для PressAnimation
 import com.example.fizmind.database.AppDatabase;
 import com.example.fizmind.quantly.PhysicalQuantity;
 import com.example.fizmind.quantly.PhysicalQuantityRegistry;
@@ -152,8 +153,8 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
                         new SymbolKey("unit_Pa", "pa", false),
                         new SymbolKey("unit_atm", "atm", false),
                         new SymbolKey("unit_erg", "erg", false),
-                        new SymbolKey("unit_j", "j", false), // изменено с "J" на "j"
-                        new SymbolKey("unit_kj", "kj", false), // изменено с "kJ" на "kj"
+                        new SymbolKey("unit_j", "j", false),
+                        new SymbolKey("unit_kj", "kj", false),
                         new SymbolKey("unit_erg/s", "erg/s", false),
                         new SymbolKey("unit_W", "w", false),
                         new SymbolKey("unit_kW", "kw", false),
@@ -232,6 +233,16 @@ public class KeyboardLogic implements KeyboardModeSwitcher {
         applyModeButtonAnimations();
         updateModeButtonStyles();
         updateKeyboard();
+
+        // применяем анимацию к кнопкам клавиатуры после инициализации
+        applyKeyAnimations();
+    }
+
+    // применение анимации ко всем клавишам клавиатуры
+    private void applyKeyAnimations() {
+        for (TextView keyView : keyboardCells) {
+            PressAnimation.apply(keyView);
+        }
     }
 
     private void setupArrowButtons() {

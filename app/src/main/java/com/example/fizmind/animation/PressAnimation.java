@@ -1,4 +1,4 @@
-package com.example.fizmind.fragments;
+package com.example.fizmind.animation;
 
 
 
@@ -26,7 +26,7 @@ public class PressAnimation {
         view.setOnTouchListener((v, event) -> {
             switch (event.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN:
-                    animatePress(v, 0.9f, 0.6f);
+                    animatePress(v, 0.7f, 0.6f);
                     break;
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:

@@ -22,7 +22,7 @@ import com.example.fizmind.database.UnknownQuantityEntity;
 import com.example.fizmind.keyboard.DisplayManager;
 import com.example.fizmind.keyboard.InputController;
 import com.example.fizmind.keyboard.KeyboardLogic;
-import com.example.fizmind.fragments.PressAnimation;
+import com.example.fizmind.animation.PressAnimation;
 import com.example.fizmind.utils.LogUtils;
 import com.google.android.material.snackbar.Snackbar;
 
