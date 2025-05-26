@@ -285,19 +285,22 @@ public class SolutionFormatter {
 
         List<String> formulaVariables = formula.getVariables();
         Map<String, String> displayToFullMap = new HashMap<>();
+
+        // формируем карту отображаемых имен к полным логическим идентификаторам
         for (String fullVar : formulaVariables) {
-            String base = fullVar.contains("_") ? fullVar.split("_")[0] : fullVar;
-            displayToFullMap.put(base, fullVar);
+            String displayVar = displayManager.getDisplayTextFromLogicalId(fullVar);
+            displayToFullMap.put(displayVar, fullVar);
         }
 
-        // подстановка значений
+        // подстановка значений для всех переменных, кроме целевой
         for (String displayVar : displayToFullMap.keySet()) {
-            if (!displayVar.equals(left)) {
+            if (!displayVar.equals(left)) { // пропускаем целевую переменную
                 String fullVar = displayToFullMap.get(displayVar);
                 if (knownValues.containsKey(fullVar)) {
                     double value = knownValues.get(fullVar);
                     String valueStr = SIConverter.formatValue(value);
-                    right = right.replaceAll("\\b" + displayVar + "\\b", valueStr);
+                    // заменяем только целые совпадения переменной
+                    right = right.replaceAll("\\b" + Pattern.quote(displayVar) + "\\b", valueStr);
                 }
             }
         }
@@ -305,6 +308,7 @@ public class SolutionFormatter {
         String substitution = left + " = " + right;
         LogUtils.d("SolutionFormatter", "подстановка: " + substitution);
 
+        // обработка сокращения дробей в HTML-формате
         Pattern fractionPattern = Pattern.compile("<sup>(\\d+)</sup>\\s*/\\s*<sub>(\\d+)</sub>");
         Matcher matcher = fractionPattern.matcher(right);
         if (matcher.find()) {
@@ -319,6 +323,7 @@ public class SolutionFormatter {
                 substitution = left + " = " + right + "<br>" + reductionStep + "<br>" + left + " = " + simplifiedHtml;
             }
         } else {
+            // обработка обычных дробей в текстовом формате
             Pattern plainFractionPattern = Pattern.compile("(\\d+)\\s*/\\s*(\\d+)");
             Matcher plainMatcher = plainFractionPattern.matcher(right);
             if (plainMatcher.find()) {
