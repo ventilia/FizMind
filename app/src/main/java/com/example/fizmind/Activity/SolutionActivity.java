@@ -23,6 +23,7 @@ public class SolutionActivity extends AppCompatActivity {
     private TextView solutionTextView;
     private AppDatabase database;
     private DisplayManager displayManager;
+    private Typeface stixTypeface;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,13 +34,13 @@ public class SolutionActivity extends AppCompatActivity {
 
         // инициализация базы данных
         database = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, "fizmind-db")
-                .allowMainThreadQueries() // разрешить запросы в основном потоке (для простоты)
+                .allowMainThreadQueries()
                 .build();
 
         // шрифты
         Typeface montserratAlternatesTypeface = Typeface.createFromAsset(
                 getAssets(), "fonts/MontserratAlternates-Regular.ttf");
-        Typeface stixTypeface = Typeface.createFromAsset(getAssets(), "fonts/stix_two_text_italic.ttf");
+        stixTypeface = Typeface.createFromAsset(getAssets(), "fonts/stix_two_text_italic.ttf");
 
         // инициализация менеджера отображения
         displayManager = new DisplayManager(stixTypeface, database);
@@ -53,13 +54,12 @@ public class SolutionActivity extends AppCompatActivity {
     }
 
     // отображает решение задачи
-    private void displaySolution(Typeface typeface) {
+    private void displaySolution(Typeface montserratTypeface) {
         FormulaDatabase formulaDatabase = new FormulaDatabase();
         Solver solver = new Solver(formulaDatabase, database);
-        SolutionFormatter formatter = new SolutionFormatter(typeface, displayManager, database);
+        SolutionFormatter formatter = new SolutionFormatter(montserratTypeface, stixTypeface, displayManager, database);
 
         try {
-            // получение и вычисление решения из базы данных
             Solver.SolutionResult result = solver.solve();
             SpannableStringBuilder solution = formatter.formatSolution(result);
             solutionTextView.setText(solution);

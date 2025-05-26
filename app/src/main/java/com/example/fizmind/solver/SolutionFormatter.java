@@ -25,13 +25,15 @@ import java.util.regex.Pattern;
 
 // форматировщик решения задачи на основе данных из базы данных
 public class SolutionFormatter {
-    private final Typeface montserratAlternatesTypeface;
-    private final DisplayManager displayManager;
-    private final AppDatabase database;
+    private final Typeface montserratAlternatesTypeface; // шрифт для заголовков и текста
+    private final Typeface stixTypeface; // шрифт STIX для физических обозначений
+    private final DisplayManager displayManager; // менеджер отображения текста
+    private final AppDatabase database; // база данных приложения
 
-    // конструктор
-    public SolutionFormatter(Typeface montserratAlternatesTypeface, DisplayManager displayManager, AppDatabase database) {
+    // конструктор с добавлением шрифта STIX
+    public SolutionFormatter(Typeface montserratAlternatesTypeface, Typeface stixTypeface, DisplayManager displayManager, AppDatabase database) {
         this.montserratAlternatesTypeface = montserratAlternatesTypeface;
+        this.stixTypeface = stixTypeface;
         this.displayManager = displayManager;
         this.database = database;
     }
@@ -60,7 +62,7 @@ public class SolutionFormatter {
         return "<sup>" + parts[0] + "</sup>/<sub>" + parts[1] + "</sub>";
     }
 
-    // форматирование решения
+    // форматирование решения с учетом шрифта STIX
     public SpannableStringBuilder formatSolution(Solver.SolutionResult result) {
         List<ConcreteMeasurementEntity> measurements = database.measurementDao().getAllMeasurements();
         List<UnknownQuantityEntity> unknowns = database.unknownQuantityDao().getAllUnknowns();
@@ -75,11 +77,22 @@ public class SolutionFormatter {
         // раздел "Дано"
         int start = builder.length();
         builder.append("Дано:\n");
-        applyTypeface(builder, start, builder.length());
+        applyTypeface(builder, start, builder.length(), montserratAlternatesTypeface);
         for (ConcreteMeasurementEntity measurement : measurements) {
-            String displayDesignation = displayManager.getDisplayTextFromLogicalId(measurement.getBaseDesignation());
-            builder.append(displayDesignation)
-                    .append(" = ")
+            String baseDesignation = measurement.getBaseDesignation();
+            String displayDesignation = displayManager.getDisplayTextFromLogicalId(baseDesignation);
+            boolean usesStix = measurement.isUsesStix(); // флаг использования STIX
+
+            int designationStart = builder.length();
+            builder.append(displayDesignation);
+            int designationEnd = builder.length();
+
+            // применение шрифта STIX к обозначению, если требуется
+            if (usesStix && stixTypeface != null) {
+                builder.setSpan(new CustomTypefaceSpan(stixTypeface), designationStart, designationEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+
+            builder.append(" = ")
                     .append(SIConverter.formatValue(measurement.getOriginalValue()))
                     .append(" ")
                     .append(measurement.getOriginalUnit())
@@ -90,30 +103,38 @@ public class SolutionFormatter {
         // раздел "Перевод в СИ"
         start = builder.length();
         builder.append("Перевод в СИ:\n");
-        applyTypeface(builder, start, builder.length());
+        applyTypeface(builder, start, builder.length(), montserratAlternatesTypeface);
         for (ConcreteMeasurementEntity measurement : measurements) {
             String displayDesignation = displayManager.getDisplayTextFromLogicalId(measurement.getBaseDesignation());
+            boolean usesStix = measurement.isUsesStix();
+
+            int designationStart = builder.length();
+            builder.append(displayDesignation);
+            int designationEnd = builder.length();
+
+            // применение шрифта STIX к обозначению
+            if (usesStix && stixTypeface != null) {
+                builder.setSpan(new CustomTypefaceSpan(stixTypeface), designationStart, designationEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+
             if (!measurement.isSIUnit()) {
                 String steps = measurement.getConversionSteps();
                 if (!steps.isEmpty()) {
-                    builder.append(displayDesignation)
-                            .append(" = ")
+                    builder.append(" = ")
                             .append(SIConverter.formatValue(measurement.getOriginalValue()))
                             .append(measurement.getOriginalUnit())
                             .append(" = ")
                             .append(steps)
                             .append("\n");
                 } else {
-                    builder.append(displayDesignation)
-                            .append(" = ")
+                    builder.append(" = ")
                             .append(SIConverter.formatValue(measurement.getValue()))
                             .append(" ")
                             .append(measurement.getUnit())
                             .append(" (нет шагов конвертации)\n");
                 }
             } else {
-                builder.append(displayDesignation)
-                        .append(" = ")
+                builder.append(" = ")
                         .append(SIConverter.formatValue(measurement.getValue()))
                         .append(" ")
                         .append(measurement.getUnit())
@@ -141,7 +162,7 @@ public class SolutionFormatter {
         if (hasIntermediateSteps) {
             start = builder.length();
             builder.append("Промежуточные вычисления:\n");
-            applyTypeface(builder, start, builder.length());
+            applyTypeface(builder, start, builder.length(), montserratAlternatesTypeface);
             for (Solver.Step step : result.getSteps()) {
                 if (!step.getVariable().equals(unknownDesignation)) {
                     Formula formula = step.getFormula();
@@ -149,9 +170,20 @@ public class SolutionFormatter {
                     builder.append(Html.fromHtml(displayExpression)).append("\n");
                     String substitution = buildSubstitution(displayExpression, formula, knownValues, step.getVariable());
                     builder.append(Html.fromHtml(substitution)).append("\n");
+
                     String displayVariable = displayManager.getDisplayTextFromLogicalId(step.getVariable());
-                    builder.append(displayVariable)
-                            .append(" = ")
+                    boolean usesStix = isUsesStix(step.getVariable(), measurements); // определение флага STIX
+
+                    int varStart = builder.length();
+                    builder.append(displayVariable);
+                    int varEnd = builder.length();
+
+                    // применение шрифта STIX к промежуточной переменной
+                    if (usesStix && stixTypeface != null) {
+                        builder.setSpan(new CustomTypefaceSpan(stixTypeface), varStart, varEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    }
+
+                    builder.append(" = ")
                             .append(SIConverter.formatValue(step.getValue()))
                             .append(" ")
                             .append(getUnit(step.getVariable()))
@@ -166,14 +198,14 @@ public class SolutionFormatter {
         if (finalStep != null && finalStep.getVariable().equals(unknownDesignation)) {
             start = builder.length();
             builder.append("Воспользуемся формулой:\n");
-            applyTypeface(builder, start, builder.length());
+            applyTypeface(builder, start, builder.length(), montserratAlternatesTypeface);
             Formula formula = finalStep.getFormula();
             String displayExpression = displayManager.getDisplayExpression(formula, unknownDesignation);
             builder.append(Html.fromHtml(displayExpression)).append("\n\n");
 
             start = builder.length();
             builder.append("Подставим значения:\n");
-            applyTypeface(builder, start, builder.length());
+            applyTypeface(builder, start, builder.length(), montserratAlternatesTypeface);
             String substitution = buildSubstitution(displayExpression, formula, knownValues, unknownDesignation);
             builder.append(Html.fromHtml(substitution)).append("\n\n");
         }
@@ -181,11 +213,21 @@ public class SolutionFormatter {
         // результат
         start = builder.length();
         builder.append("Результат:\n");
-        applyTypeface(builder, start, builder.length());
+        applyTypeface(builder, start, builder.length(), montserratAlternatesTypeface);
         String displayUnknown = displayManager.getDisplayTextFromLogicalId(unknownDesignation);
+        boolean usesStix = unknowns.get(0).isUsesStix(); // флаг STIX для неизвестной величины
+
+        int unknownStart = builder.length();
+        builder.append(displayUnknown);
+        int unknownEnd = builder.length();
+
+        // применение шрифта STIX к неизвестной величине
+        if (usesStix && stixTypeface != null) {
+            builder.setSpan(new CustomTypefaceSpan(stixTypeface), unknownStart, unknownEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+
         String unit = getUnit(unknownDesignation);
-        builder.append(displayUnknown)
-                .append(" = ")
+        builder.append(" = ")
                 .append(SIConverter.formatValue(result.getResult()))
                 .append(" ")
                 .append(unit)
@@ -194,23 +236,44 @@ public class SolutionFormatter {
         // ответ
         start = builder.length();
         builder.append("Ответ: ");
-        applyTypeface(builder, start, builder.length());
+        applyTypeface(builder, start, builder.length(), montserratAlternatesTypeface);
         double roundedResult = Math.round(result.getResult() * 100.0) / 100.0;
+        int answerStart = builder.length();
         builder.append(displayUnknown)
                 .append(" ≈ ")
                 .append(SIConverter.formatValue(roundedResult))
                 .append(" ")
                 .append(unit);
+
         // применение стиля полужирного шрифта к тексту после "Ответ: "
         int boldStart = start + "Ответ: ".length();
         builder.setSpan(new StyleSpan(Typeface.BOLD), boldStart, builder.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         // применение подчеркивания ко всему блоку "Ответ"
-        int answerStart = start;
         int answerEnd = builder.length();
         builder.setSpan(new UnderlineSpan(), answerStart, answerEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
+        // применение шрифта STIX к обозначению в ответе
+        if (usesStix && stixTypeface != null) {
+            int displayUnknownStart = answerStart;
+            int displayUnknownEnd = displayUnknownStart + displayUnknown.length();
+            builder.setSpan(new CustomTypefaceSpan(stixTypeface), displayUnknownStart, displayUnknownEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+
         LogUtils.d("SolutionFormatter", "решение:\n" + builder.toString());
         return builder;
+    }
+
+    // метод для проверки, нужно ли использовать шрифт STIX для обозначения
+    private boolean isUsesStix(String designation, List<ConcreteMeasurementEntity> measurements) {
+        // поиск измерения с данным обозначением
+        for (ConcreteMeasurementEntity measurement : measurements) {
+            String fullDesignation = measurement.getSubscript().isEmpty() ?
+                    measurement.getBaseDesignation() : measurement.getBaseDesignation() + "_" + measurement.getSubscript();
+            if (fullDesignation.equals(designation)) {
+                return measurement.isUsesStix();
+            }
+        }
+        return false; // по умолчанию STIX не используется, если обозначение не найдено
     }
 
     // построение подстановки значений в формулу с сокращением
@@ -242,7 +305,6 @@ public class SolutionFormatter {
         String substitution = left + " = " + right;
         LogUtils.d("SolutionFormatter", "подстановка: " + substitution);
 
-
         Pattern fractionPattern = Pattern.compile("<sup>(\\d+)</sup>\\s*/\\s*<sub>(\\d+)</sub>");
         Matcher matcher = fractionPattern.matcher(right);
         if (matcher.find()) {
@@ -257,22 +319,19 @@ public class SolutionFormatter {
                 substitution = left + " = " + right + "<br>" + reductionStep + "<br>" + left + " = " + simplifiedHtml;
             }
         } else {
-            // проверка обычной дроби: число/число
             Pattern plainFractionPattern = Pattern.compile("(\\d+)\\s*/\\s*(\\d+)");
             Matcher plainMatcher = plainFractionPattern.matcher(right);
             if (plainMatcher.find()) {
                 int numerator = Integer.parseInt(plainMatcher.group(1));
                 int denominator = Integer.parseInt(plainMatcher.group(2));
                 int gcd = Solver.gcd(numerator, denominator);
-                if (gcd > 1) { // шаги сокращения отображаются только если есть что сокращать
+                if (gcd > 1) {
                     String simplified = simplifyFraction(numerator, denominator);
                     LogUtils.d("SolutionFormatter", "найдена обычная дробь: " + numerator + "/" + denominator + " → сокращена до: " + simplified);
                     String simplifiedHtml = formatSimplifiedFraction(simplified);
                     String reductionStep = "Сократим на " + gcd;
                     substitution = left + " = " + right + "<br>" + reductionStep + "<br>" + left + " = " + simplifiedHtml;
                 }
-            } else {
-                LogUtils.d("SolutionFormatter", "дробь в выражении не найдена");
             }
         }
 
@@ -286,9 +345,9 @@ public class SolutionFormatter {
     }
 
     // применение шрифта
-    private void applyTypeface(SpannableStringBuilder builder, int start, int end) {
-        if (montserratAlternatesTypeface != null) {
-            builder.setSpan(new CustomTypefaceSpan(montserratAlternatesTypeface), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+    private void applyTypeface(SpannableStringBuilder builder, int start, int end, Typeface typeface) {
+        if (typeface != null) {
+            builder.setSpan(new CustomTypefaceSpan(typeface), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
     }
 }
