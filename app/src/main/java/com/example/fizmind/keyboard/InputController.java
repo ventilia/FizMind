@@ -231,7 +231,7 @@ public class InputController {
     // обработка первого символа обозначения
     private void processInitialDesignation(String input, String sourceKeyboardMode, boolean keyUsesStix, String logicalId) {
         if (!"Designation".equals(sourceKeyboardMode)) {
-            LogUtils.wWithSnackbar("InputController", "символ обозначения должен быть из режима 'Designation'", rootView);
+            LogUtils.wWithSnackbar("InputController", "Первый символ ввода поля должен быть из режима 'Обозначения'", rootView);
             return;
         }
         if (logicalId.startsWith("op_") || logicalId.startsWith("mod_")) {
