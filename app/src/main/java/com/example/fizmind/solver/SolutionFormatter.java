@@ -238,7 +238,6 @@ public class SolutionFormatter {
         builder.append("Ответ: ");
         applyTypeface(builder, start, builder.length(), montserratAlternatesTypeface);
         double roundedResult = Math.round(result.getResult() * 100.0) / 100.0;
-        int answerStart = builder.length();
         builder.append(displayUnknown)
                 .append(" ≈ ")
                 .append(SIConverter.formatValue(roundedResult))
@@ -248,13 +247,14 @@ public class SolutionFormatter {
         // применение стиля полужирного шрифта к тексту после "Ответ: "
         int boldStart = start + "Ответ: ".length();
         builder.setSpan(new StyleSpan(Typeface.BOLD), boldStart, builder.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        // применение подчеркивания ко всему блоку "Ответ"
+        // применение подчеркивания ко всей строке "Ответ: "
+        int answerStart = start; // начинаем с "Ответ: "
         int answerEnd = builder.length();
         builder.setSpan(new UnderlineSpan(), answerStart, answerEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
         // применение шрифта STIX к обозначению в ответе
         if (usesStix && stixTypeface != null) {
-            int displayUnknownStart = answerStart;
+            int displayUnknownStart = start + "Ответ: ".length();
             int displayUnknownEnd = displayUnknownStart + displayUnknown.length();
             builder.setSpan(new CustomTypefaceSpan(stixTypeface), displayUnknownStart, displayUnknownEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
