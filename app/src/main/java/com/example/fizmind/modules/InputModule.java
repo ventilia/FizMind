@@ -10,7 +10,7 @@ public class InputModule {
     private final StringBuilder content;
     private boolean isActive;
 
-    // конструктор модуля
+
     public InputModule(ModuleType type) {
         this.type = type;
         this.content = new StringBuilder();
@@ -28,7 +28,7 @@ public class InputModule {
             content.deleteCharAt(content.length() - 1);
             return content.length() == 0; // true, если модуль стал пустым
         }
-        return true; // модуль уже пуст
+        return true;
     }
 
     // удаление всего содержимого
@@ -47,12 +47,12 @@ public class InputModule {
         isActive = false;
     }
 
-    // проверка, пуст ли модуль
+
     public boolean isEmpty() {
         return content.length() == 0;
     }
 
-    // проверка активности
+
     public boolean isActive() {
         return isActive;
     }
@@ -62,12 +62,11 @@ public class InputModule {
         return type;
     }
 
-    // получение содержимого
+
     public String getContent() {
         return content.toString();
     }
 
-    // получение отображаемого текста с форматированием
     public SpannableStringBuilder getDisplayText() {
         SpannableStringBuilder result = new SpannableStringBuilder(content.toString());
         result.setSpan(new SubscriptSpan(), 0, result.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
