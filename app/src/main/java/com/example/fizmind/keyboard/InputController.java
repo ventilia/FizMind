@@ -69,7 +69,7 @@ public class InputController {
     private static final long DOUBLE_CLICK_TIME_DELTA = 300;
     private boolean isConversionMode = false;
 
-    // конструктор класса
+
     public InputController(TextView designationsView, TextView unknownView, AppDatabase database,
                            View rootView, DisplayManager displayManager) {
         this.designationsView = designationsView;
@@ -97,7 +97,7 @@ public class InputController {
         LogUtils.logPropertySet("InputController", "разрешение ввода неизвестного", allowed);
     }
 
-    // установка шрифта STIX
+    // установка шрифта
     public void setStixTypeface(Typeface stixTypeface) {
         this.stixTypeface = stixTypeface;
         LogUtils.logPropertySet("InputController", "шрифт STIX", "установлен");
@@ -109,7 +109,7 @@ public class InputController {
         LogUtils.logPropertySet("InputController", "переключатель режимов клавиатуры", "установлен");
     }
 
-    // установка режима перевода в СИ
+    // установка  перевода в СИ
     public void setConversionMode(boolean isConversionMode) {
         this.isConversionMode = isConversionMode;
         if (isConversionMode) {
@@ -120,7 +120,7 @@ public class InputController {
         LogUtils.logPropertySet("InputController", "режим", isConversionMode ? "перевод в СИ" : "калькулятор");
     }
 
-    // установка текущего поля ввода
+    // установка текущего поля
     public void setCurrentInputField(String field) {
         if ("unknown".equals(field) && !isUnknownInputAllowed) {
             LogUtils.wWithSnackbar("InputController", "переключение на 'Введите неизвестное' заблокировано", rootView);
@@ -151,17 +151,17 @@ public class InputController {
         return currentUnknownDesignation;
     }
 
-    // проверка наличия индекса
+
     public boolean hasSubscript() {
         return designationSubscriptModule != null && !designationSubscriptModule.isEmpty();
     }
 
-    // проверка наличия индекса для неизвестного
+
     public boolean hasUnknownSubscript() {
         return unknownSubscriptModule != null && !unknownSubscriptModule.isEmpty();
     }
 
-    // обработка ввода с клавиатуры
+
     public void onKeyInput(String input, String sourceKeyboardMode, boolean keyUsesStix, String logicalId) {
         LogUtils.logInputProcessing("InputController", currentState.toString(), focusState.toString(), input, logicalId, isConversionMode ? "СИ" : "калькулятор");
 
@@ -173,7 +173,7 @@ public class InputController {
         updateDisplay();
     }
 
-    // обработка ввода для поля "designations"
+
     private void handleDesignationsInput(String input, String sourceKeyboardMode, boolean keyUsesStix, String logicalId) {
         if (focusState == FocusState.MODULE && designationSubscriptModule != null && designationSubscriptModule.isActive()) {
             handleModuleInput(input, logicalId);
@@ -186,7 +186,6 @@ public class InputController {
         }
     }
 
-    // обработка ввода в модуль
     private void handleModuleInput(String input, String logicalId) {
         if (designationSubscriptModule.getType() == ModuleType.SUBSCRIPT && (input.equals("p") || input.equals("k"))) {
             LogUtils.wWithSnackbar("InputController", "символы 'p' и 'k' можно использовать только в специальных модулях", rootView);
@@ -204,7 +203,7 @@ public class InputController {
         }
     }
 
-    // переключение фокуса после ввода в модуль
+
     private void switchFocusAfterModule(String input, String logicalId) {
         if (input.matches("[0-9]") || ".".equals(input) || "-".equals(input)) {
             focusState = FocusState.VALUE;
@@ -226,7 +225,7 @@ public class InputController {
         }
     }
 
-    // обработка первого символа обозначения
+    // обработка первого символа
     private void processInitialDesignation(String input, String sourceKeyboardMode, boolean keyUsesStix, String logicalId) {
         if (!"Designation".equals(sourceKeyboardMode)) {
             LogUtils.wWithSnackbar("InputController", "первый символ ввода поля должен быть из режима 'Обозначения'", rootView);
@@ -256,7 +255,6 @@ public class InputController {
         }
     }
 
-    // обновление состояния для физической величины
     private void updateStateForPhysicalQuantity() {
         PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(logicalDesignation);
         if (pq != null && pq.isConstant()) {
@@ -271,7 +269,7 @@ public class InputController {
         }
     }
 
-    // обработка последующего ввода для обозначения
+
     private void processSubsequentDesignationInput(String input, String logicalId) {
         if (input.matches("[0-9]") || ".".equals(input) || "-".equals(input)) {
             currentState = InputState.ENTERING_VALUE;
@@ -288,7 +286,7 @@ public class InputController {
         }
     }
 
-    // добавление обычного подстрочного индекса
+    // добавление  подстрочного индекса
     private void addSubscriptModule(ModuleType type) {
         if (!ModuleValidator.canAddModule(type, designationSubscriptModule, logicalDesignation)) {
             LogUtils.wWithSnackbar("InputController", "нельзя добавить индекс", rootView);
@@ -300,7 +298,7 @@ public class InputController {
         updateKeyboardMode();
     }
 
-    // добавление фиксированного модуля ("p" или "k")
+
     private void addFixedModule(ModuleType type, String symbol) {
         if (!ModuleValidator.canAddModule(type, designationSubscriptModule, logicalDesignation)) {
             LogUtils.wWithSnackbar("InputController", "нельзя добавить модуль '" + symbol + "'", rootView);
@@ -336,8 +334,6 @@ public class InputController {
             valueBuffer.append(input);
         } else if (".".equals(input)) {
             validateDecimalPoint(input);
-        } else if ("-".equals(input)) {
-            validateMinusSign(input);
         } else if (logicalId.equals("op_abs_open")) {
             valueOperationBuffer.append("|");
         } else if (logicalId.equals("op_abs_close") && valueOperationBuffer.toString().contains("|")) {
@@ -363,16 +359,8 @@ public class InputController {
         }
     }
 
-    // валидация минуса
-    private void validateMinusSign(String input) {
-        if (valueBuffer.length() > 0) {
-            LogUtils.wWithSnackbar("InputController", "минус можно вводить только в начале", rootView);
-        } else {
-            valueBuffer.append(input);
-        }
-    }
 
-    // обработка ввода единицы измерения
+
     private void handleUnitInput(String input, String logicalId) {
         PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(logicalDesignation);
         if (pq == null) {
@@ -390,7 +378,7 @@ public class InputController {
         }
     }
 
-    // обработка ввода для поля "unknown"
+
     private void handleUnknownInput(String input, String sourceKeyboardMode, boolean keyUsesStix, String logicalId) {
         if (isConversionMode) {
             LogUtils.wWithSnackbar("InputController", "ввод в 'Введите неизвестное' заблокирован в режиме 'Перевод в СИ'", rootView);
@@ -426,7 +414,7 @@ public class InputController {
         }
     }
 
-    // добавление подстрочного индекса для неизвестного
+
     private void addSubscriptModuleForUnknown() {
         if (unknownSubscriptModule != null) {
             LogUtils.wWithSnackbar("InputController", "индекс уже введён", rootView);
@@ -443,7 +431,6 @@ public class InputController {
         LogUtils.d("InputController", "добавлен подстрочный индекс для неизвестного");
     }
 
-    // добавление фиксированного модуля для неизвестного
     private void addFixedModuleForUnknown(String logicalId, String input) {
         if (!"designation_E".equals(currentUnknownDesignation) && !"E_latin".equals(currentUnknownDesignation)) {
             LogUtils.wWithSnackbar("InputController", "модули 'p' и 'k' применимы только к 'E'", rootView);
@@ -461,7 +448,7 @@ public class InputController {
         LogUtils.d("InputController", "добавлен фиксированный модуль '" + input + "' для неизвестного");
     }
 
-    // установка первого неизвестного обозначения
+
     private void setInitialUnknown(String input, boolean keyUsesStix, String logicalId) {
         String adjustedLogicalId = "designation_E".equals(logicalId) ? "E_latin" : logicalId;
         unknownDisplayDesignation = displayManager.getDisplayTextFromLogicalId(adjustedLogicalId);
@@ -528,7 +515,6 @@ public class InputController {
         updateDisplay();
     }
 
-    // обработка удаления для неизвестного
     private void handleUnknownDeletion() {
         if (isConversionMode) {
             LogUtils.d("InputController", "удаление в 'Введите неизвестное' игнорируется в режиме 'Перевод в СИ'");
@@ -543,7 +529,6 @@ public class InputController {
         }
     }
 
-    // обработка удаления для designations
     private void handleDesignationsDeletion() {
         if (focusState == FocusState.MODULE || focusState == FocusState.VALUE) {
             performSingleDelete();
@@ -556,7 +541,7 @@ public class InputController {
         }
     }
 
-    // выполнение одиночного удаления
+    // выполнение  удаления
     private void performSingleDelete() {
         if (focusState == FocusState.MODULE && designationSubscriptModule != null && designationSubscriptModule.isActive()) {
             if (designationSubscriptModule.deleteChar()) {
@@ -612,7 +597,7 @@ public class InputController {
         }
     }
 
-    // корректировка фокуса влево для designations
+
     private void adjustFocusLeft() {
         if (focusState == FocusState.MODULE && designationSubscriptModule != null && designationSubscriptModule.isActive()) {
             designationSubscriptModule.deactivate();
@@ -640,7 +625,7 @@ public class InputController {
         }
     }
 
-    // корректировка фокуса влево для неизвестного
+    // корректировка фокуса  неизвестного
     private void adjustUnknownFocusLeft() {
         if (focusState == FocusState.MODULE && unknownSubscriptModule != null && unknownSubscriptModule.isActive()) {
             unknownSubscriptModule.deactivate();
@@ -661,7 +646,7 @@ public class InputController {
         }
     }
 
-    // корректировка фокуса вправо для designations
+
     private void adjustFocusRight() {
         if (focusState == FocusState.DESIGNATION) {
             if (designationSubscriptModule != null) {
