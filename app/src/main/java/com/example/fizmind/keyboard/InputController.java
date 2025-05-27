@@ -69,6 +69,7 @@ public class InputController {
     private static final long DOUBLE_CLICK_TIME_DELTA = 300;
     private boolean isConversionMode = false;
 
+    // конструктор класса
     public InputController(TextView designationsView, TextView unknownView, AppDatabase database,
                            View rootView, DisplayManager displayManager) {
         this.designationsView = designationsView;
@@ -90,25 +91,25 @@ public class InputController {
         LogUtils.logControllerInitialized("InputController");
     }
 
-
+    // установка разрешения ввода неизвестного
     public void setUnknownInputAllowed(boolean allowed) {
         this.isUnknownInputAllowed = allowed;
         LogUtils.logPropertySet("InputController", "разрешение ввода неизвестного", allowed);
     }
 
-
+    // установка шрифта STIX
     public void setStixTypeface(Typeface stixTypeface) {
         this.stixTypeface = stixTypeface;
         LogUtils.logPropertySet("InputController", "шрифт STIX", "установлен");
     }
 
-
+    // установка переключателя режимов клавиатуры
     public void setKeyboardModeSwitcher(KeyboardModeSwitcher switcher) {
         this.keyboardModeSwitcher = switcher;
         LogUtils.logPropertySet("InputController", "переключатель режимов клавиатуры", "установлен");
     }
 
-
+    // установка режима перевода в СИ
     public void setConversionMode(boolean isConversionMode) {
         this.isConversionMode = isConversionMode;
         if (isConversionMode) {
@@ -119,7 +120,7 @@ public class InputController {
         LogUtils.logPropertySet("InputController", "режим", isConversionMode ? "перевод в СИ" : "калькулятор");
     }
 
-
+    // установка текущего поля ввода
     public void setCurrentInputField(String field) {
         if ("unknown".equals(field) && !isUnknownInputAllowed) {
             LogUtils.wWithSnackbar("InputController", "переключение на 'Введите неизвестное' заблокировано", rootView);
@@ -135,27 +136,27 @@ public class InputController {
         LogUtils.d("InputController", "текущее поле ввода установлено: " + field);
     }
 
-
+    // получение текущего обозначения
     public String getCurrentDesignation() {
         return logicalDesignation;
     }
 
-
+    // получение текущего поля ввода
     public String getCurrentInputField() {
         return currentInputField;
     }
 
-
+    // получение текущего неизвестного обозначения
     public String getCurrentUnknownDesignation() {
         return currentUnknownDesignation;
     }
 
-
+    // проверка наличия индекса
     public boolean hasSubscript() {
         return designationSubscriptModule != null && !designationSubscriptModule.isEmpty();
     }
 
-
+    // проверка наличия индекса для неизвестного
     public boolean hasUnknownSubscript() {
         return unknownSubscriptModule != null && !unknownSubscriptModule.isEmpty();
     }
@@ -187,7 +188,6 @@ public class InputController {
 
     // обработка ввода в модуль
     private void handleModuleInput(String input, String logicalId) {
-        // запрет ввода "p" и "k" в обычный SUBSCRIPT
         if (designationSubscriptModule.getType() == ModuleType.SUBSCRIPT && (input.equals("p") || input.equals("k"))) {
             LogUtils.wWithSnackbar("InputController", "символы 'p' и 'k' можно использовать только в специальных модулях", rootView);
             return;
@@ -198,7 +198,6 @@ public class InputController {
             LogUtils.wWithSnackbar("InputController", "нельзя добавить символ '" + input + "' к модулю", rootView);
             return;
         }
-        // если ввод завершён, переключаем фокус
         if (!input.matches("[a-zA-Z0-9]")) {
             designationSubscriptModule.deactivate();
             switchFocusAfterModule(input, logicalId);
@@ -230,7 +229,7 @@ public class InputController {
     // обработка первого символа обозначения
     private void processInitialDesignation(String input, String sourceKeyboardMode, boolean keyUsesStix, String logicalId) {
         if (!"Designation".equals(sourceKeyboardMode)) {
-            LogUtils.wWithSnackbar("InputController", "Первый символ ввода поля должен быть из режима 'Обозначения'", rootView);
+            LogUtils.wWithSnackbar("InputController", "первый символ ввода поля должен быть из режима 'Обозначения'", rootView);
             return;
         }
         if (logicalId.startsWith("op_") || logicalId.startsWith("mod_")) {
@@ -397,8 +396,6 @@ public class InputController {
             LogUtils.wWithSnackbar("InputController", "ввод в 'Введите неизвестное' заблокирован в режиме 'Перевод в СИ'", rootView);
             return;
         }
-
-        // проверка на числа и единицы измерения
         if ("Numbers_and_operations".equals(sourceKeyboardMode) && !"_".equals(input) && focusState != FocusState.MODULE) {
             LogUtils.wWithSnackbar("InputController", "числа нельзя вводить в 'Введите неизвестное'", rootView);
             return;
@@ -407,9 +404,7 @@ public class InputController {
             LogUtils.wWithSnackbar("InputController", "единицы измерения нельзя вводить в 'Введите неизвестное'", rootView);
             return;
         }
-
         if (focusState == FocusState.MODULE && unknownSubscriptModule != null && unknownSubscriptModule.isActive()) {
-            // запрет ввода "p" и "k" в обычный SUBSCRIPT для неизвестного
             if (unknownSubscriptModule.getType() == ModuleType.SUBSCRIPT && (input.equals("p") || input.equals("k"))) {
                 LogUtils.wWithSnackbar("InputController", "символы 'p' и 'k' можно использовать только в специальных модулях", rootView);
                 return;
@@ -550,8 +545,7 @@ public class InputController {
 
     // обработка удаления для designations
     private void handleDesignationsDeletion() {
-        // если фокус на модуле, выполняем только одиночное удаление
-        if (focusState == FocusState.MODULE) {
+        if (focusState == FocusState.MODULE || focusState == FocusState.VALUE) {
             performSingleDelete();
         } else if (deleteClickCount == 2) {
             database.measurementDao().deleteLastMeasurement();
@@ -858,6 +852,8 @@ public class InputController {
         if (keyboardModeSwitcher != null) keyboardModeSwitcher.switchToDesignation();
         logAllSavedData();
     }
+
+
 
     // обновление режима клавиатуры
     private void updateKeyboardMode() {
