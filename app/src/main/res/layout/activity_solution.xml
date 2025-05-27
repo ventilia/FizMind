@@ -29,7 +29,18 @@
             android:textSize="20sp" />
     </RelativeLayout>
 
-
+    <LinearLayout
+        android:id="@+id/solution_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/background_solution"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="16dp"
+        android:layout_below="@id/backButton"
+        android:layout_marginTop="16dp">
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -48,5 +59,6 @@
             android:focusableInTouchMode="false" />
 
     </ScrollView>
+    </LinearLayout>
 
 </LinearLayout>
