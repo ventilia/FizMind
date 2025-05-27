@@ -40,9 +40,9 @@ public class ModuleValidator {
             if (currentContent.isEmpty() && (input.equals("p") || input.equals("k"))) {
                 return true;
             }
-            return false; // дальнейший ввод запрещен
+            return false;
         } else if (type == ModuleType.SUBSCRIPT) {
-            // для обычного индекса разрешаем буквы и цифры
+
             return input.matches("[0-9]");
         }
         return false;
