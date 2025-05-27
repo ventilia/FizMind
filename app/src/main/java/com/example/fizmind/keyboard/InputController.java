@@ -843,7 +843,7 @@ public class InputController {
         );
     }
 
-    // сохранение и сброс измерения
+
     private void saveAndResetMeasurement(ConcreteMeasurementEntity measurement, String baseDesignation, String unit) {
         database.measurementDao().insert(measurement);
         LogUtils.logSaveMeasurement("InputController", measurement.toString());
@@ -855,7 +855,6 @@ public class InputController {
 
 
 
-    // обновление режима клавиатуры
     private void updateKeyboardMode() {
         if (keyboardModeSwitcher == null) return;
         if ("designations".equals(currentInputField)) {
@@ -901,7 +900,7 @@ public class InputController {
         LogUtils.d("InputController", "обновлён интерфейс отображения");
     }
 
-    // обновление цветов текста
+
     private void updateTextColors() {
         if ("designations".equals(currentInputField)) {
             designationsView.setTextColor(Color.BLACK);
@@ -912,7 +911,6 @@ public class InputController {
         }
     }
 
-    // сброс ввода
     private void resetInput() {
         designationBuffer.setLength(0);
         valueBuffer.setLength(0);
