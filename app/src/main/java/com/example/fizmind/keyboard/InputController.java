@@ -742,7 +742,7 @@ public class InputController {
         saveAndResetMeasurement(measurement, baseDesignation, unit);
     }
 
-    // валидация ввода для сохранения измерения
+
     private boolean validateMeasurementInput() {
         if (designationSubscriptModule != null && designationSubscriptModule.isActive() && designationSubscriptModule.isEmpty()) {
             LogUtils.wWithSnackbar("InputController", "завершите ввод индекса или удалите его", rootView);
@@ -759,7 +759,7 @@ public class InputController {
         return true;
     }
 
-    // получение единицы измерения для сохранения
+
     private String getUnitForMeasurement() {
         String unit = unitBuffer.toString();
         if (unit.isEmpty()) {
@@ -783,12 +783,12 @@ public class InputController {
         }
     }
 
-    // получение подстрочного индекса
+
     private String getSubscriptForMeasurement() {
         return (designationSubscriptModule != null && !designationSubscriptModule.isEmpty()) ? designationSubscriptModule.getDisplayText().toString() : "";
     }
 
-    // корректировка базового обозначения
+
     private String adjustBaseDesignation(String baseDesignation, String subscript) {
         if ("E_latin".equals(baseDesignation)) {
             if ("p".equals(subscript)) return "E_latin_p";
@@ -880,7 +880,7 @@ public class InputController {
         }
     }
 
-    // обновление отображения
+
     private void updateDisplay() {
         List<ConcreteMeasurementEntity> measurements = database.measurementDao().getAllMeasurements();
         List<UnknownQuantityEntity> unknowns = database.unknownQuantityDao().getAllUnknowns();
@@ -929,7 +929,7 @@ public class InputController {
         LogUtils.d("InputController", "сброшены все буферы ввода");
     }
 
-    // сброс состояния поля
+
     private void resetFieldState() {
         designationSubscriptModule = null;
         unknownSubscriptModule = null;
@@ -938,7 +938,7 @@ public class InputController {
         currentUnknownDesignation = null;
     }
 
-    // сброс ввода неизвестного
+
     private void resetUnknownInput() {
         unknownDisplayDesignation = null;
         logicalUnknownDesignation = null;
@@ -948,7 +948,7 @@ public class InputController {
         focusState = FocusState.DESIGNATION;
     }
 
-    // очистка всех данных
+
     public void clearAll() {
         if ("designations".equals(currentInputField)) {
             resetInput();
