@@ -69,7 +69,6 @@ public class InputController {
     private static final long DOUBLE_CLICK_TIME_DELTA = 300;
     private boolean isConversionMode = false;
 
-    // конструктор контроллера ввода
     public InputController(TextView designationsView, TextView unknownView, AppDatabase database,
                            View rootView, DisplayManager displayManager) {
         this.designationsView = designationsView;
@@ -91,25 +90,25 @@ public class InputController {
         LogUtils.logControllerInitialized("InputController");
     }
 
-    // установка разрешения ввода неизвестного
+
     public void setUnknownInputAllowed(boolean allowed) {
         this.isUnknownInputAllowed = allowed;
         LogUtils.logPropertySet("InputController", "разрешение ввода неизвестного", allowed);
     }
 
-    // установка шрифта STIX
+
     public void setStixTypeface(Typeface stixTypeface) {
         this.stixTypeface = stixTypeface;
         LogUtils.logPropertySet("InputController", "шрифт STIX", "установлен");
     }
 
-    // установка переключателя режимов клавиатуры
+
     public void setKeyboardModeSwitcher(KeyboardModeSwitcher switcher) {
         this.keyboardModeSwitcher = switcher;
         LogUtils.logPropertySet("InputController", "переключатель режимов клавиатуры", "установлен");
     }
 
-    // установка режима перевода в СИ
+
     public void setConversionMode(boolean isConversionMode) {
         this.isConversionMode = isConversionMode;
         if (isConversionMode) {
@@ -120,7 +119,7 @@ public class InputController {
         LogUtils.logPropertySet("InputController", "режим", isConversionMode ? "перевод в СИ" : "калькулятор");
     }
 
-    // установка текущего поля ввода
+
     public void setCurrentInputField(String field) {
         if ("unknown".equals(field) && !isUnknownInputAllowed) {
             LogUtils.wWithSnackbar("InputController", "переключение на 'Введите неизвестное' заблокировано", rootView);
@@ -136,27 +135,27 @@ public class InputController {
         LogUtils.d("InputController", "текущее поле ввода установлено: " + field);
     }
 
-    // получение текущего обозначения
+
     public String getCurrentDesignation() {
         return logicalDesignation;
     }
 
-    // получение текущего поля ввода
+
     public String getCurrentInputField() {
         return currentInputField;
     }
 
-    // получение текущего неизвестного обозначения
+
     public String getCurrentUnknownDesignation() {
         return currentUnknownDesignation;
     }
 
-    // проверка наличия подстрочного индекса
+
     public boolean hasSubscript() {
         return designationSubscriptModule != null && !designationSubscriptModule.isEmpty();
     }
 
-    // проверка наличия индекса у неизвестного
+
     public boolean hasUnknownSubscript() {
         return unknownSubscriptModule != null && !unknownSubscriptModule.isEmpty();
     }

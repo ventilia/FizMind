@@ -48,12 +48,12 @@ public class SolutionActivity extends AppCompatActivity {
         ImageView backButton = findViewById(R.id.backButton);
         backButton.setOnClickListener(v -> finish());
 
-        // отображение решения
+
         displaySolution(montserratAlternatesTypeface);
         LogUtils.d("SolutionActivity", "активность создана");
     }
 
-    // отображает решение задачи
+
     private void displaySolution(Typeface montserratTypeface) {
         FormulaDatabase formulaDatabase = new FormulaDatabase();
         Solver solver = new Solver(formulaDatabase, database);
