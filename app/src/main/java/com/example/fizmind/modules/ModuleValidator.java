@@ -22,7 +22,7 @@ public class ModuleValidator {
         }
         for (ConcreteMeasurement m : measurements) {
             if (m.getBaseDesignation().equals(baseDesignation) && m.getSubscript().equals(subscript)) {
-                return false; // индекс уже используется
+                return false;
             }
         }
         return true;

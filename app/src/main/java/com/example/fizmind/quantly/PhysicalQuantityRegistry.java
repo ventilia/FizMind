@@ -111,27 +111,27 @@ public class PhysicalQuantityRegistry {
                 Arrays.asList("cm/s²", "m/s²", "km/s²"), true, gravityValue));
     }
 
-    // получение физической величины по обозначению
+
     public static PhysicalQuantity getPhysicalQuantity(String designation) {
         return registry.get(designation);
     }
 
-    // получение текущего значения ускорения свободного падения
+
     public static double getGravityValue() {
         return gravityValue;
     }
 
-    // очистка реестра
+
     public static void clearRegistry() {
         registry.clear();
     }
 
-    // добавление новой физической величины в реестр
+
     public static void addPhysicalQuantity(String key, PhysicalQuantity quantity) {
         registry.put(key, quantity);
     }
 
-    // получение списка всех физических величин
+
     public static List<PhysicalQuantity> getAllQuantities() {
         return new ArrayList<>(registry.values());
     }

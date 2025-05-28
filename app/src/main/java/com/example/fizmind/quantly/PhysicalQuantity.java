@@ -24,7 +24,7 @@ public class PhysicalQuantity {
         initConversionFactors();
     }
 
-    // инициализация коэффициентов пересчета
+    //  коэффициенты пересчета
     private void initConversionFactors() {
         switch (id) {
             case "m_latin":

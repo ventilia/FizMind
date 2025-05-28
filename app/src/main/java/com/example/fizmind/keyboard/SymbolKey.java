@@ -6,7 +6,7 @@ public class SymbolKey {
     private final boolean useStixFont;
     private final boolean color;
 
-    // поля
+
     public SymbolKey(String logicalId, String displayText, boolean useStixFont, boolean color) {
         this.logicalId = logicalId;
         this.displayText = displayText;

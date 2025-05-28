@@ -2,8 +2,8 @@ package com.example.fizmind.modules;
 
 public enum ModuleType {
     SUBSCRIPT("нижний индекс", "_", false),
-    SUBSCRIPT_P("индекс потенциальной энергии", "p", false),
-    SUBSCRIPT_K("индекс кинетической энергии", "k", false);
+    SUBSCRIPT_P("потенциальной энергии", "p", false),
+    SUBSCRIPT_K("кинетической энергии", "k", false);
 
     private final String description;
     private final String symbol;

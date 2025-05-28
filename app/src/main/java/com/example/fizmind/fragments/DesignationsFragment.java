@@ -20,7 +20,7 @@ import com.example.fizmind.utils.LogUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-// фрагмент для отображения списка физических величин
+
 public class DesignationsFragment extends Fragment {
 
     private ListView listView;
@@ -33,25 +33,24 @@ public class DesignationsFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_designations, container, false);
         listView = view.findViewById(R.id.list_view_designations);
 
-        // настройка кнопки "назад"
+
         ImageView backButton = view.findViewById(R.id.backButton);
         backButton.setOnClickListener(v -> getActivity().onBackPressed());
 
-        // загрузка шрифта
+
         Typeface stixTypeface = Typeface.createFromAsset(getContext().getAssets(), "fonts/stix_two_text_italic.ttf");
 
-        // инициализация базы данных
+
         database = Room.databaseBuilder(getContext(), AppDatabase.class, "fizmind-db")
                 .allowMainThreadQueries() // разрешить запросы в основном потоке (для простоты)
                 .build();
 
-        // инициализация менеджера отображения
+
         displayManager = new DisplayManager(stixTypeface, database);
 
-        // получение списка всех физических величин
         List<PhysicalQuantity> quantities = new ArrayList<>(PhysicalQuantityRegistry.getAllQuantities());
 
-        // настройка адаптера для списка
+
         adapter = new DesignationAdapter(getContext(), quantities, displayManager);
         listView.setAdapter(adapter);
 

@@ -29,7 +29,7 @@ import com.google.android.material.snackbar.Snackbar;
 import java.util.Arrays;
 import java.util.List;
 
-// фрагмент клавиатуры, работающий с базой данных
+
 public class KeyboardFragment extends Fragment {
     private KeyboardLogic keyboardLogic;
     private InputController inputController;
@@ -39,10 +39,9 @@ public class KeyboardFragment extends Fragment {
     private boolean isConversionMode = false;
     private AppDatabase database;
 
-    // конструктор по умолчанию
     public KeyboardFragment() {}
 
-    // создание экземпляра фрагмента с параметрами
+
     public static KeyboardFragment newInstance(boolean isConversionMode, boolean isUnknownInputAllowed) {
         KeyboardFragment fragment = new KeyboardFragment();
         Bundle args = new Bundle();
@@ -110,7 +109,7 @@ public class KeyboardFragment extends Fragment {
         ImageButton nextPageButton = view.findViewById(R.id.button_next_page);
         ImageButton buttonScrollDown = view.findViewById(R.id.button_scroll_down);
 
-        // инициализация логики клавиатуры
+
         keyboardLogic = new KeyboardLogic(
                 requireContext(), keyboardCells, pageNumberView, designationButton,
                 unitsButton, numbersButton, prevPageButton, nextPageButton,
@@ -128,7 +127,7 @@ public class KeyboardFragment extends Fragment {
         inputController.setKeyboardModeSwitcher(keyboardLogic);
         keyboardLogic.setInputController(inputController);
 
-        // установка обработчиков кликов (анимация уже подключена)
+        //  обработчика кликов
         buttonSave.setOnClickListener(v -> {
             LogUtils.logButtonPressed("KeyboardFragment", "SAVE");
             inputController.onDownArrowPressed();
@@ -165,7 +164,7 @@ public class KeyboardFragment extends Fragment {
         });
     }
 
-    // обработка нажатия на кнопку перехода к решению
+
     private void handleCycleButtonPress() {
         List<UnknownQuantityEntity> unknowns = database.unknownQuantityDao().getAllUnknowns();
         if (unknowns.isEmpty()) {

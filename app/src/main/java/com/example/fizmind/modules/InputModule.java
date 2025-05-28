@@ -17,32 +17,31 @@ public class InputModule {
         this.isActive = false;
     }
 
-    // добавление символа в содержимое
+
     public void apply(String input) {
         content.append(input);
     }
 
-    // удаление последнего символа
+
     public boolean deleteChar() {
         if (content.length() > 0) {
             content.deleteCharAt(content.length() - 1);
-            return content.length() == 0; // true, если модуль стал пустым
+            return content.length() == 0;
         }
         return true;
     }
 
-    // удаление всего содержимого
     public void deleteEntire() {
         content.setLength(0);
         isActive = false;
     }
 
-    // активация модуля
+
     public void activate() {
         isActive = true;
     }
 
-    // деактивация модуля
+
     public void deactivate() {
         isActive = false;
     }
@@ -57,7 +56,7 @@ public class InputModule {
         return isActive;
     }
 
-    // получение типа модуля
+
     public ModuleType getType() {
         return type;
     }

@@ -14,18 +14,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-// решатель уравнений на основе данных из базы данных
 public class Solver {
     private final FormulaDatabase formulaDatabase;
     private final AppDatabase appDatabase;
 
-    // конструктор
+
     public Solver(FormulaDatabase formulaDatabase, AppDatabase appDatabase) {
         this.formulaDatabase = formulaDatabase;
         this.appDatabase = appDatabase;
     }
 
-    // класс результата решения
+
     public static class SolutionResult {
         private final double result;
         private final List<Step> steps;
@@ -69,9 +68,9 @@ public class Solver {
         }
     }
 
-    // метод для вычисления НОД двух чисел
+    // метод для  НОД двух чисел
     public static int gcd(int a, int b) {
-        // используем алгоритм Евклида
+        //  алгоритм Евклида
         a = Math.abs(a);
         b = Math.abs(b);
         while (b != 0) {
@@ -94,15 +93,15 @@ public class Solver {
         String unknownDesignation = unknowns.get(0).getLogicalDesignation();
         Map<String, Double> knownValues = new HashMap<>();
 
-        // формируем известные значения с учётом корректных ключей
+
         for (ConcreteMeasurementEntity measurement : measurements) {
             String baseDesignation = measurement.getBaseDesignation();
             String subscript = measurement.getSubscript();
             String fullDesignation;
 
-            // проверяем, включён ли subscript уже в baseDesignation
+
             if (baseDesignation.endsWith("_" + subscript) && !subscript.isEmpty()) {
-                fullDesignation = baseDesignation; // не добавляем повторно subscript
+                fullDesignation = baseDesignation;
             } else {
                 fullDesignation = subscript.isEmpty() ? baseDesignation : baseDesignation + "_" + subscript;
             }
@@ -127,13 +126,13 @@ public class Solver {
             return computedValues.get(variable);
         }
 
-        // проверка на циклическую зависимость
+
         if (visited.contains(variable)) {
             throw new IllegalArgumentException("обнаружен цикл в зависимостях для переменной: " + variable);
         }
         visited.add(variable);
 
-        // получаем список формул для вычисления переменмой
+
         List<Formula> possibleFormulas = formulaDatabase.getAdjacencyList().getOrDefault(variable, new ArrayList<>());
         if (possibleFormulas.isEmpty()) {
             throw new IllegalArgumentException("нет формул для вычисления " + variable);
@@ -141,7 +140,7 @@ public class Solver {
 
         LogUtils.d("Solver", "доступные формулы для " + variable + ": " + possibleFormulas.size());
 
-        // первый проход: ищем формулу, для которой все зависимости известны
+
         for (Formula formula : possibleFormulas) {
             List<String> variables = formula.getVariables();
             boolean canCompute = true;
@@ -157,7 +156,7 @@ public class Solver {
                 }
             }
 
-            // логируем, можем ли использовать формулу
+
             if (canCompute) {
                 LogUtils.d("Solver", "можно вычислить " + variable + " по формуле " + formula.getBaseExpression());
             } else {
@@ -165,7 +164,7 @@ public class Solver {
                         ", отсутствуют: " + missingVars);
             }
 
-            // если все данные есть, вычисляем
+            //вычисляем
             if (canCompute) {
                 Double[] values = new Double[variables.size()];
                 for (int i = 0; i < variables.size(); i++) {

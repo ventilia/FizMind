@@ -18,7 +18,7 @@ public class ConcreteMeasurement {
     private final boolean isSIUnit;
     private final boolean isConversionMode;
 
-    // конструктор
+
     public ConcreteMeasurement(
             String baseDesignation, double value, String unit,
             String designationOperations, String valueOperations,
@@ -40,7 +40,7 @@ public class ConcreteMeasurement {
         this.isConversionMode = isConversionMode;
     }
 
-    // геттеры
+
     public String getBaseDesignation() { return baseDesignation; }
     public double getValue() { return value; }
     public String getUnit() { return unit; }

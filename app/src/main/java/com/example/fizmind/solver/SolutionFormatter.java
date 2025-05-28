@@ -23,14 +23,14 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-// форматировщик решения задачи на основе данных из базы данных
-public class SolutionFormatter {
-    private final Typeface montserratAlternatesTypeface; // шрифт для заголовков и текста
-    private final Typeface stixTypeface; // шрифт STIX для физических обозначений
-    private final DisplayManager displayManager; // менеджер отображения текста
-    private final AppDatabase database; // база данных приложения
 
-    // конструктор с добавлением шрифта STIX
+public class SolutionFormatter {
+    private final Typeface montserratAlternatesTypeface;
+    private final Typeface stixTypeface;
+    private final DisplayManager displayManager;
+    private final AppDatabase database;
+
+
     public SolutionFormatter(Typeface montserratAlternatesTypeface, Typeface stixTypeface, DisplayManager displayManager, AppDatabase database) {
         this.montserratAlternatesTypeface = montserratAlternatesTypeface;
         this.stixTypeface = stixTypeface;
@@ -38,31 +38,29 @@ public class SolutionFormatter {
         this.database = database;
     }
 
-    // метод для сокращения дроби
+
     private String simplifyFraction(int numerator, int denominator) {
-        if (denominator == 0) return numerator + "/" + denominator; // избежание деления на ноль
+        if (denominator == 0) return numerator + "/" + denominator;
         int gcd = Solver.gcd(numerator, denominator);
         int simplifiedNumerator = numerator / gcd;
         int simplifiedDenominator = denominator / gcd;
-        // если знаменатель стал 1, возвращаем целое число
+
         if (simplifiedDenominator == 1) {
             return String.valueOf(simplifiedNumerator);
         }
         return simplifiedNumerator + "/" + simplifiedDenominator;
     }
 
-    // метод для формирования html-строки сокращённой дроби или целого числа
+
     private String formatSimplifiedFraction(String simplified) {
-        // если simplified — целое число, возвращаем его без форматирования дроби
         if (!simplified.contains("/")) {
             return simplified;
         }
-        // иначе форматируем как дробь в html
         String[] parts = simplified.split("/");
         return "<sup>" + parts[0] + "</sup>/<sub>" + parts[1] + "</sub>";
     }
 
-    // форматирование решения с учетом шрифта STIX
+
     public SpannableStringBuilder formatSolution(Solver.SolutionResult result) {
         List<ConcreteMeasurementEntity> measurements = database.measurementDao().getAllMeasurements();
         List<UnknownQuantityEntity> unknowns = database.unknownQuantityDao().getAllUnknowns();
@@ -74,7 +72,7 @@ public class SolutionFormatter {
         String unknownDesignation = unknowns.get(0).getLogicalDesignation();
         SpannableStringBuilder builder = new SpannableStringBuilder();
 
-        // раздел "Дано"
+
         int start = builder.length();
         builder.append("Дано:\n");
         applyTypeface(builder, start, builder.length(), montserratAlternatesTypeface);
@@ -87,7 +85,6 @@ public class SolutionFormatter {
             builder.append(displayDesignation);
             int designationEnd = builder.length();
 
-            // применение шрифта STIX к обозначению, если требуется
             if (usesStix && stixTypeface != null) {
                 builder.setSpan(new CustomTypefaceSpan(stixTypeface), designationStart, designationEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
@@ -100,7 +97,7 @@ public class SolutionFormatter {
         }
         builder.append("\n");
 
-        // раздел "Перевод в СИ"
+
         start = builder.length();
         builder.append("Перевод в СИ:\n");
         applyTypeface(builder, start, builder.length(), montserratAlternatesTypeface);
@@ -112,7 +109,7 @@ public class SolutionFormatter {
             builder.append(displayDesignation);
             int designationEnd = builder.length();
 
-            // применение шрифта STIX к обозначению
+
             if (usesStix && stixTypeface != null) {
                 builder.setSpan(new CustomTypefaceSpan(stixTypeface), designationStart, designationEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
@@ -143,7 +140,7 @@ public class SolutionFormatter {
         }
         builder.append("\n");
 
-        // подготовка известных значений
+
         Map<String, Double> knownValues = new HashMap<>();
         for (ConcreteMeasurementEntity measurement : measurements) {
             String fullDesignation = measurement.getSubscript().isEmpty() ?
@@ -178,7 +175,7 @@ public class SolutionFormatter {
                     builder.append(displayVariable);
                     int varEnd = builder.length();
 
-                    // применение шрифта STIX к промежуточной переменной
+
                     if (usesStix && stixTypeface != null) {
                         builder.setSpan(new CustomTypefaceSpan(stixTypeface), varStart, varEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                     }
@@ -210,7 +207,7 @@ public class SolutionFormatter {
             builder.append(Html.fromHtml(substitution)).append("\n\n");
         }
 
-        // результат
+        // рез
         start = builder.length();
         builder.append("Результат:\n");
         applyTypeface(builder, start, builder.length(), montserratAlternatesTypeface);
@@ -221,7 +218,7 @@ public class SolutionFormatter {
         builder.append(displayUnknown);
         int unknownEnd = builder.length();
 
-        // применение шрифта STIX к неизвестной величине
+        // применение шрифта
         if (usesStix && stixTypeface != null) {
             builder.setSpan(new CustomTypefaceSpan(stixTypeface), unknownStart, unknownEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
@@ -233,7 +230,7 @@ public class SolutionFormatter {
                 .append(unit)
                 .append("\n\n");
 
-        // ответ
+
         start = builder.length();
         builder.append("Ответ: ");
         applyTypeface(builder, start, builder.length(), montserratAlternatesTypeface);
@@ -244,15 +241,15 @@ public class SolutionFormatter {
                 .append(" ")
                 .append(unit);
 
-        // применение стиля полужирного шрифта к тексту после "Ответ: "
+
         int boldStart = start + "Ответ: ".length();
         builder.setSpan(new StyleSpan(Typeface.BOLD), boldStart, builder.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        // применение подчеркивания ко всей строке "Ответ: "
-        int answerStart = start; // начинаем с "Ответ: "
+
+        int answerStart = start;
         int answerEnd = builder.length();
         builder.setSpan(new UnderlineSpan(), answerStart, answerEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
-        // применение шрифта STIX к обозначению в ответе
+
         if (usesStix && stixTypeface != null) {
             int displayUnknownStart = start + "Ответ: ".length();
             int displayUnknownEnd = displayUnknownStart + displayUnknown.length();
@@ -263,9 +260,9 @@ public class SolutionFormatter {
         return builder;
     }
 
-    // метод для проверки, нужно ли использовать шрифт STIX для обозначения
+
     private boolean isUsesStix(String designation, List<ConcreteMeasurementEntity> measurements) {
-        // поиск измерения с данным обозначением
+
         for (ConcreteMeasurementEntity measurement : measurements) {
             String fullDesignation = measurement.getSubscript().isEmpty() ?
                     measurement.getBaseDesignation() : measurement.getBaseDesignation() + "_" + measurement.getSubscript();
@@ -273,10 +270,10 @@ public class SolutionFormatter {
                 return measurement.isUsesStix();
             }
         }
-        return false; // по умолчанию STIX не используется, если обозначение не найдено
+        return false;
     }
 
-    // построение подстановки значений в формулу с сокращением
+
     private String buildSubstitution(String displayExpression, Formula formula, Map<String, Double> knownValues, String targetVariable) {
         String[] parts = displayExpression.split("=");
         if (parts.length != 2) return "ошибка в формуле";
@@ -286,20 +283,19 @@ public class SolutionFormatter {
         List<String> formulaVariables = formula.getVariables();
         Map<String, String> displayToFullMap = new HashMap<>();
 
-        // формируем карту отображаемых имен к полным логическим идентификаторам
         for (String fullVar : formulaVariables) {
             String displayVar = displayManager.getDisplayTextFromLogicalId(fullVar);
             displayToFullMap.put(displayVar, fullVar);
         }
 
-        // подстановка значений для всех переменных, кроме целевой
+
         for (String displayVar : displayToFullMap.keySet()) {
-            if (!displayVar.equals(left)) { // пропускаем целевую переменную
+            if (!displayVar.equals(left)) {
                 String fullVar = displayToFullMap.get(displayVar);
                 if (knownValues.containsKey(fullVar)) {
                     double value = knownValues.get(fullVar);
                     String valueStr = SIConverter.formatValue(value);
-                    // заменяем только целые совпадения переменной
+
                     right = right.replaceAll("\\b" + Pattern.quote(displayVar) + "\\b", valueStr);
                 }
             }
@@ -308,7 +304,6 @@ public class SolutionFormatter {
         String substitution = left + " = " + right;
         LogUtils.d("SolutionFormatter", "подстановка: " + substitution);
 
-        // обработка сокращения дробей в HTML-формате
         Pattern fractionPattern = Pattern.compile("<sup>(\\d+)</sup>\\s*/\\s*<sub>(\\d+)</sub>");
         Matcher matcher = fractionPattern.matcher(right);
         if (matcher.find()) {
@@ -323,7 +318,7 @@ public class SolutionFormatter {
                 substitution = left + " = " + right + "<br>" + reductionStep + "<br>" + left + " = " + simplifiedHtml;
             }
         } else {
-            // обработка обычных дробей в текстовом формате
+
             Pattern plainFractionPattern = Pattern.compile("(\\d+)\\s*/\\s*(\\d+)");
             Matcher plainMatcher = plainFractionPattern.matcher(right);
             if (plainMatcher.find()) {
@@ -343,13 +338,13 @@ public class SolutionFormatter {
         return substitution;
     }
 
-    // получение единицы измерения
+
     private String getUnit(String designation) {
         PhysicalQuantity pq = PhysicalQuantityRegistry.getPhysicalQuantity(designation);
         return pq != null ? pq.getSiUnit() : "";
     }
 
-    // применение шрифта
+
     private void applyTypeface(SpannableStringBuilder builder, int start, int end, Typeface typeface) {
         if (typeface != null) {
             builder.setSpan(new CustomTypefaceSpan(typeface), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);

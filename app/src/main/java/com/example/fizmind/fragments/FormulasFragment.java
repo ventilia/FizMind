@@ -35,7 +35,7 @@ public class FormulasFragment extends Fragment {
 
         listView = view.findViewById(R.id.list_view_formulas);
 
-        // кнопка «назад»
+
         ImageView backButton = view.findViewById(R.id.backButton);
         backButton.setOnClickListener(v -> requireActivity().onBackPressed());
 
@@ -45,7 +45,7 @@ public class FormulasFragment extends Fragment {
                 "fonts/MontserratAlternates-Regular.ttf"
         );
 
-        // инициализируем базу данных
+
         database = Room.databaseBuilder(
                         requireContext(),
                         AppDatabase.class,
