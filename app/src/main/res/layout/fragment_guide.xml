@@ -130,26 +130,6 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:background="@drawable/bg_round_light"
-            android:layout_marginHorizontal="16dp"
-            android:padding="16dp">
-
-
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:fontFamily="@font/montserrat_alternates"
-                android:textSize="18sp"
-                android:layout_marginTop="12dp"
-                android:text="Эта кнопка отвечает за сохранение введенных данных и переход к новому полю\nПоле нельзя сохранить, если нету обозначения и числового значения\nВведенное неизвестное также надо сохранять"/>
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@drawable/bg_round_light"
             android:layout_margin="16dp"
             android:padding="16dp">
 
